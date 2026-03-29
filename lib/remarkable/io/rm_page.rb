@@ -1,0 +1,264 @@
+module Remarkable
+  module IO
+    class RmPage
+      HEADER_V6 = "reMarkable .lines file, version=6          ".b
+      PAGE_WIDTH = 1404.0
+      WIDTH_SCALE = 4.0
+
+      module Colour
+        BLACK = 0
+        GREY = 1
+        WHITE = 2
+        HIGHLIGHTER_YELLOW = 3
+        HIGHLIGHTER_GREEN = 4
+        HIGHLIGHTER_PINK = 5
+        BLUE = 6
+        RED = 7
+        HIGHLIGHTER_GREY = 8
+        RGBA = 9
+        GREEN = 10
+        CYAN = 11
+        MAGENTA = 12
+        YELLOW = 13
+      end
+
+      module Pen
+        PENCIL_TILT = 1
+        FINELINER_2 = 17
+        HIGHLIGHTER_2 = 18
+        SHADER = 23
+      end
+
+      Point = Struct.new(:x, :y, :speed, :direction, :width, :pressure, keyword_init: true)
+
+      class Line
+        attr_accessor :brush_type, :color, :rgba, :thickness_scale, :starting_length
+        attr_reader :points
+
+        def initialize
+          @brush_type = Pen::FINELINER_2
+          @color = Colour::BLACK
+          @rgba = 0xFF000000
+          @thickness_scale = 1.0
+          @starting_length = 0.0
+          @points = []
+        end
+
+        def add_point(x, y)
+          point = Point.new(x: x.to_f, y: y.to_f, speed: 0.1, direction: 0.0, width: 2.0, pressure: 1.0)
+          @points << point
+          point
+        end
+      end
+
+      def initialize
+        @lines = []
+      end
+
+      def add_line
+        line = Line.new
+        @lines << line
+        line
+      end
+
+      def to_rm_bytes
+        out = +"".b
+        out << HEADER_V6
+        out << write_author_ids_block
+        out << write_migration_info_block
+        out << write_page_info_block
+        out << write_scene_tree_block
+        out << write_tree_node_block(0, 1, "", 12)
+        out << write_tree_node_block(0, 11, "Layer 1", 14)
+        out << write_scene_group_item_block(0, 1, 0, 13, 0, 0, 0, 11)
+        out << write_line_blocks
+        out
+      end
+
+      private
+
+      def write_author_ids_block
+        block = +"".b
+        block << write_varuint(1)
+        sub = +"".b
+        author_bytes_le = [
+          0x9F, 0xA5, 0x5B, 0x49, 0x43, 0xC9, 0x5C, 0x2B,
+          0xB4, 0x55, 0x36, 0x82, 0xF6, 0x94, 0x89, 0x06
+        ].pack("C*")
+        sub << write_varuint(author_bytes_le.bytesize)
+        sub << author_bytes_le
+        sub << [1].pack("v")
+        block << write_subblock(0, sub)
+        write_block(0x09, 1, 1, block)
+      end
+
+      def write_migration_info_block
+        block = +"".b
+        block << write_tagged_id(1, 1, 1)
+        block << write_tagged_bool(2, true)
+        write_block(0x00, 1, 1, block)
+      end
+
+      def write_page_info_block
+        block = +"".b
+        block << write_tagged_int(1, 1)
+        block << write_tagged_int(2, 0)
+        block << write_tagged_int(3, 0)
+        block << write_tagged_int(4, 0)
+        write_block(0x0A, 0, 1, block)
+      end
+
+      def write_scene_tree_block
+        block = +"".b
+        block << write_tagged_id(1, 0, 11)
+        block << write_tagged_id(2, 0, 0)
+        block << write_tagged_bool(3, true)
+        sub = write_tagged_id(1, 0, 1)
+        block << write_subblock(4, sub)
+        write_block(0x01, 1, 1, block)
+      end
+
+      def write_tree_node_block(node_author, node_id, label, label_timestamp)
+        block = +"".b
+        block << write_tagged_id(1, node_author, node_id)
+        block << write_lww_string(2, 0, label_timestamp, label)
+        block << write_lww_bool(3, 0, label_timestamp, true)
+        write_block(0x02, 1, 1, block)
+      end
+
+      def write_scene_group_item_block(parent_author, parent_id, item_author, item_id, left_author, left_id, value_author, value_id)
+        block = +"".b
+        block << write_tagged_id(1, parent_author, parent_id)
+        block << write_tagged_id(2, item_author, item_id)
+        block << write_tagged_id(3, left_author, left_id)
+        block << write_tagged_id(4, 0, 0)
+        block << write_tagged_int(5, 0)
+        value = +"\x02".b
+        value << write_tagged_id(2, value_author, value_id)
+        block << write_subblock(6, value)
+        write_block(0x04, 1, 1, block)
+      end
+
+      def write_line_blocks
+        out = +"".b
+        previous_item_id = 0
+        item_id = 14
+        @lines.each do |line|
+          out << write_line_block(line, item_id, previous_item_id)
+          previous_item_id = item_id
+          item_id += 1
+        end
+        out
+      end
+
+      def write_line_block(line, item_id, left_id)
+        block = +"".b
+        block << write_tagged_id(1, 0, 11)
+        block << write_tagged_id(2, 1, item_id)
+        block << write_tagged_id(3, left_id.zero? ? 0 : 1, left_id)
+        block << write_tagged_id(4, 0, 0)
+        block << write_tagged_int(5, 0)
+        block << write_subblock(6, line_value_bytes(line))
+        write_block(0x05, 2, 2, block)
+      end
+
+      def line_value_bytes(line)
+        out = +"\x03".b
+        out << write_tagged_int(1, line.brush_type)
+        out << write_tagged_int(2, line.color)
+        out << write_tagged_double(3, line.thickness_scale)
+        out << write_tagged_float(4, line.starting_length)
+        out << write_subblock(5, point_bytes(line))
+        out << write_tagged_id(6, 0, 1)
+        out << write_tagged_int(8, line.rgba) if line.color == Colour::RGBA
+        out
+      end
+
+      def point_bytes(line)
+        out = +"".b
+        line.points.each do |point|
+          out << [scene_x(point.x)].pack("e")
+          out << [point.y].pack("e")
+          out << [[[point.speed.round, 0].max, 0xFFFF].min].pack("v")
+          out << [[[scaled_width(point.width).round, 0].max, 0xFFFF].min].pack("v")
+          out << [[[point.direction.round, 0].max, 0xFF].min].pack("C")
+          out << [[[(point.pressure * 255).round, 0].max, 0xFF].min].pack("C")
+        end
+        out
+      end
+
+      def scene_x(x)
+        x - (PAGE_WIDTH / 2.0)
+      end
+
+      def scaled_width(width)
+        width.to_f * WIDTH_SCALE
+      end
+
+      def write_block(block_type, min_version, current_version, block_data)
+        [block_data.bytesize].pack("V") + [0, min_version, current_version, block_type].pack("C*") + block_data
+      end
+
+      def write_subblock(index, data)
+        write_tag(index, 0x0C) + [data.bytesize].pack("V") + data
+      end
+
+      def write_lww_bool(index, author, value_id, value)
+        write_subblock(index, write_tagged_id(1, author, value_id) + write_tagged_bool(2, value))
+      end
+
+      def write_lww_string(index, author, value_id, value)
+        write_subblock(index, write_tagged_id(1, author, value_id) + write_tagged_string(2, value))
+      end
+
+      def write_tagged_string(index, value)
+        data = +"".b
+        bytes = value.encode(Encoding::UTF_8)
+        data << write_varuint(bytes.bytesize)
+        data << [1].pack("C")
+        data << bytes
+        write_subblock(index, data)
+      end
+
+      def write_tagged_bool(index, value)
+        write_tag(index, 0x01) + [value ? 1 : 0].pack("C")
+      end
+
+      def write_tagged_id(index, author, value)
+        write_tag(index, 0x0F) + [author].pack("C") + write_varuint(value)
+      end
+
+      def write_tagged_int(index, value)
+        write_tag(index, 0x04) + [value].pack("V")
+      end
+
+      def write_tagged_float(index, value)
+        write_tag(index, 0x04) + [value].pack("e")
+      end
+
+      def write_tagged_double(index, value)
+        write_tag(index, 0x08) + [value].pack("E")
+      end
+
+      def write_tag(index, tag_type)
+        write_varuint((index << 4) | tag_type)
+      end
+
+      def write_varuint(value)
+        out = +"".b
+        remaining = value
+        loop do
+          byte = remaining & 0x7F
+          remaining >>= 7
+          if remaining != 0
+            out << [(byte | 0x80)].pack("C")
+          else
+            out << [byte].pack("C")
+            break
+          end
+        end
+        out
+      end
+    end
+  end
+end
