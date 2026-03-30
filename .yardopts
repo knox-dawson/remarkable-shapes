@@ -1,0 +1,4 @@
+--markup markdown
+--protected
+--private
+lib/**/*.rb

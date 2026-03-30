@@ -1,57 +1,75 @@
 # remarkable-shapes
 
-Standalone Ruby repo for generating uploadable `.rmdoc` files for reMarkable tablets.
+Ruby tools for generating uploadable `.rmdoc` files for reMarkable tablets.
 
-## Relationship to Drawj2d
+## Overview
 
-The Java repo `remarkable-scenes` contains:
+This project owns its own `.rm` and `.rmdoc` writing logic. It does not depend on `Drawj2d` at runtime.
 
-- `ReMarkablePage.java`
-- `ReMarkableAPIrmdoc.java`
+The code is organized into:
 
-Those started as code derived from the Drawj2d-side writer classes, but they now live in your own repo and are independent from future Drawj2d changes.
-
-That means:
-
-- yes, your Java repo is independent of Drawj2d for `.rm` / `.rmdoc` generation
-- yes, you can use your own repo instead of Drawj2d for this work
-
-This Ruby repo takes the same approach:
-
-- it is self-contained
-- it does not require Drawj2d
-- it owns its own `.rm` and `.rmdoc` writing logic
-
-## Layout
-
-- `lib/remarkable/io`
-  low-level `.rm` and `.rmdoc` writing
-- `lib/remarkable/shapes`
-  reusable drawing helpers
-- `lib/remarkable/shapes`
-  reusable drawing helpers and named shapes
+- `lib/io`
+  low-level lines v6 and `.rmdoc` writers
+- `lib/shapes`
+  reusable geometry helpers and named output shapes
 - `bin/generate_shape`
-  generic shape-name runner
+  command-line shape generator
+- `spec`
+  RSpec tests for page construction and `.rmdoc` writing
 
-## Run
+## Installation
 
 ```bash
-cd /home/bmb/rmlines_research/remarkable-shapes
-ruby bin/generate_shape --help
-ruby bin/generate_shape us-flag out/us-flag.rmdoc
-ruby bin/generate_shape greenland-flag out/greenland-flag.rmdoc
-ruby bin/generate_shape shape-sampler out/shape-sampler.rmdoc
-ruby bin/generate_shape color-sampler out/color-sampler.rmdoc
+cd remarkable-shapes
+bundle install
 ```
 
-## Why Ruby may fit you better
+## Usage
 
-If your main task is:
+List available shapes:
 
-- define reusable geometry helpers
-- write small shape scripts
-- generate output files
+```bash
+ruby bin/generate_shape --help
+```
 
-then Ruby is a reasonable fit. It is less ceremony-heavy than Java for this kind of scripting work.
+Generate sample outputs:
 
-The main tradeoff is that you lose the benefit of reusing Java classes from Drawj2d directly, but since you asked for independence from Drawj2d, that is acceptable here.
+```bash
+ruby bin/generate_shape shape-sampler out/shape-sampler.rmdoc
+ruby bin/generate_shape color-sampler out/color-sampler.rmdoc
+ruby bin/generate_shape us-flag out/us-flag.rmdoc
+ruby bin/generate_shape greenland-flag out/greenland-flag.rmdoc
+ruby bin/generate_shape cat-png out/cat-png.rmdoc
+```
+
+After `bundle install`, the same commands can be run with `bundle exec`.
+
+## API Notes
+
+The drawing helpers in `lib/shapes/shapes.rb` follow a normalized pattern:
+
+- `page` first
+- geometric parameters next
+- `rgba:`
+- `color:`
+- `brush:`
+
+By default, methods draw in RGBA mode using opaque black and the fineliner brush. Passing a tablet colour code through `color:` switches the stroke to one of the built-in palette values.
+
+## Development
+
+Run the test suite:
+
+```bash
+bundle exec rspec
+```
+
+Generate YARD docs:
+
+```bash
+bundle exec yard doc
+```
+
+## License
+
+No license has been selected yet. Add one before publishing the repository on GitHub.

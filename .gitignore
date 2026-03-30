@@ -1,1 +1,5 @@
 /out/
+/.bundle/
+/vendor/bundle/
+/.yardoc/
+/.rspec_status
