@@ -57,6 +57,115 @@ module Remarkable
       draw_tapered_segment(line, x1, y1, x2, y2, width)
     end
 
+    # Draws a wide filled rectangle-like stroke with a separate outline stroke.
+    #
+    # This matches the old Java rectOutlined helper closely, while fitting the
+    # current Ruby API style.
+    #
+    # @return [void]
+    def rect_outlined(page, x1, y1, x2, y2, width, line_width,
+                      rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH,
+                      outline_rgba: DEFAULT_RGBA, outline_color: DEFAULT_COLOR, outline_brush: DEFAULT_BRUSH)
+      rect(page, x1, y1, x2, y2, width, rgba:, color:, brush:)
+
+      draw_box(
+        page,
+        x1,
+        y1 - (width * 0.5),
+        x2,
+        y2 + (width * 0.5),
+        line_width,
+        rgba: outline_rgba,
+        color: outline_color,
+        brush: outline_brush
+      )
+    end
+
+    # Compatibility wrapper for older Java-style translated generators.
+    #
+    # @return [void]
+    def rectOutlined(page, x1, y1, x2, y2, width, color, line_width, line_color, brush, brush2)
+      rect_outlined(
+        page, x1, y1, x2, y2, width, line_width,
+        color:,
+        brush:,
+        outline_color: line_color,
+        outline_brush: brush2
+      )
+    end
+
+    # Draws a wide rectangle-like stroke with a folded corner and outline.
+    #
+    # This matches the old Java rectCorner helper closely, while fitting the
+    # current Ruby API style.
+    #
+    # @return [void]
+    def rect_corner(page, x1, y1, x2, y2, width, corner, line_width,
+                    rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH,
+                    corner_rgba: DEFAULT_RGBA, corner_color: DEFAULT_COLOR,
+                    outline_rgba: DEFAULT_RGBA, outline_color: DEFAULT_COLOR, outline_brush: DEFAULT_BRUSH,
+                    corner_outline_rgba: DEFAULT_RGBA, corner_outline_color: DEFAULT_COLOR)
+      c = corner
+
+      rect(page, x1, y1, x2 - c, y2, width, rgba:, color:, brush:)
+      rect(page, x2 - c, y2 + (c * 0.5), x2, y2 + (c * 0.5), width - c, rgba:, color:, brush:)
+
+      hypotenuse = c * Math.sqrt(2)
+      height = c / Math.sqrt(2)
+      xprime = x2 - c
+      yprime = y2 + (c * 0.5) - ((width - c) / 2.0)
+      hprime = height / Math.sqrt(2)
+      triangle(
+        page,
+        xprime,
+        yprime,
+        xprime + hprime,
+        yprime - hprime,
+        hypotenuse,
+        rgba: corner_rgba,
+        color: corner_color,
+        brush:
+      )
+
+      xa = x2 - c
+      ya = y2 - (width * 0.5)
+      xb = x1
+      yb = y1 - (width * 0.5)
+      xc = x1
+      yc = y1 + (width * 0.5)
+      xd = x2
+      yd = y2 + (width * 0.5)
+      xe = x2
+      ye = y2 + (c * 0.5) - ((width - c) * 0.5)
+
+      line = page.add_line
+      apply_style(line, rgba: outline_rgba, color: outline_color, brush: outline_brush)
+      [[xa, ya], [xb, yb], [xc, yc], [xd, yd], [xe, ye]].each do |x, y|
+        line.add_point(x, y).width = line_width
+      end
+
+      line2 = page.add_line
+      apply_style(line2, rgba: corner_outline_rgba, color: corner_outline_color, brush: outline_brush)
+      [[xa, ya], [xa, ye], [xe, ye], [xa, ya]].each do |x, y|
+        line2.add_point(x, y).width = line_width
+      end
+    end
+
+    # Compatibility wrapper for older Java-style translated generators.
+    #
+    # @return [void]
+    def rectCorner(page, x1, y1, x2, y2, width, corner, color, corner_color, line_width, line_color, corner_line_color, brush, brush2)
+      rect_corner(
+        page, x1, y1, x2, y2, width, corner, line_width,
+        color:,
+        brush:,
+        corner_color:,
+        outline_color: line_color,
+        outline_brush: brush2,
+        corner_outline_color: corner_line_color
+      )
+    end
+
     # Draws a filled circle approximated by a very short wide line.
     #
     # @return [void]
@@ -65,6 +174,20 @@ module Remarkable
       apply_style(line, rgba:, color:, brush:)
       line.add_point(cx, cy).width = radius * 2
       line.add_point(cx + 0.001, cy + 0.001).width = radius * 2
+    end
+
+    # Compatibility wrapper for older Java-style translated generators.
+    #
+    # @return [void]
+    def circleShader(page, rgba, cx, cy, radius)
+      circle(page, cx, cy, radius, rgba:, brush: RmPage::Pen::SHADER)
+    end
+
+    # Compatibility wrapper for older Java-style translated generators.
+    #
+    # @return [void]
+    def rm2Box(page)
+      rm2_box(page)
     end
 
     # Converts a PNG file into a 2D array of ARGB integers.
