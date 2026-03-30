@@ -4,7 +4,7 @@ Ruby tools for generating uploadable `.rmdoc` files for reMarkable tablets.
 
 ## Overview
 
-This project owns its own `.rm` and `.rmdoc` writing logic. It does not depend on `Drawj2d` at runtime.
+This project generates uploadable `.rmdoc` files and includes its own `.rm` and `.rmdoc` writing logic.
 
 The code is organized into:
 
