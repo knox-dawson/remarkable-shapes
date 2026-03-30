@@ -1,4 +1,4 @@
-# remarkable-scenes-ruby
+# remarkable-shapes
 
 Standalone Ruby repo for generating uploadable `.rmdoc` files for reMarkable tablets.
 
@@ -28,19 +28,20 @@ This Ruby repo takes the same approach:
   low-level `.rm` and `.rmdoc` writing
 - `lib/remarkable/shapes`
   reusable drawing helpers
-- `lib/remarkable/scenes`
-  named scenes
-- `bin/generate_scene`
-  generic scene-name runner
+- `lib/remarkable/shapes`
+  reusable drawing helpers and named shapes
+- `bin/generate_shape`
+  generic shape-name runner
 
 ## Run
 
 ```bash
-cd /home/bmb/rmlines_research/remarkable-scenes-ruby
-ruby bin/generate_scene --help
-ruby bin/generate_scene us-flag out/us-flag.rmdoc
-ruby bin/generate_scene greenland-flag out/greenland-flag.rmdoc
-ruby bin/generate_scene shape-sampler out/shape-sampler.rmdoc
+cd /home/bmb/rmlines_research/remarkable-shapes
+ruby bin/generate_shape --help
+ruby bin/generate_shape us-flag out/us-flag.rmdoc
+ruby bin/generate_shape greenland-flag out/greenland-flag.rmdoc
+ruby bin/generate_shape shape-sampler out/shape-sampler.rmdoc
+ruby bin/generate_shape color-sampler out/color-sampler.rmdoc
 ```
 
 ## Why Ruby may fit you better
@@ -48,10 +49,9 @@ ruby bin/generate_scene shape-sampler out/shape-sampler.rmdoc
 If your main task is:
 
 - define reusable geometry helpers
-- write small scene scripts
+- write small shape scripts
 - generate output files
 
 then Ruby is a reasonable fit. It is less ceremony-heavy than Java for this kind of scripting work.
 
 The main tradeoff is that you lose the benefit of reusing Java classes from Drawj2d directly, but since you asked for independence from Drawj2d, that is acceptable here.
-

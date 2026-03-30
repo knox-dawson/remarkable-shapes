@@ -23,9 +23,22 @@ module Remarkable
     end
 
     def draw_line(page, x1, y1, x2, y2, width, color)
+      draw_line_pen(page, x1, y1, x2, y2, width, Remarkable::IO::RmPage::Pen::FINELINER_2, color)
+    end
+
+    def draw_line_pen(page, x1, y1, x2, y2, width, brush, color)
       line = page.add_line
-      line.brush_type = Remarkable::IO::RmPage::Pen::FINELINER_2
+      line.brush_type = brush
       line.color = color
+      line.add_point(x1, y1).width = width
+      line.add_point(x2, y2).width = width
+    end
+
+    def draw_line_rgba(page, x1, y1, x2, y2, width, brush, rgba)
+      line = page.add_line
+      line.brush_type = brush
+      line.color = Remarkable::IO::RmPage::Colour::RGBA
+      line.rgba = rgba
       line.add_point(x1, y1).width = width
       line.add_point(x2, y2).width = width
     end
