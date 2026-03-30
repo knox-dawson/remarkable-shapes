@@ -5,6 +5,8 @@ require "io/rm_page"
 require "io/rmdoc_writer"
 require "shapes/shape_library"
 
+LOCAL_SHAPES_DIR = File.expand_path("../local_shapes", __dir__)
+
 SHAPES = {
   "shape-sampler" => Remarkable::ShapeLibrary.method(:draw_shape_sampler),
   "color-sampler" => Remarkable::ShapeLibrary.method(:draw_color_sampler),
@@ -14,9 +16,37 @@ SHAPES = {
 }.freeze
 
 def print_usage
-  puts "Usage: ruby bin/generate_shape <shape-name> [output-file]"
+  puts "Usage: ruby bin/generate_shape <shape-name-or-file> [output-file]"
   puts "Available shapes:"
   SHAPES.keys.each { |name| puts "  #{name}" }
+  puts
+  puts "Local shape files:"
+  puts "  ruby bin/generate_shape local_shapes/post-it/example.rb"
+  puts "  ruby bin/generate_shape post-it/example"
+  puts
+  puts "A local shape file must evaluate to a callable object, for example:"
+  puts "  ->(page) { Remarkable::Shapes.rm2_box(page) }"
+end
+
+def resolve_local_shape_path(shape_name)
+  candidates = [
+    shape_name,
+    "#{shape_name}.rb",
+    File.join(LOCAL_SHAPES_DIR, shape_name),
+    File.join(LOCAL_SHAPES_DIR, "#{shape_name}.rb")
+  ]
+
+  candidates
+    .map { |path| File.expand_path(path, Dir.pwd) }
+    .find { |path| File.file?(path) }
+end
+
+def load_local_renderer(path)
+  renderer = eval(File.read(path), TOPLEVEL_BINDING, path)
+  return renderer if renderer.respond_to?(:call)
+
+  warn "Local shape file must evaluate to a callable object: #{path}"
+  exit 2
 end
 
 if ARGV.empty? || %w[--help -h].include?(ARGV[0])
@@ -26,13 +56,19 @@ end
 
 shape_name = ARGV[0]
 renderer = SHAPES[shape_name]
+shape_path = nil
 unless renderer
-  warn "Unknown shape: #{shape_name}"
+  shape_path = resolve_local_shape_path(shape_name)
+  renderer = load_local_renderer(shape_path) if shape_path
+end
+unless renderer
+  warn "Unknown shape or file: #{shape_name}"
   print_usage
   exit 2
 end
 
-output_name = ARGV[1] || "out/#{shape_name}.rmdoc"
+default_name = shape_path ? File.basename(shape_path, ".rb") : shape_name
+output_name = ARGV[1] || "out/#{default_name}.rmdoc"
 page = Remarkable::RmPage.new
 renderer.call(page)
 Remarkable::RmdocWriter.write(output_name, page.to_rm_bytes)

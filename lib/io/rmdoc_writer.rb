@@ -15,7 +15,7 @@ module Remarkable
       notebook_id = SecureRandom.uuid
       page_id = SecureRandom.uuid
       visible_name = File.basename(path, ".rmdoc")
-      content = create_content(page_id)
+      content = create_content(notebook_id, page_id)
       metadata = create_metadata(visible_name)
 
       entries = [
@@ -29,9 +29,10 @@ module Remarkable
 
     # Creates the .content JSON payload.
     #
+    # @param notebook_id [String]
     # @param page_id [String]
     # @return [String]
-    def self.create_content(page_id)
+    def self.create_content(notebook_id, page_id)
       <<~JSON
         {
             "cPages": {
@@ -58,7 +59,7 @@ module Remarkable
                 ],
                 "uuids": [
                     {
-                        "first": "25248a5b-7602-5a83-b6b8-885ee4e4f813",
+                        "first": "#{notebook_id}",
                         "second": 1
                     }
                 ]

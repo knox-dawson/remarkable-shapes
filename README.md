@@ -44,6 +44,21 @@ ruby bin/generate_shape cat-png out/cat-png.rmdoc
 
 After `bundle install`, the same commands can be run with `bundle exec`.
 
+Generate a local untracked shape file:
+
+```bash
+ruby bin/generate_shape local_shapes/post-it/example.rb out/example.rmdoc
+ruby bin/generate_shape post-it/example out/example.rmdoc
+```
+
+Local shape files should evaluate to a callable object, such as:
+
+```ruby
+lambda do |page|
+  Remarkable::Shapes.rm2_box(page)
+end
+```
+
 ## API Notes
 
 The drawing helpers in `lib/shapes/shapes.rb` follow a normalized pattern:

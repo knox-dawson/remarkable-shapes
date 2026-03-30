@@ -219,7 +219,7 @@ module Remarkable
     def draw_cat_png(page)
       Shapes.rm2_box(page, color: RmPage::Colour::BLACK)
 
-      png_path = "/tmp/cat_output.png"
+      png_path = File.expand_path("../../examples/cat.png", __dir__)
       rgba_grid = Shapes.png_to_rgba_grid(png_path)
       pixel_size = 6.0
       box_left = 130.0
