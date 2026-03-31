@@ -1,0 +1,36 @@
+#!/usr/bin/env ruby
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+
+require "io/rm_page"
+require "io/rmdoc_writer"
+require "shapes/image_generator"
+
+def print_usage
+  puts "Usage: ruby bin/generate_image <png-path> [output-file]"
+  puts
+  puts "Example:"
+  puts "  ruby bin/generate_image examples/cat.png out/cat-image.rmdoc"
+end
+
+if ARGV.empty? || %w[--help -h].include?(ARGV[0])
+  print_usage
+  exit 0
+end
+
+png_path = ARGV[0]
+unless File.extname(png_path).downcase == ".png"
+  warn "generate_image only supports PNG input: #{png_path}"
+  exit 2
+end
+
+unless File.file?(png_path)
+  warn "PNG file not found: #{png_path}"
+  exit 2
+end
+
+default_name = File.basename(png_path, ".png")
+output_path = ARGV[1] || "out/#{default_name}.rmdoc"
+
+page = Remarkable::RmPage.new
+Remarkable::ImageGenerator.draw_png(page, png_path)
+Remarkable::RmdocWriter.write(output_path, page.to_rm_bytes)

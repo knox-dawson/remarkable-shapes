@@ -21,6 +21,19 @@ The code is organized into:
 
 ## Installation
 
+Prerequisites:
+
+- Ruby
+- Bundler
+
+If `bundle` is not already available, install Bundler with:
+
+```bash
+gem install bundler
+```
+
+Setup:
+
 ```bash
 cd remarkable-shapes
 bundle install
@@ -43,6 +56,12 @@ ruby bin/generate_shape us-flag out/us-flag.rmdoc
 ruby bin/generate_shape greenland-flag out/greenland-flag.rmdoc
 ruby bin/generate_shape cat-png out/cat-png.rmdoc
 ruby bin/generate_shape line-font-sampler out/line-font-sampler.rmdoc
+```
+
+Generate a one-off image page from a PNG:
+
+```bash
+ruby bin/generate_image examples/cat.png out/cat-image.rmdoc
 ```
 
 After `bundle install`, the same commands can be run with `bundle exec`.
