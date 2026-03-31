@@ -5,12 +5,13 @@ require "io/rm_page"
 require "io/rmdoc_writer"
 require "shapes/shape_library"
 
-LOCAL_SHAPES_DIR = File.expand_path("../local_shapes", __dir__)
+EXAMPLES_DIR = File.expand_path("../examples", __dir__)
 
 SHAPES = {
   "shape-sampler" => Remarkable::ShapeLibrary.method(:draw_shape_sampler),
   "color-sampler" => Remarkable::ShapeLibrary.method(:draw_color_sampler),
   "cat-png" => Remarkable::ShapeLibrary.method(:draw_cat_png),
+  "line-font-sampler" => Remarkable::ShapeLibrary.method(:draw_line_font_sampler),
   "us-flag" => Remarkable::ShapeLibrary.method(:draw_us_flag),
   "greenland-flag" => Remarkable::ShapeLibrary.method(:draw_greenland_flag)
 }.freeze
@@ -20,21 +21,32 @@ def print_usage
   puts "Available shapes:"
   SHAPES.keys.each { |name| puts "  #{name}" }
   puts
-  puts "Local shape files:"
-  puts "  ruby bin/generate_shape local_shapes/post-it/example.rb"
-  puts "  ruby bin/generate_shape post-it/example"
+  puts "External shape files:"
+  puts "  ruby bin/generate_shape /path/to/shape-repo/post-it/example.rb"
+  puts "  REMARKABLE_SHAPES_PATH=/path/to/shape-repo ruby bin/generate_shape post-it/example"
   puts
-  puts "A local shape file must evaluate to a callable object, for example:"
+  puts "Tracked example shape files:"
+  puts "  ruby bin/generate_shape examples/emoji-pages/emoji-01.rb"
+  puts
+  puts "A shape file must evaluate to a callable object, for example:"
   puts "  ->(page) { Remarkable::Shapes.rm2_box(page) }"
 end
 
-def resolve_local_shape_path(shape_name)
-  candidates = [
-    shape_name,
-    "#{shape_name}.rb",
-    File.join(LOCAL_SHAPES_DIR, shape_name),
-    File.join(LOCAL_SHAPES_DIR, "#{shape_name}.rb")
-  ]
+def shape_search_roots
+  roots = [EXAMPLES_DIR]
+  env_roots = ENV.fetch("REMARKABLE_SHAPES_PATH", "")
+                 .split(File::PATH_SEPARATOR)
+                 .reject(&:empty?)
+  roots.concat(env_roots)
+  roots.uniq
+end
+
+def resolve_shape_path(shape_name)
+  candidates = [shape_name, "#{shape_name}.rb"]
+  shape_search_roots.each do |root|
+    candidates << File.join(root, shape_name)
+    candidates << File.join(root, "#{shape_name}.rb")
+  end
 
   candidates
     .map { |path| File.expand_path(path, Dir.pwd) }
@@ -58,7 +70,7 @@ shape_name = ARGV[0]
 renderer = SHAPES[shape_name]
 shape_path = nil
 unless renderer
-  shape_path = resolve_local_shape_path(shape_name)
+  shape_path = resolve_shape_path(shape_name)
   renderer = load_local_renderer(shape_path) if shape_path
 end
 unless renderer

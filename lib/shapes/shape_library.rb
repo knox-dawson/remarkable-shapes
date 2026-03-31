@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "shapes"
+require_relative "line_font"
 
 module Remarkable
   # Named output shapes built from the generic drawing helpers.
@@ -232,6 +233,50 @@ module Remarkable
       y = box_top + ((box_height - grid_height) / 2.0)
 
       Shapes.draw_rgba_grid(page, rgba_grid, x, y, pixel_size, brush: RmPage::Pen::FINELINER_2)
+    end
+
+    # Draws a sampler page for the imported line font.
+    #
+    # @param page [Remarkable::RmPage]
+    # @return [void]
+    def draw_line_font_sampler(page)
+      Shapes.rm2_box(page, color: RmPage::Colour::BLACK)
+
+      samples = [
+        " !\"#$%&'()*+,-./0123456789:;<=>?@",
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_`",
+        "abcdefghijklmnopqrstuvwxyz{|}~ °",
+        "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ",
+        "αβγδεζηθικλμνξοπρςστυφχψω",
+        "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ",
+        "абвгдежзийклмнопрстуфхцчшщъыьэюя",
+        "←↑→↓∂∃∇∈∏∑−∓∕∖∗∙√∝∞∠∥∩∪∫∴∼≠≡"
+      ]
+
+      y = 250.0
+      samples.each do |text|
+        Shapes.text(
+          page, text, 165.0, y,
+          size: 30.0,
+          stroke_width: 2.0,
+          style: :plain,
+          mono: false,
+          color: RmPage::Colour::BLACK,
+          brush: RmPage::Pen::FINELINER_2
+        )
+        y += 170.0
+      end
+
+      Shapes.text(
+        page, "Italic sample: ABCDEFG abcdefg 012345",
+        165.0,
+        y,
+        size: 28.0,
+        stroke_width: 2.0,
+        style: :italic,
+        color: RmPage::Colour::BLACK,
+        brush: RmPage::Pen::FINELINER_2
+      )
     end
   end
 end

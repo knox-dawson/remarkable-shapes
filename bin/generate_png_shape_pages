@@ -7,7 +7,8 @@ def print_usage
   puts "Usage: ruby bin/generate_png_shape_pages <image-dir> <rows>x<cols> [output-dir] [prefix] [outer-padding] [cell-gap] [pixel-gap]"
   puts
   puts "Example:"
-  puts "  ruby bin/generate_png_shape_pages emoji 3x5 local_shapes/emoji-pages emoji 40 30 -0.10"
+  puts "  ruby bin/generate_png_shape_pages emoji 3x5 examples/emoji-pages emoji 40 30 -0.10"
+  puts "  ruby bin/generate_png_shape_pages emoji 3x5 /path/to/shape-repo/emoji-pages emoji"
   puts
   puts "Notes:"
   puts "  outer-padding adds margin inside the rm2 box"
@@ -23,7 +24,8 @@ end
 
 image_dir = ARGV[0]
 layout = ARGV[1] || abort("Missing layout, for example 3x5")
-output_dir = ARGV[2] || File.join("local_shapes", File.basename(File.expand_path(image_dir)))
+default_dirname = "#{File.basename(File.expand_path(image_dir))}-pages"
+output_dir = ARGV[2] || File.join("examples", default_dirname)
 prefix = ARGV[3]
 outer_padding = (ARGV[4] || Remarkable::PngShapePageGenerator::DEFAULT_OUTER_PADDING).to_f
 cell_gap = (ARGV[5] || Remarkable::PngShapePageGenerator::DEFAULT_CELL_GAP).to_f

@@ -48,6 +48,39 @@ module Remarkable
       line.add_point(x2, y2).width = width
     end
 
+    # Draws a multi-point polyline using a constant stroke width.
+    #
+    # @param points [Array<Array<Numeric>>]
+    # @return [void]
+    def draw_polyline(page, points, width, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
+      return if points.length < 2
+
+      line = page.add_line
+      apply_style(line, rgba:, color:, brush:)
+      points.each do |x, y|
+        line.add_point(x, y).width = width
+      end
+    end
+
+    # Draws line-font text using the shared vector font renderer.
+    #
+    # @return [Float] rendered width
+    def text(page, string, x, baseline_y, size: 48.0, stroke_width: 2.0, style: :plain, mono: false,
+             rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
+      require_relative "line_font"
+
+      LineFont.draw_text(
+        page, string, x, baseline_y,
+        size:,
+        stroke_width:,
+        style:,
+        mono:,
+        rgba:,
+        color:,
+        brush:
+      )
+    end
+
     # Draws a thick tapered rectangle-like stroke.
     #
     # @return [void]

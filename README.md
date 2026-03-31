@@ -14,6 +14,8 @@ The code is organized into:
   reusable geometry helpers and named output shapes
 - `bin/generate_shape`
   command-line shape generator
+- `examples`
+  tracked example inputs and generated page definitions
 - `spec`
   RSpec tests for page construction and `.rmdoc` writing
 
@@ -40,36 +42,45 @@ ruby bin/generate_shape color-sampler out/color-sampler.rmdoc
 ruby bin/generate_shape us-flag out/us-flag.rmdoc
 ruby bin/generate_shape greenland-flag out/greenland-flag.rmdoc
 ruby bin/generate_shape cat-png out/cat-png.rmdoc
+ruby bin/generate_shape line-font-sampler out/line-font-sampler.rmdoc
 ```
 
 After `bundle install`, the same commands can be run with `bundle exec`.
 
-Generate paged local shape files from a directory of PNGs:
+For your own shape projects, the cleanest setup is a separate repo checked out beside this one, then point `generate_shape` at it with `REMARKABLE_SHAPES_PATH` or an explicit file path. Keep `remarkable-shapes` as the reusable engine repo, and keep your project-specific shape files in that separate tracked repo.
+
+Generate tracked example page files from a directory of PNGs:
 
 ```bash
-ruby bin/generate_png_shape_pages emoji 3x5 local_shapes/emoji-pages emoji
+ruby bin/generate_png_shape_pages emoji 3x5 examples/emoji-pages emoji
 ```
 
 With explicit inner padding, cell spacing, and slight pixel overlap:
 
 ```bash
-ruby bin/generate_png_shape_pages emoji 3x5 local_shapes/emoji-pages emoji 40 30 -0.10
+ruby bin/generate_png_shape_pages emoji 3x5 examples/emoji-pages emoji 40 30 -0.10
+```
+
+Generate page files in an external shapes repo:
+
+```bash
+ruby bin/generate_png_shape_pages emoji 3x5 ../remarkable-shape-projects/emoji-pages emoji
 ```
 
 Then render one of the generated pages:
 
 ```bash
-ruby bin/generate_shape local_shapes/emoji-pages/emoji-01.rb out/emoji-01.rmdoc
+ruby bin/generate_shape examples/emoji-pages/emoji-01.rb out/emoji-01.rmdoc
 ```
 
-Generate a local untracked shape file:
+Render a shape from your external shapes repo:
 
 ```bash
-ruby bin/generate_shape local_shapes/post-it/example.rb out/example.rmdoc
-ruby bin/generate_shape post-it/example out/example.rmdoc
+REMARKABLE_SHAPES_PATH=../remarkable-shape-projects ruby bin/generate_shape post-it/example out/example.rmdoc
+ruby bin/generate_shape ../remarkable-shape-projects/post-it/example.rb out/example.rmdoc
 ```
 
-Local shape files should evaluate to a callable object, such as:
+Shape files should evaluate to a callable object, such as:
 
 ```ruby
 lambda do |page|
