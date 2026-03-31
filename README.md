@@ -44,6 +44,24 @@ ruby bin/generate_shape cat-png out/cat-png.rmdoc
 
 After `bundle install`, the same commands can be run with `bundle exec`.
 
+Generate paged local shape files from a directory of PNGs:
+
+```bash
+ruby bin/generate_png_shape_pages emoji 3x5 local_shapes/emoji-pages emoji
+```
+
+With explicit inner padding, cell spacing, and slight pixel overlap:
+
+```bash
+ruby bin/generate_png_shape_pages emoji 3x5 local_shapes/emoji-pages emoji 40 30 -0.10
+```
+
+Then render one of the generated pages:
+
+```bash
+ruby bin/generate_shape local_shapes/emoji-pages/emoji-01.rb out/emoji-01.rmdoc
+```
+
 Generate a local untracked shape file:
 
 ```bash
