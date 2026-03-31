@@ -116,4 +116,5 @@ bundle exec yard doc
 
 ## License
 
-No license has been selected yet. Add one before publishing the repository on GitHub.
+This project is licensed under the MIT License.
+See the [LICENSE](LICENSE) file for details.
