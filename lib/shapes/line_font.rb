@@ -86,7 +86,7 @@ module Remarkable
       size.to_f * MONO_ADVANCE_FACTOR
     end
 
-    # Returns the baseline-to-top offset used in the Drawj2d implementation.
+    # Returns the baseline-to-top offset
     #
     # @return [Float]
     def baseline_to_top(size)
