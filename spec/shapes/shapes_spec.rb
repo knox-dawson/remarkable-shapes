@@ -72,4 +72,52 @@ RSpec.describe Remarkable::Shapes do
     expect(line.points.first.width).to eq(0)
     expect(line.points.last.width).to eq(0)
   end
+
+  it "draws clipped-corner boxes as closed constant-width polylines" do
+    described_class.draw_box_corners(page, 10, 20, 110, 120, 5, 12, color: Remarkable::RmPage::Colour::BLACK)
+
+    line = page.lines.first
+    expect(line.points.length).to eq(9)
+    expect(line.thickness_scale).to eq(5.0)
+  end
+
+  it "draws alternating-colour stars" do
+    described_class.stars_colored(page, 100, 100, 40, 5, 31, -1, colors: [Remarkable::RmPage::Colour::RED, Remarkable::RmPage::Colour::BLUE])
+
+    expect(page.lines.length).to eq(5)
+    expect(page.lines.map(&:color)).to eq([
+      Remarkable::RmPage::Colour::RED,
+      Remarkable::RmPage::Colour::BLUE,
+      Remarkable::RmPage::Colour::RED,
+      Remarkable::RmPage::Colour::BLUE,
+      Remarkable::RmPage::Colour::RED
+    ])
+  end
+
+  it "draws regular polygon outlines" do
+    described_class.regular_polygon_outline(page, 100, 100, 40, 6, 4, color: Remarkable::RmPage::Colour::BLACK)
+
+    line = page.lines.first
+    expect(line.points.length).to eq(7)
+    expect(line.thickness_scale).to eq(4.0)
+  end
+
+  it "draws filled regular polygons as triangle fans" do
+    described_class.regular_polygon_fill(page, 100, 100, 40, 5, colors: [Remarkable::RmPage::Colour::RED, Remarkable::RmPage::Colour::BLUE])
+
+    expect(page.lines.length).to eq(5)
+    expect(page.lines.map(&:color)).to eq([
+      Remarkable::RmPage::Colour::RED,
+      Remarkable::RmPage::Colour::BLUE,
+      Remarkable::RmPage::Colour::RED,
+      Remarkable::RmPage::Colour::BLUE,
+      Remarkable::RmPage::Colour::RED
+    ])
+  end
+
+  it "draws parallelograms from four points" do
+    described_class.parallelogram(page, [10, 20], [50, 50], [120, 50], [80, 20], color: Remarkable::RmPage::Colour::GREEN)
+
+    expect(page.lines.length).to eq(5)
+  end
 end

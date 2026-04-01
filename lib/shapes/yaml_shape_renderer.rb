@@ -153,6 +153,16 @@ module Remarkable
         draw_rectangle_outline_object(page, object, layout, style:, brush:)
       when "rectangle_outline_fill"
         draw_rectangle_outline_fill_object(page, object, layout, brush:)
+      when "star"
+        draw_star_object(page, object, layout, style:, brush:)
+      when "polygon_outline"
+        draw_polygon_outline_object(page, object, layout, style:, brush:)
+      when "regular_polygon_outline"
+        draw_regular_polygon_outline_object(page, object, layout, style:, brush:)
+      when "regular_polygon_fill"
+        draw_regular_polygon_fill_object(page, object, layout, style:, brush:)
+      when "parallelogram"
+        draw_parallelogram_object(page, object, layout, style:, brush:)
       when "image"
         draw_image_object(page, object, layout, base_dir:, brush:)
       else
@@ -232,11 +242,14 @@ module Remarkable
     def parse_color(value)
       return parse_rgba(value) if value.is_a?(Integer)
 
-      key = value.to_s.strip.upcase.gsub(/[^A-Z0-9]+/, "_")
+      text = value.to_s.strip
+      return parse_rgba(text) if text.start_with?("0x", "0X") || text.match?(/\A[0-9A-Fa-f]{8}\z/)
+
+      key = text.upcase.gsub(/[^A-Z0-9]+/, "_")
       if RmPage::Colour.const_defined?(key, false)
         RmPage::Colour.const_get(key, false)
       else
-        parse_rgba(value)
+        parse_rgba(text)
       end
     end
 
@@ -251,6 +264,15 @@ module Remarkable
       raise ArgumentError, "rgba must be 8 hex digits" unless text.match?(/\A[0-9A-Fa-f]{8}\z/)
 
       text.to_i(16)
+    end
+
+    # Parses a list of colors into tablet colors or RGBA integers.
+    #
+    # @return [Array<Integer>]
+    def parse_color_list(values)
+      raise ArgumentError, "colors must be an array" unless values.is_a?(Array)
+
+      values.map { |value| parse_color(value) }
     end
 
     # Parses an optional brush name.
@@ -283,6 +305,21 @@ module Remarkable
     # @return [String]
     def prefixed_key(prefix, suffix)
       prefix ? "#{prefix}_#{suffix}" : suffix
+    end
+
+    # Resolves a list of local points into page coordinates.
+    #
+    # @return [Array<Array<Float>>]
+    def resolve_points(layout, values)
+      raise ArgumentError, "points must be an array" unless values.is_a?(Array)
+
+      values.map do |value|
+        raise ArgumentError, "each point must have two values" unless value.is_a?(Array) && value.length == 2
+
+        [layout[:x] + Float(value[0]), layout[:y] + Float(value[1])]
+      end
+    rescue ArgumentError, TypeError
+      raise ArgumentError, "points must be numeric coordinate pairs"
     end
 
     # Draws a line object.
@@ -357,6 +394,89 @@ module Remarkable
     def draw_rectangle_outline_fill_object(page, object, layout, brush:)
       draw_rectangle_fill_object(page, object, layout, style: style_options_for(object, "fill"), brush:)
       draw_rectangle_outline_object(page, object, layout, style: style_options_for(object, "outline"), brush:)
+    end
+
+    # Draws a star object using one or more cycled colours.
+    #
+    # @return [void]
+    def draw_star_object(page, object, layout, style:, brush:)
+      box = resolve_box(layout, object)
+      point_count = fetch_number(object, "points").to_i
+      wide_point_percent = fetch_number(object, "wide_point_percent", 31.0)
+      star_width = fetch_number(object, "star_width", -1.0)
+      rotation = fetch_number(object, "rotation", 0.0)
+      radius = [box[:width], box[:height]].min / 2.0
+
+      if object.key?("colors")
+        Shapes.stars_colored(
+          page,
+          box[:center_x],
+          box[:center_y],
+          radius,
+          point_count,
+          wide_point_percent,
+          star_width,
+          colors: parse_color_list(object["colors"]),
+          rotation:,
+          brush:
+        )
+      else
+        Shapes.stars(
+          page,
+          box[:center_x],
+          box[:center_y],
+          radius,
+          point_count,
+          wide_point_percent,
+          star_width,
+          rotation:,
+          brush:,
+          **style
+        )
+      end
+    end
+
+    # Draws a freeform polygon outline object.
+    #
+    # @return [void]
+    def draw_polygon_outline_object(page, object, layout, style:, brush:)
+      stroke_width = fetch_number(object, "stroke_width", DEFAULT_STROKE_WIDTH)
+      points = resolve_points(layout, object.fetch("points") { raise ArgumentError, "points are required" })
+      Shapes.polygon_outline(page, points, stroke_width, brush:, **style)
+    end
+
+    # Draws a regular polygon outline object fitted into its box.
+    #
+    # @return [void]
+    def draw_regular_polygon_outline_object(page, object, layout, style:, brush:)
+      box = resolve_box(layout, object)
+      stroke_width = fetch_number(object, "stroke_width", DEFAULT_STROKE_WIDTH)
+      sides = fetch_number(object, "sides").to_i
+      rotation = fetch_number(object, "rotation", 0.0)
+      radius = [box[:width], box[:height]].min / 2.0
+      Shapes.regular_polygon_outline(page, box[:center_x], box[:center_y], radius, sides, stroke_width, rotation:, brush:, **style)
+    end
+
+    # Draws a filled regular polygon object fitted into its box.
+    #
+    # @return [void]
+    def draw_regular_polygon_fill_object(page, object, layout, style:, brush:)
+      box = resolve_box(layout, object)
+      sides = fetch_number(object, "sides").to_i
+      rotation = fetch_number(object, "rotation", 0.0)
+      radius = [box[:width], box[:height]].min / 2.0
+      colors = object.key?("colors") ? parse_color_list(object["colors"]) : [style[:color] == RmPage::Colour::RGBA ? style[:rgba] : style[:color]]
+      Shapes.regular_polygon_fill(page, box[:center_x], box[:center_y], radius, sides, colors:, rotation:, brush:)
+    end
+
+    # Draws a parallelogram from four local points.
+    #
+    # @return [void]
+    def draw_parallelogram_object(page, object, layout, style:, brush:)
+      points = resolve_points(layout, object.fetch("points") { raise ArgumentError, "points are required" })
+      raise ArgumentError, "parallelogram requires exactly 4 points" unless points.length == 4
+
+      Shapes.parallelogram(page, points[0], points[1], points[2], points[3], brush:, **style)
     end
 
     # Draws an image object fitted inside the given bounding box.

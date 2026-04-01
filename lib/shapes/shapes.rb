@@ -40,6 +40,7 @@ module Remarkable
     def draw_box(page, x1, y1, x2, y2, width, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
       line = page.add_line
       apply_style(line, rgba:, color:, brush:)
+      line.thickness_scale = width.to_f
       [[x1, y1], [x2, y1], [x2, y2], [x1, y2], [x1, y1]].each do |x, y|
         line.add_point(x, y).width = width
       end
@@ -51,6 +52,7 @@ module Remarkable
     def draw_line(page, x1, y1, x2, y2, width, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
       line = page.add_line
       apply_style(line, rgba:, color:, brush:)
+      line.thickness_scale = width.to_f
       line.add_point(x1, y1).width = width
       line.add_point(x2, y2).width = width
     end
@@ -64,6 +66,7 @@ module Remarkable
 
       line = page.add_line
       apply_style(line, rgba:, color:, brush:)
+      line.thickness_scale = width.to_f
       points.each do |x, y|
         line.add_point(x, y).width = width
       end
@@ -124,6 +127,27 @@ module Remarkable
         color: outline_color,
         brush: outline_brush
       )
+    end
+
+    # Draws a wide rectangle-like stroke with clipped ends.
+    #
+    # @return [void]
+    def rect_corners(page, x1, y1, x2, y2, width, corner,
+                     rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
+      line = page.add_line
+      apply_style(line, rgba:, color:, brush:)
+      widths = [0.0, width - (corner * 2.0), width.to_f, width.to_f, width - (corner * 2.0), 0.0]
+      points = [
+        [x1 - 0.01, y1],
+        [x1, y1],
+        [x1 + corner, y1],
+        [x2 - corner, y2],
+        [x2, y2],
+        [x2 + 0.01, y2]
+      ]
+      points.each_with_index do |(x, y), index|
+        line.add_point(x, y).width = widths[index]
+      end
     end
 
     # Compatibility wrapper for older Java-style translated generators.
@@ -211,6 +235,13 @@ module Remarkable
       )
     end
 
+    # Compatibility wrapper for older Java-style translated generators.
+    #
+    # @return [void]
+    def rectCorners(page, x1, y1, x2, y2, width, corner, color)
+      rect_corners(page, x1, y1, x2, y2, width, corner, color:)
+    end
+
     # Draws a filled circle approximated by a very short wide line.
     #
     # @return [void]
@@ -233,6 +264,32 @@ module Remarkable
     # @return [void]
     def rm2Box(page)
       rm2_box(page)
+    end
+
+    # Draws a box with clipped corners.
+    #
+    # @return [void]
+    def draw_box_corners(page, x1, y1, x2, y2, width, corner,
+                         rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
+      points = [
+        [x1, y1 + corner],
+        [x1 + corner, y1],
+        [x2 - corner, y1],
+        [x2, y1 + corner],
+        [x2, y2 - corner],
+        [x2 - corner, y2],
+        [x1 + corner, y2],
+        [x1, y2 - corner],
+        [x1, y1 + corner]
+      ]
+      draw_polyline(page, points, width, rgba:, color:, brush:)
+    end
+
+    # Compatibility wrapper for older Java-style translated generators.
+    #
+    # @return [void]
+    def drawBoxCorners(page, x1, y1, x2, y2, width, corner, color)
+      draw_box_corners(page, x1, y1, x2, y2, width, corner, color:)
     end
 
     # Converts a PNG file into a 2D array of ARGB integers.
@@ -349,6 +406,68 @@ module Remarkable
       triangle(page, cx, cy, m2x, m2y, w2, rgba:, color:, brush:)
     end
 
+    # Returns the corner points for an axis-aligned square.
+    #
+    # @return [Array<Array<Float>>]
+    def generate_square_box(cx, cy, side)
+      half = side / 2.0
+      [
+        [cx - half, cy - half],
+        [cx + half, cy - half],
+        [cx + half, cy + half],
+        [cx - half, cy + half]
+      ]
+    end
+
+    # Returns the three control points for the square-line fill trick.
+    #
+    # @return [Array<Array<Float>>]
+    def generate_square_line(cx, cy, side)
+      diag = side * Math.sqrt(2.0)
+      half = side / 2.0
+      [
+        [cx - half, cy - half, 0.0],
+        [cx, cy, diag],
+        [cx + half, cy + half, 0.0]
+      ]
+    end
+
+    # Draws a filled diamond-shaped square using one wide tapered line.
+    #
+    # @return [void]
+    def draw_square_line(page, cx, cy, side, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
+      line = page.add_line
+      apply_style(line, rgba:, color:, brush:)
+      generate_square_line(cx, cy, side).each do |x, y, width|
+        line.add_point(x, y).width = width
+      end
+    end
+
+    # Compatibility wrapper for older Java-style translated generators.
+    #
+    # @return [void]
+    def drawSquareLine(page, cx, cy, side, color)
+      draw_square_line(page, cx, cy, side, color:)
+    end
+
+    # Draws an outlined square using four constant-width edges.
+    #
+    # @return [void]
+    def draw_square_box(page, cx, cy, side, width, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
+      points = generate_square_box(cx, cy, side)
+      4.times do |index|
+        nx = (index + 1) % 4
+        draw_line(page, points[index][0], points[index][1], points[nx][0], points[nx][1], width, rgba:, color:, brush:)
+      end
+    end
+
+    # Compatibility wrapper for older Java-style translated generators.
+    #
+    # @return [void]
+    def drawSquareBox(page, cx, cy, side, width, color)
+      draw_square_box(page, cx, cy, side, width, color:)
+    end
+
     # Draws a multi-arm star as a collection of tapered strokes.
     #
     # @return [void]
@@ -357,6 +476,24 @@ module Remarkable
       points.times do |arm|
         line = page.add_line
         apply_style(line, rgba:, color:, brush:)
+        3.times do |index|
+          line.add_point(arms[arm][index][0], arms[arm][index][1]).width = arms[arm][index][2]
+        end
+      end
+    end
+
+    # Draws a multi-arm star with one or more alternating colours.
+    #
+    # @param colors [Array<Integer, Array<Integer>, Hash>]
+    # @return [void]
+    def stars_colored(page, cx, cy, radius, points, wide_point_percent, width, colors:, rotation: 0, brush: DEFAULT_BRUSH)
+      raise ArgumentError, "colors must not be empty" if colors.nil? || colors.empty?
+
+      arms = generate_star_lines(cx, cy, radius, points, wide_point_percent, width, rotation)
+      points.times do |arm|
+        style = style_options(colors[arm % colors.length])
+        line = page.add_line
+        apply_style(line, brush:, **style)
         3.times do |index|
           line.add_point(arms[arm][index][0], arms[arm][index][1]).width = arms[arm][index][2]
         end
@@ -385,6 +522,57 @@ module Remarkable
         result[index][2] = [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle), 0.0]
       end
       result
+    end
+
+    # Returns the vertices of a regular polygon.
+    #
+    # @return [Array<Array<Float>>]
+    def regular_polygon_points(cx, cy, radius, sides, rotation: 0)
+      raise ArgumentError, "sides must be >= 3" if sides.to_i < 3
+
+      start_angle = (-90.0 * Math::PI / 180.0) + (rotation.to_f * Math::PI / 180.0)
+      Array.new(sides) do |index|
+        angle = start_angle + index * (2.0 * Math::PI / sides.to_f)
+        [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)]
+      end
+    end
+
+    # Draws a freeform polygon outline.
+    #
+    # @param points [Array<Array<Numeric>>]
+    # @return [void]
+    def polygon_outline(page, points, width, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
+      raise ArgumentError, "polygon requires at least 3 points" if points.length < 3
+
+      closed = points + [points.first]
+      draw_polyline(page, closed, width, rgba:, color:, brush:)
+    end
+
+    # Draws a regular polygon outline.
+    #
+    # @return [void]
+    def regular_polygon_outline(page, cx, cy, radius, sides, width, rotation: 0,
+                                rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
+      polygon_outline(page, regular_polygon_points(cx, cy, radius, sides, rotation:), width, rgba:, color:, brush:)
+    end
+
+    # Draws a filled regular polygon using a triangle fan from the center.
+    #
+    # @param colors [Array<Integer, Array<Integer>, Hash>]
+    # @return [void]
+    def regular_polygon_fill(page, cx, cy, radius, sides, colors:, rotation: 0, brush: DEFAULT_BRUSH)
+      raise ArgumentError, "colors must not be empty" if colors.nil? || colors.empty?
+
+      vertices = regular_polygon_points(cx, cy, radius, sides, rotation:)
+      sides.times do |index|
+        a = vertices[index]
+        b = vertices[(index + 1) % sides]
+        mid_x = (a[0] + b[0]) / 2.0
+        mid_y = (a[1] + b[1]) / 2.0
+        width = Math.hypot(b[0] - a[0], b[1] - a[1])
+        style = style_options(colors[index % colors.length])
+        triangle(page, cx, cy, mid_x, mid_y, width, brush:, **style)
+      end
     end
 
     # Draws a striped flag pattern using an array of colour or RGBA values.
@@ -430,6 +618,57 @@ module Remarkable
         end
         offset += stripe_lengths[index]
       end
+    end
+
+    # Simple point struct used by parallelogram geometry helpers.
+    Point = Struct.new(:x, :y, keyword_init: true)
+
+    # Returns the midpoint between two points.
+    #
+    # @return [Point]
+    def midpoint(a, b)
+      Point.new(x: (a.x + b.x) * 0.5, y: (a.y + b.y) * 0.5)
+    end
+
+    # Returns the Euclidean distance between two points.
+    #
+    # @return [Float]
+    def distance(a, b)
+      Math.hypot(a.x - b.x, a.y - b.y)
+    end
+
+    # Projects point q onto the line through a and b.
+    #
+    # @return [Point]
+    def project(q, a, b)
+      vx = b.x - a.x
+      vy = b.y - a.y
+      t = ((q.x - a.x) * vx + (q.y - a.y) * vy) / (vx * vx + vy * vy)
+      Point.new(x: a.x + (t * vx), y: a.y + (t * vy))
+    end
+
+    # Draws a filled parallelogram using two right triangles and a center band.
+    #
+    # @param a [Point, Array<Numeric>]
+    # @param b [Point, Array<Numeric>]
+    # @param c [Point, Array<Numeric>]
+    # @param d [Point, Array<Numeric>]
+    # @return [void]
+    def parallelogram(page, a, b, c, d, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
+      a = to_point(a)
+      b = to_point(b)
+      c = to_point(c)
+      d = to_point(d)
+
+      p1 = project(b, a, d)
+      p2 = project(d, b, c)
+      m1 = midpoint(b, p1)
+      m2 = midpoint(d, p2)
+      band_width = distance(b, p1)
+
+      right_triangle(page, a.x, a.y, p1.x, p1.y, b.x, b.y, rgba:, color:, brush:)
+      right_triangle(page, c.x, c.y, p2.x, p2.y, d.x, d.y, rgba:, color:, brush:)
+      rect(page, m1.x, m1.y, m2.x, m2.y, band_width, rgba:, color:, brush:)
     end
 
     # Builds a 32-bit ARGB integer from channels.
@@ -524,6 +763,15 @@ module Remarkable
     def draw_constant_segment(line, x1, y1, x2, y2, width)
       line.add_point(x1, y1).width = width
       line.add_point(x2, y2).width = width
+    end
+
+    # Converts a Point or two-value array into a Point.
+    #
+    # @return [Point]
+    def to_point(value)
+      return value if value.is_a?(Point)
+
+      Point.new(x: value[0].to_f, y: value[1].to_f)
     end
   end
 end

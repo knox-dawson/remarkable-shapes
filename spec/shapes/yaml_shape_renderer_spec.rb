@@ -98,4 +98,33 @@ RSpec.describe Remarkable::YamlShapeRenderer do
       described_class.render(page, { "objects" => [{ "type" => "triangle" }] })
     end.to raise_error(ArgumentError, /unsupported object type/)
   end
+
+  it "renders star and regular polygon objects" do
+    config = {
+      "canvas" => { "width" => 900, "height" => 600, "placement" => "top-left" },
+      "objects" => [
+        { "type" => "star", "x" => 20, "y" => 20, "width" => 120, "height" => 120, "points" => 5, "colors" => ["red", "blue"] },
+        { "type" => "regular_polygon_outline", "x" => 180, "y" => 20, "width" => 120, "height" => 120, "sides" => 6, "stroke_width" => 5, "color" => "black" },
+        { "type" => "regular_polygon_fill", "x" => 340, "y" => 20, "width" => 120, "height" => 120, "sides" => 5, "colors" => ["0xFFFF0000", "0xFF0000FF"] }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines.length).to eq(11)
+  end
+
+  it "renders freeform polygon and parallelogram objects" do
+    config = {
+      "canvas" => { "width" => 900, "height" => 600, "placement" => "top-left" },
+      "objects" => [
+        { "type" => "polygon_outline", "points" => [[10, 10], [90, 10], [70, 80], [20, 60]], "stroke_width" => 4, "color" => "black" },
+        { "type" => "parallelogram", "points" => [[140, 20], [180, 60], [280, 60], [240, 20]], "color" => "green" }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines.length).to eq(6)
+  end
 end
