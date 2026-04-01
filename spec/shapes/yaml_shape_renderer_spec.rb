@@ -185,4 +185,61 @@ RSpec.describe Remarkable::YamlShapeRenderer do
       expect(ys.max).to be <= 180
     end
   end
+
+  it "renders wrapped text inside a box" do
+    config = {
+      "canvas" => { "width" => 500, "height" => 300, "placement" => "top-left" },
+      "objects" => [
+        {
+          "type" => "text",
+          "x" => 20,
+          "y" => 20,
+          "width" => 180,
+          "height" => 140,
+          "text" => "This is a wrapped text example for the yaml renderer.",
+          "size" => 24,
+          "stroke_width" => 2,
+          "wrap" => true,
+          "align" => "left",
+          "valign" => "top",
+          "color" => "black"
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines).not_to be_empty
+    ys = page.lines.flat_map { |line| line.points.map(&:y) }
+    expect(ys.max - ys.min).to be > 24
+  end
+
+  it "accepts gap as an alias for image pixel spacing" do
+    Dir.mktmpdir do |dir|
+      png_path = File.join(dir, "tiny.png")
+      image = ChunkyPNG::Image.new(2, 1, ChunkyPNG::Color::TRANSPARENT)
+      image[0, 0] = ChunkyPNG::Color.rgba(255, 0, 0, 255)
+      image[1, 0] = ChunkyPNG::Color.rgba(0, 0, 255, 255)
+      image.save(png_path)
+
+      config = {
+        "canvas" => { "width" => 300, "height" => 200, "placement" => "top-left" },
+        "objects" => [
+          {
+            "type" => "image",
+            "path" => png_path,
+            "x" => 20,
+            "y" => 20,
+            "width" => 100,
+            "height" => 100,
+            "gap" => -0.2
+          }
+        ]
+      }
+
+      described_class.render(page, config)
+
+      expect(page.lines.length).to eq(2)
+    end
+  end
 end

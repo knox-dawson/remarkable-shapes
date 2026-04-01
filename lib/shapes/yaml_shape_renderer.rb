@@ -4,6 +4,7 @@ require "psych"
 
 require_relative "../io/rm_page"
 require_relative "shapes"
+require_relative "line_font"
 
 module Remarkable
   # Renders a simple user-facing YAML page description into reMarkable lines.
@@ -165,6 +166,8 @@ module Remarkable
         draw_regular_polygon_fill_object(page, object, layout, style:, brush:)
       when "parallelogram"
         draw_parallelogram_object(page, object, layout, style:, brush:)
+      when "text"
+        draw_text_object(page, object, layout, style:, brush:)
       when "image"
         draw_image_object(page, object, layout, base_dir:, brush:)
       when "yaml"
@@ -309,6 +312,34 @@ module Remarkable
     # @return [String]
     def prefixed_key(prefix, suffix)
       prefix ? "#{prefix}_#{suffix}" : suffix
+    end
+
+    # Returns wrapped text lines for the given width.
+    #
+    # @return [Array<String>]
+    def wrap_text_lines(text, max_width, size:, style:, mono:)
+      return text.to_s.split("\n") if max_width.nil? || max_width <= 0
+
+      wrapped = []
+      text.to_s.split("\n", -1).each do |paragraph|
+        if paragraph.empty?
+          wrapped << ""
+          next
+        end
+
+        current = +""
+        paragraph.split(/\s+/).each do |word|
+          candidate = current.empty? ? word : "#{current} #{word}"
+          if LineFont.text_width(candidate, size:, style:, mono:) <= max_width || current.empty?
+            current = candidate
+          else
+            wrapped << current
+            current = word
+          end
+        end
+        wrapped << current unless current.empty?
+      end
+      wrapped
     end
 
     # Resolves a list of local points into page coordinates.
@@ -530,6 +561,70 @@ module Remarkable
       Shapes.parallelogram(page, points[0], points[1], points[2], points[3], brush:, **style)
     end
 
+    # Draws text into a box with optional wrapping and alignment.
+    #
+    # @return [void]
+    def draw_text_object(page, object, layout, style:, brush:)
+      box = resolve_box(layout, object)
+      text = object.fetch("text") { raise ArgumentError, "text is required" }.to_s
+      size = scale_length(layout, fetch_number(object, "size", LineFont::DEFAULT_SIZE))
+      stroke_width = scale_length(layout, fetch_number(object, "stroke_width", LineFont::DEFAULT_STROKE_WIDTH))
+      line_spacing = fetch_number(object, "line_spacing", 1.25)
+      style_name = object.fetch("style", LineFont::DEFAULT_STYLE).to_sym
+      mono = object.fetch("mono", false)
+      wrap = object.fetch("wrap", false)
+      align = object.fetch("align", "left").to_s
+      valign = object.fetch("valign", "top").to_s
+
+      lines = if wrap
+                wrap_text_lines(text, box[:width], size:, style: style_name, mono:)
+              else
+                text.split("\n", -1)
+              end
+
+      line_height = size * line_spacing
+      block_height = line_height * [lines.length, 1].max
+      top_y = case valign
+              when "top"
+                box[:y]
+              when "center", "middle"
+                box[:y] + ((box[:height] - block_height) / 2.0)
+              when "bottom"
+                box[:y] + (box[:height] - block_height)
+              else
+                raise ArgumentError, "unsupported valign: #{valign}"
+              end
+
+      baseline = top_y - LineFont.baseline_to_top(size)
+      lines.each do |line|
+        line_width = LineFont.text_width(line, size:, style: style_name, mono:)
+        x = case align
+            when "left"
+              box[:x]
+            when "center", "middle"
+              box[:x] + ((box[:width] - line_width) / 2.0)
+            when "right"
+              box[:x] + (box[:width] - line_width)
+            else
+              raise ArgumentError, "unsupported align: #{align}"
+            end
+
+        Shapes.text(
+          page,
+          line,
+          x,
+          baseline,
+          size:,
+          stroke_width:,
+          style: style_name,
+          mono:,
+          brush:,
+          **style
+        )
+        baseline += line_height
+      end
+    end
+
     # Draws an image object fitted inside the given bounding box.
     #
     # @return [void]
@@ -546,7 +641,11 @@ module Remarkable
       grid_height = image_height * pixel_size
       x = box[:x] + ((box[:width] - grid_width) / 2.0)
       y = box[:y] + ((box[:height] - grid_height) / 2.0)
-      pixel_gap = fetch_number(object, "pixel_gap", 0.0)
+      pixel_gap = if object.key?("gap")
+                    fetch_number(object, "gap", 0.0)
+                  else
+                    fetch_number(object, "pixel_gap", 0.0)
+                  end
 
       Shapes.draw_rgba_grid(page, rgba_grid, x, y, pixel_size, gap: pixel_gap, brush:)
     end

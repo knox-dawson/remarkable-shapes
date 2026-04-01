@@ -1,0 +1,38 @@
+canvas:
+  width: 1200
+  height: 950
+  placement: top
+
+objects:
+  - type: text
+    x: 40
+    y: 20
+    width: 1120
+    height: 220
+    text: "remarkable-shapes 0.9.0-beta.1\nWrapped text and image gap example"
+    size: 62
+    stroke_width: 5
+    wrap: true
+    align: center
+    valign: center
+    color: black
+
+  - type: image
+    path: cat.png
+    x: 320
+    y: 250
+    width: 560
+    height: 500
+    gap: -0.10
+
+  - type: text
+    x: 100
+    y: 775
+    width: 960
+    height: 140
+    text: "Using type: image with gap: -0.10"
+    size: 42
+    stroke_width: 4
+    align: center
+    valign: center
+    color: blue

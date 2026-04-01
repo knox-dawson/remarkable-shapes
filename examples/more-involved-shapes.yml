@@ -1,0 +1,68 @@
+canvas:
+  tablet: rm2
+  width: 1404
+  height: 1872
+  placement: top-left
+
+objects:
+  - type: text
+    x: 70
+    y: 50
+    width: 1260
+    height: 280
+    text: "remarkable-shapes\nMore involved YAML example"
+    size: 70
+    stroke_width: 5
+    wrap: true
+    align: center
+    valign: center
+    color: black
+
+  - type: image
+    path: cat.png
+    x: 100
+    y: 360
+    width: 560
+    height: 500
+    gap: -0.10
+
+  - type: text
+    x: 730
+    y: 360
+    width: 560
+    height: 260
+    text: "This text object can be placed in a box, aligned, and wrapped. The image object can use gap or overlap so pixel edges render differently."
+    size: 30
+    stroke_width: 3
+    wrap: true
+    align: left
+    valign: top
+    color: blue
+
+  - type: star
+    x: 750
+    y: 690
+    width: 270
+    height: 270
+    points: 6
+    colors:
+      - red
+      - yellow
+      - blue
+
+  - type: regular_polygon_fill
+    x: 1040
+    y: 680
+    width: 300
+    height: 300
+    sides: 8
+    colors:
+      - "0xFF66CC66"
+      - "0xFF3366CC"
+
+  - type: yaml
+    path: nested-child.yml
+    x: 140
+    y: 930
+    width: 560
+    height: 420
