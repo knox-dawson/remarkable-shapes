@@ -26,6 +26,13 @@ end
 default_name = File.basename(yaml_path, File.extname(yaml_path))
 output_path = ARGV[1] || "out/#{default_name}.rmdoc"
 
-page = Remarkable::RmPage.new
-Remarkable::YamlShapeRenderer.render_file(page, yaml_path)
-Remarkable::RmdocWriter.write(output_path, page.to_rm_bytes)
+config = Remarkable::YamlShapeRenderer.load_file_config(yaml_path)
+layout = Remarkable::YamlShapeRenderer.resolve_canvas_layout(config.fetch("canvas", {}))
+page = Remarkable::RmPage.new(page_width: layout[:physical_width], page_height: layout[:physical_height])
+Remarkable::YamlShapeRenderer.render(page, config, base_dir: File.dirname(File.expand_path(yaml_path)))
+Remarkable::RmdocWriter.write(
+  output_path,
+  page.to_rm_bytes,
+  page_width: page.page_width,
+  page_height: page.page_height
+)

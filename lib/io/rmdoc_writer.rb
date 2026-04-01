@@ -6,16 +6,23 @@ require "zlib"
 module Remarkable
   # Packs one page of lines bytes into an uploadable .rmdoc notebook.
   class RmdocWriter
+    # Default rm2 page width for notebook metadata.
+    DEFAULT_PAGE_WIDTH = 1404
+    # Default rm2 page height for notebook metadata.
+    DEFAULT_PAGE_HEIGHT = 1872
+
     # Writes a .rmdoc file to disk.
     #
     # @param path [String] output file path
     # @param rm_bytes [String] serialized lines v6 page bytes
+    # @param page_width [Numeric] physical page width for notebook metadata
+    # @param page_height [Numeric] physical page height for notebook metadata
     # @return [void]
-    def self.write(path, rm_bytes)
+    def self.write(path, rm_bytes, page_width: DEFAULT_PAGE_WIDTH, page_height: DEFAULT_PAGE_HEIGHT)
       notebook_id = SecureRandom.uuid
       page_id = SecureRandom.uuid
       visible_name = File.basename(path, ".rmdoc")
-      content = create_content(notebook_id, page_id)
+      content = create_content(notebook_id, page_id, page_width:, page_height:)
       metadata = create_metadata(visible_name)
 
       entries = [
@@ -31,8 +38,13 @@ module Remarkable
     #
     # @param notebook_id [String]
     # @param page_id [String]
+    # @param page_width [Numeric]
+    # @param page_height [Numeric]
     # @return [String]
-    def self.create_content(notebook_id, page_id)
+    def self.create_content(notebook_id, page_id, page_width: DEFAULT_PAGE_WIDTH, page_height: DEFAULT_PAGE_HEIGHT)
+      page_width = page_width.to_i
+      page_height = page_height.to_i
+      zoom_center_y = page_height / 2
       <<~JSON
         {
             "cPages": {
@@ -66,10 +78,10 @@ module Remarkable
             },
             "coverPageNumber": -1,
             "customZoomCenterX": 0,
-            "customZoomCenterY": 936,
+            "customZoomCenterY": #{zoom_center_y},
             "customZoomOrientation": "portrait",
-            "customZoomPageHeight": 1872,
-            "customZoomPageWidth": 1404,
+            "customZoomPageHeight": #{page_height},
+            "customZoomPageWidth": #{page_width},
             "customZoomScale": 1,
             "documentMetadata": {
             },

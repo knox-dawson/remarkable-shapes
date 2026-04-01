@@ -1,0 +1,12 @@
+canvas:
+  tablet: rm2
+  placement: top-left
+
+objects:
+  - type: rectangle_outline
+    x: 0
+    y: 0
+    width: 1404
+    height: 1872
+    color: black
+    stroke_width: 30

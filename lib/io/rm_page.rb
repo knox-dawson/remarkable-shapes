@@ -6,8 +6,10 @@ module Remarkable
   class RmPage
     # Binary file header used by reMarkable lines v6.
     HEADER_V6 = "reMarkable .lines file, version=6          ".b
-    # Page width in tablet units.
-    PAGE_WIDTH = 1404.0
+    # Default rm2 page width in tablet units.
+    DEFAULT_PAGE_WIDTH = 1404.0
+    # Default rm2 page height in tablet units.
+    DEFAULT_PAGE_HEIGHT = 1872.0
     # Empirical scale factor needed for lines v6 widths.
     WIDTH_SCALE = 4.0
 
@@ -104,10 +106,19 @@ module Remarkable
 
     # @return [Array<Line>] lines currently added to the page
     attr_reader :lines
+    # @return [Float] physical page width used for x-coordinate centering
+    attr_reader :page_width
+    # @return [Float] physical page height used for metadata and canvas presets
+    attr_reader :page_height
 
     # Creates an empty page.
-    def initialize
+    #
+    # @param page_width [Numeric]
+    # @param page_height [Numeric]
+    def initialize(page_width: DEFAULT_PAGE_WIDTH, page_height: DEFAULT_PAGE_HEIGHT)
       @lines = []
+      @page_width = page_width.to_f
+      @page_height = page_height.to_f
     end
 
     # Adds a new stroke line to the page.
@@ -291,7 +302,7 @@ module Remarkable
     # @param x [Numeric]
     # @return [Float]
     def scene_x(x)
-      x - (PAGE_WIDTH / 2.0)
+      x - (page_width / 2.0)
     end
 
     # Applies the empirical width scale for lines v6.

@@ -22,4 +22,12 @@ RSpec.describe Remarkable::RmdocWriter do
     expect(metadata["visibleName"]).to eq("demo")
     expect(metadata["type"]).to eq("DocumentType")
   end
+
+  it "writes content metadata for the requested page size" do
+    content = JSON.parse(described_class.create_content("notebook-id", "page-id", page_width: 1620, page_height: 2160))
+
+    expect(content["customZoomPageWidth"]).to eq(1620)
+    expect(content["customZoomPageHeight"]).to eq(2160)
+    expect(content["customZoomCenterY"]).to eq(1080)
+  end
 end

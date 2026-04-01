@@ -8,19 +8,18 @@ require_relative "shapes"
 module Remarkable
   # Renders a simple user-facing YAML page description into reMarkable lines.
   module YamlShapeRenderer
-    # Left edge of the standard drawable page box.
-    BOX_LEFT = 130.0
-    # Top edge of the standard drawable page box.
-    BOX_TOP = 130.0
-    # Right edge of the standard drawable page box.
-    BOX_RIGHT = 1270.0
-    # Bottom edge of the standard drawable page box.
-    BOX_BOTTOM = 1740.0
+    # Named physical tablet canvas presets.
+    TABLETS = {
+      "rm2" => { width: 1404.0, height: 1872.0 },
+      "rmpro" => { width: 1620.0, height: 2160.0 }
+    }.freeze
 
+    # Default tablet preset when none is provided.
+    DEFAULT_TABLET = "rm2"
     # Default canvas width used when none is provided.
-    DEFAULT_CANVAS_WIDTH = BOX_RIGHT - BOX_LEFT
+    DEFAULT_CANVAS_WIDTH = TABLETS.fetch(DEFAULT_TABLET).fetch(:width)
     # Default canvas height used when none is provided.
-    DEFAULT_CANVAS_HEIGHT = BOX_BOTTOM - BOX_TOP
+    DEFAULT_CANVAS_HEIGHT = TABLETS.fetch(DEFAULT_TABLET).fetch(:height)
     # Default placement for the user canvas.
     DEFAULT_PLACEMENT = "center"
     # Default stroke width for outline objects.
@@ -34,9 +33,17 @@ module Remarkable
     # @param yaml_path [String]
     # @return [Hash] resolved canvas layout
     def render_file(page, yaml_path)
-      config = Psych.safe_load(File.read(yaml_path), permitted_classes: [], aliases: false) || {}
-      config = stringify_keys(config)
+      config = load_file_config(yaml_path)
       render(page, config, base_dir: File.dirname(File.expand_path(yaml_path)))
+    end
+
+    # Loads and normalizes a YAML config file.
+    #
+    # @param yaml_path [String]
+    # @return [Hash]
+    def load_file_config(yaml_path)
+      config = Psych.safe_load(File.read(yaml_path), permitted_classes: [], aliases: false) || {}
+      stringify_keys(config)
     end
 
     # Renders a YAML-derived configuration hash onto the page.
@@ -59,30 +66,46 @@ module Remarkable
       layout
     end
 
+    # Resolves the physical tablet profile from canvas settings.
+    #
+    # @param canvas [Hash]
+    # @return [Hash]
+    def resolve_tablet_profile(canvas)
+      tablet = (canvas["tablet"] || DEFAULT_TABLET).to_s
+      profile = TABLETS[tablet]
+      raise ArgumentError, "unsupported tablet: #{tablet}" unless profile
+
+      {
+        tablet:,
+        physical_width: profile.fetch(:width),
+        physical_height: profile.fetch(:height)
+      }
+    end
+
     # Resolves the user canvas into standard page coordinates.
     #
     # @param canvas [Hash]
     # @return [Hash]
     def resolve_canvas_layout(canvas)
-      width = (canvas["width"] || DEFAULT_CANVAS_WIDTH).to_f
-      height = (canvas["height"] || DEFAULT_CANVAS_HEIGHT).to_f
+      profile = resolve_tablet_profile(canvas)
+      width = (canvas["width"] || profile.fetch(:physical_width)).to_f
+      height = (canvas["height"] || profile.fetch(:physical_height)).to_f
       raise ArgumentError, "canvas width must be positive" unless width.positive?
       raise ArgumentError, "canvas height must be positive" unless height.positive?
 
-      available_width = BOX_RIGHT - BOX_LEFT
-      available_height = BOX_BOTTOM - BOX_TOP
-      raise ArgumentError, "canvas does not fit within the standard page box" if width > available_width || height > available_height
-
       placement = (canvas["placement"] || DEFAULT_PLACEMENT).to_s
-      x = placement_x(placement, width, available_width)
-      y = placement_y(placement, height, available_height)
+      x = placement_x(placement, width, profile.fetch(:physical_width))
+      y = placement_y(placement, height, profile.fetch(:physical_height))
 
       {
         x:,
         y:,
         width:,
         height:,
-        placement:
+        placement:,
+        tablet: profile.fetch(:tablet),
+        physical_width: profile.fetch(:physical_width),
+        physical_height: profile.fetch(:physical_height)
       }
     end
 
@@ -159,11 +182,11 @@ module Remarkable
     def placement_x(placement, width, available_width)
       case placement
       when "top", "bottom", "center"
-        BOX_LEFT + ((available_width - width) / 2.0)
+        (available_width - width) / 2.0
       when "left", "top-left", "bottom-left"
-        BOX_LEFT
+        0.0
       when "right", "top-right", "bottom-right"
-        BOX_RIGHT - width
+        available_width - width
       else
         raise ArgumentError, "unsupported placement: #{placement}"
       end
@@ -175,11 +198,11 @@ module Remarkable
     def placement_y(placement, height, available_height)
       case placement
       when "left", "right", "center"
-        BOX_TOP + ((available_height - height) / 2.0)
+        (available_height - height) / 2.0
       when "top", "top-left", "top-right"
-        BOX_TOP
+        0.0
       when "bottom", "bottom-left", "bottom-right"
-        BOX_BOTTOM - height
+        available_height - height
       else
         raise ArgumentError, "unsupported placement: #{placement}"
       end

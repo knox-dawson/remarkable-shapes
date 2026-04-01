@@ -1,0 +1,12 @@
+canvas:
+  tablet: rmpro
+  placement: top-left
+
+objects:
+  - type: rectangle_outline
+    x: 0
+    y: 0
+    width: 1620
+    height: 2160
+    color: black
+    stroke_width: 30

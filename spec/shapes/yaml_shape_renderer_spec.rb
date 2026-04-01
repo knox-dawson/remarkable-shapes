@@ -15,8 +15,35 @@ RSpec.describe Remarkable::YamlShapeRenderer do
       "placement" => "top"
     )
 
-    expect(layout[:x]).to be > described_class::BOX_LEFT
-    expect(layout[:y]).to eq(described_class::BOX_TOP)
+    expect(layout[:x]).to be > 0
+    expect(layout[:y]).to eq(0)
+    expect(layout[:tablet]).to eq("rm2")
+  end
+
+  it "resolves the rmpro physical canvas preset" do
+    layout = described_class.resolve_canvas_layout(
+      "tablet" => "rmpro",
+      "placement" => "top-left"
+    )
+
+    expect(layout[:width]).to eq(1620.0)
+    expect(layout[:height]).to eq(2160.0)
+    expect(layout[:physical_width]).to eq(1620.0)
+    expect(layout[:physical_height]).to eq(2160.0)
+    expect(layout[:x]).to eq(0.0)
+    expect(layout[:y]).to eq(0.0)
+  end
+
+  it "allows a logical canvas larger than the physical tablet canvas" do
+    layout = described_class.resolve_canvas_layout(
+      "tablet" => "rm2",
+      "width" => 2000,
+      "height" => 2500,
+      "placement" => "center"
+    )
+
+    expect(layout[:x]).to be < 0
+    expect(layout[:y]).to be < 0
   end
 
   it "renders generic shape objects from a config hash" do
