@@ -51,4 +51,25 @@ RSpec.describe Remarkable::Shapes do
 
     expect(page.lines).to be_empty
   end
+
+  it "draws highlighter rectangles as constant-width two-point strokes with explicit thickness" do
+    described_class.rect(page, 10, 20, 110, 20, 18, brush: Remarkable::RmPage::Pen::HIGHLIGHTER_2, rgba: 0xFF334455)
+
+    line = page.lines.first
+    expect(line.brush_type).to eq(Remarkable::RmPage::Pen::HIGHLIGHTER_2)
+    expect(line.thickness_scale).to eq(18.0)
+    expect(line.points.length).to eq(2)
+    expect(line.points.map(&:width)).to eq([18, 18])
+  end
+
+  it "keeps tapered four-point rectangles for non-highlighter brushes" do
+    described_class.rect(page, 10, 20, 110, 20, 18, brush: Remarkable::RmPage::Pen::FINELINER_2)
+
+    line = page.lines.first
+    expect(line.brush_type).to eq(Remarkable::RmPage::Pen::FINELINER_2)
+    expect(line.thickness_scale).to eq(1.0)
+    expect(line.points.length).to eq(4)
+    expect(line.points.first.width).to eq(0)
+    expect(line.points.last.width).to eq(0)
+  end
 end

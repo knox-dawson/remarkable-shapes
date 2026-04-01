@@ -22,7 +22,7 @@ module Remarkable
     # Default padding below the image.
     DEFAULT_BOTTOM_PADDING = 20.0
     # Default brush used for PNG-backed image rendering.
-    DEFAULT_BRUSH = RmPage::Pen::FINELINER_2
+    DEFAULT_BRUSH = RmPage::Pen::HIGHLIGHTER_2
     # Default gap between rendered pixel cells.
     DEFAULT_PIXEL_GAP = 0.0
 

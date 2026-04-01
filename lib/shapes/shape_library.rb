@@ -211,7 +211,7 @@ module Remarkable
     # Draws a PNG-backed RGBA grid at a chosen location and scale.
     #
     # @return [void]
-    def draw_png_shape(page, png_path, x, y, pixel_size, brush: RmPage::Pen::FINELINER_2, gap: 0.0)
+    def draw_png_shape(page, png_path, x, y, pixel_size, brush: RmPage::Pen::HIGHLIGHTER_2, gap: 0.0)
       rgba_grid = Shapes.png_to_rgba_grid(png_path)
       Shapes.draw_rgba_grid(page, rgba_grid, x, y, pixel_size, gap:, brush:)
     end
@@ -235,7 +235,7 @@ module Remarkable
       x = box_left + ((box_width - grid_width) / 2.0)
       y = box_top + ((box_height - grid_height) / 2.0)
 
-      Shapes.draw_rgba_grid(page, rgba_grid, x, y, pixel_size, brush: RmPage::Pen::FINELINER_2)
+      Shapes.draw_rgba_grid(page, rgba_grid, x, y, pixel_size, brush: RmPage::Pen::HIGHLIGHTER_2)
     end
 
     # Draws a sampler page for the imported line font.

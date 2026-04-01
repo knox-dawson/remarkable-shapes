@@ -94,7 +94,12 @@ module Remarkable
     def rect(page, x1, y1, x2, y2, width, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
       line = page.add_line
       apply_style(line, rgba:, color:, brush:)
-      draw_tapered_segment(line, x1, y1, x2, y2, width)
+      if brush == RmPage::Pen::HIGHLIGHTER_2
+        line.thickness_scale = width.to_f
+        draw_constant_segment(line, x1, y1, x2, y2, width)
+      else
+        draw_tapered_segment(line, x1, y1, x2, y2, width)
+      end
     end
 
     # Draws a wide filled rectangle-like stroke with a separate outline stroke.
@@ -261,7 +266,7 @@ module Remarkable
     # @param gap [Numeric] empty space between cells
     # @param brush [Integer] tablet pen identifier
     # @return [void]
-    def draw_rgba_grid(page, rgba_grid, x, y, pixel_size, gap: 0.0, brush: DEFAULT_BRUSH)
+    def draw_rgba_grid(page, rgba_grid, x, y, pixel_size, gap: 0.0, brush: RmPage::Pen::HIGHLIGHTER_2)
       raise ArgumentError, "rgba_grid must not be empty" if rgba_grid.nil? || rgba_grid.empty?
 
       draw_size = pixel_size - gap
@@ -507,6 +512,18 @@ module Remarkable
       line.add_point(x1, y1).width = width
       line.add_point(x2, y2).width = width
       line.add_point(x2 + eps * ux, y2 + eps * uy).width = 0
+    end
+
+    # Draws a shared constant-width two-point stroke shape.
+    #
+    # This is useful for highlighter-backed filled strokes where the tapered
+    # zero-width endpoints are not needed and a clean rectangular end cap looks
+    # better on-device and in export.
+    #
+    # @return [void]
+    def draw_constant_segment(line, x1, y1, x2, y2, width)
+      line.add_point(x1, y1).width = width
+      line.add_point(x2, y2).width = width
     end
   end
 end
