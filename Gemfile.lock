@@ -2,7 +2,17 @@ GEM
   remote: https://rubygems.org/
   specs:
     chunky_png (1.4.0)
+    date (3.5.1)
     diff-lcs (1.6.2)
+    docile (1.4.1)
+    erb (6.0.2)
+    psych (5.3.1)
+      date
+      stringio
+    rdoc (7.2.0)
+      erb
+      psych (>= 4.0.0)
+      tsort
     rspec (3.13.2)
       rspec-core (~> 3.13.0)
       rspec-expectations (~> 3.13.0)
@@ -16,6 +26,14 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
     rspec-support (3.13.7)
+    simplecov (0.22.0)
+      docile (~> 1.1)
+      simplecov-html (~> 0.11)
+      simplecov_json_formatter (~> 0.1)
+    simplecov-html (0.13.2)
+    simplecov_json_formatter (0.1.4)
+    stringio (3.2.0)
+    tsort (0.2.0)
     yard (0.9.38)
 
 PLATFORMS
@@ -24,7 +42,9 @@ PLATFORMS
 
 DEPENDENCIES
   chunky_png
+  rdoc
   rspec
+  simplecov
   yard
 
 BUNDLED WITH

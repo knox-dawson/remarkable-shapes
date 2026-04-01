@@ -4,3 +4,5 @@
 /.yardoc/
 /.rspec_status
 /local_shapes/
+/coverage/
+/doc/
