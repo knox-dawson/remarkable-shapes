@@ -7,12 +7,18 @@ require_relative "shapes"
 module Remarkable
   # Hershey-style vector line font renderer backed by imported glyph stroke data.
   module LineFont
+    # Default rendered glyph size.
     DEFAULT_SIZE = 48.0
+    # Default stroke width for rendered glyph paths.
     DEFAULT_STROKE_WIDTH = 2.0
+    # Default glyph style.
     DEFAULT_STYLE = :plain
+    # Monospaced advance as a fraction of glyph size.
     MONO_ADVANCE_FACTOR = 0.75
+    # Fallback advance as a fraction of glyph size for unsupported characters.
     FALLBACK_ADVANCE_FACTOR = 0.5
 
+    # Imported glyph data files by style.
     DATA_FILES = {
       plain: File.expand_path("../../data/line_font/plain.json", __dir__),
       italic: File.expand_path("../../data/line_font/italic.json", __dir__),

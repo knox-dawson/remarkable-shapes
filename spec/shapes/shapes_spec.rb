@@ -33,4 +33,22 @@ RSpec.describe Remarkable::Shapes do
     expect(page.lines.length).to eq(2)
     expect(page.lines.map(&:rgba)).to contain_exactly(0xFFFF0000, 0xFF00FF00)
   end
+
+  it "raises for an empty rgba grid" do
+    expect do
+      described_class.draw_rgba_grid(page, [], 100, 200, 10)
+    end.to raise_error(ArgumentError, /must not be empty/)
+  end
+
+  it "raises when pixel_size is not greater than gap" do
+    expect do
+      described_class.draw_rgba_grid(page, [[0xFFFFFFFF]], 100, 200, 10, gap: 10)
+    end.to raise_error(ArgumentError, /greater than gap/)
+  end
+
+  it "does not draw a polyline with fewer than two points" do
+    described_class.draw_polyline(page, [[10, 20]], 3)
+
+    expect(page.lines).to be_empty
+  end
 end

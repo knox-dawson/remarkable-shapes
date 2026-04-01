@@ -6,15 +6,24 @@ require_relative "shapes"
 module Remarkable
   # Renders a single PNG image onto a page without drawing the standard box.
   module ImageGenerator
+    # Left edge of the standard drawable page box.
     BOX_LEFT = 130.0
+    # Top edge of the standard drawable page box.
     BOX_TOP = 130.0
+    # Right edge of the standard drawable page box.
     BOX_RIGHT = 1270.0
+    # Bottom edge of the standard drawable page box.
     BOX_BOTTOM = 1740.0
 
+    # Default padding above the image.
     DEFAULT_TOP_PADDING = 40.0
+    # Default padding on the left and right sides.
     DEFAULT_SIDE_PADDING = 20.0
+    # Default padding below the image.
     DEFAULT_BOTTOM_PADDING = 20.0
+    # Default brush used for PNG-backed image rendering.
     DEFAULT_BRUSH = RmPage::Pen::FINELINER_2
+    # Default gap between rendered pixel cells.
     DEFAULT_PIXEL_GAP = 0.0
 
     module_function

@@ -5,13 +5,20 @@ require_relative "../io/rm_page"
 module Remarkable
   # Geometry and raster-like drawing helpers for {RmPage}.
   module Shapes
+    # Default opaque black RGBA colour.
     DEFAULT_RGBA = 0xFF000000
+    # Default colour mode uses explicit RGBA.
     DEFAULT_COLOR = RmPage::Colour::RGBA
+    # Default brush for most geometry helpers.
     DEFAULT_BRUSH = RmPage::Pen::FINELINER_2
 
+    # Angle constant for the rightward direction.
     RIGHT = 0
+    # Angle constant for the downward direction.
     DOWN = Math::PI / 2
+    # Angle constant for the leftward direction.
     LEFT = Math::PI
+    # Angle constant for the upward direction.
     UP = 3 * Math::PI / 2
 
     module_function

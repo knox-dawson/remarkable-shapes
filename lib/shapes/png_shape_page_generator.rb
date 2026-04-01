@@ -9,13 +9,21 @@ require_relative "shape_library"
 module Remarkable
   # Generates local Ruby shape files that render directories of PNGs in grids.
   class PngShapePageGenerator
+    # Left edge of the standard page box.
     PAGE_LEFT = 130.0
+    # Top edge of the standard page box.
     PAGE_TOP = 130.0
+    # Right edge of the standard page box.
     PAGE_RIGHT = 1270.0
+    # Bottom edge of the standard page box.
     PAGE_BOTTOM = 1740.0
+    # Default padding inside the page box.
     DEFAULT_OUTER_PADDING = 40.0
+    # Default gap between image cells.
     DEFAULT_CELL_GAP = 30.0
+    # Default gap between rendered PNG pixels.
     DEFAULT_PIXEL_GAP = 0.0
+    # Default brush used for PNG-backed shapes.
     DEFAULT_BRUSH = RmPage::Pen::FINELINER_2
 
     # Parses a layout specification such as "3x5".

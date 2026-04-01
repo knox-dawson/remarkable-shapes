@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "tmpdir"
+
 require_relative "../spec_helper"
 require "shapes/image_generator"
 
@@ -12,5 +14,27 @@ RSpec.describe Remarkable::ImageGenerator do
     expect(layout[:x] + layout[:width]).to be <= described_class::BOX_RIGHT
     expect(layout[:y] + layout[:height]).to be <= described_class::BOX_BOTTOM
     expect(layout[:pixel_size]).to be > 0
+  end
+
+  it "raises for non-positive image dimensions" do
+    expect do
+      described_class.layout_for_image(0, 50)
+    end.to raise_error(ArgumentError, /must be positive/)
+  end
+
+  it "draws a png onto the page without needing the rm2 box" do
+    Dir.mktmpdir do |dir|
+      png_path = File.join(dir, "tiny.png")
+      image = ChunkyPNG::Image.new(2, 2, ChunkyPNG::Color::TRANSPARENT)
+      image[0, 0] = ChunkyPNG::Color.rgba(255, 0, 0, 255)
+      image[1, 1] = ChunkyPNG::Color.rgba(0, 0, 255, 255)
+      image.save(png_path)
+
+      page = Remarkable::RmPage.new
+      layout = described_class.draw_png(page, png_path)
+
+      expect(layout[:y]).to eq(described_class::BOX_TOP + described_class::DEFAULT_TOP_PADDING)
+      expect(page.lines.length).to eq(2)
+    end
   end
 end

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Core namespaces for the reMarkable lines v6 writing and shape-rendering tools.
 module Remarkable
   # Low-level writer for reMarkable lines v6 pages.
   class RmPage
@@ -12,21 +13,36 @@ module Remarkable
 
     # Tablet colour codes used by the built-in palette.
     module Colour
+      # Built-in black.
       BLACK = 0
+      # Built-in grey.
       GREY = 1
+      # Built-in white.
       WHITE = 2
+      # Built-in yellow highlighter.
       HIGHLIGHTER_YELLOW = 3
+      # Built-in green highlighter.
       HIGHLIGHTER_GREEN = 4
+      # Built-in pink highlighter.
       HIGHLIGHTER_PINK = 5
+      # Built-in blue.
       BLUE = 6
+      # Built-in red.
       RED = 7
+      # Built-in grey highlighter.
       HIGHLIGHTER_GREY = 8
+      # Custom RGBA stroke colour.
       RGBA = 9
+      # Built-in green.
       GREEN = 10
+      # Built-in cyan.
       CYAN = 11
+      # Built-in magenta.
       MAGENTA = 12
+      # Built-in yellow.
       YELLOW = 13
 
+      # All supported built-in colour codes.
       VALUES = [
         BLACK, GREY, WHITE, HIGHLIGHTER_YELLOW, HIGHLIGHTER_GREEN,
         HIGHLIGHTER_PINK, BLUE, RED, HIGHLIGHTER_GREY, RGBA,
@@ -36,9 +52,13 @@ module Remarkable
 
     # Pen identifiers used by the tablet.
     module Pen
+      # Tilt pencil brush.
       PENCIL_TILT = 1
+      # Fineliner brush.
       FINELINER_2 = 17
+      # Highlighter brush.
       HIGHLIGHTER_2 = 18
+      # Shader brush.
       SHADER = 23
     end
 

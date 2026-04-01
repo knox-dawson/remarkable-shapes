@@ -6,6 +6,7 @@ require_relative "line_font"
 module Remarkable
   # Named output shapes built from the generic drawing helpers.
   module ShapeLibrary
+    # Built-in tablet palette values used by the colour sampler.
     TABLET_COLOURS = [
       RmPage::Colour::BLACK,
       RmPage::Colour::GREY,
@@ -21,17 +22,19 @@ module Remarkable
       RmPage::Colour::YELLOW
     ].freeze
 
+    # Representative RGBA values for shader brush samples.
     TABLET_SHADER_RGBAS = [
-      1_075_912_220,
-      1_295_010_528,
-      1_718_932_200,
-      1_724_002_610,
-      1_945_823_001,
-      1_946_071_552,
-      2_157_042_289,
-      2_160_099_282
+      0x40211E1C,
+      0x4D304AE0,
+      0x6674D2E8,
+      0x66C23132,
+      0x73FAE719,
+      0x73FEB200,
+      0x8091DA71,
+      0x80C07FD2
     ].freeze
 
+    # Rainbow RGBA values used by the colour sampler.
     RAINBOW_RGBAS = [
       0xFFFF0000,
       0xFFFF6600,
