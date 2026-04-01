@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+
+require "io/rm_page"
+require "io/rmdoc_writer"
+require "shapes/yaml_shape_renderer"
+
+def print_usage
+  puts "Usage: ruby bin/generate_yaml <yaml-file> [output-file]"
+  puts
+  puts "Example:"
+  puts "  ruby bin/generate_yaml examples/basic-shapes.yml out/basic-shapes.rmdoc"
+end
+
+if ARGV.empty? || %w[--help -h].include?(ARGV[0])
+  print_usage
+  exit 0
+end
+
+yaml_path = ARGV[0]
+unless File.file?(yaml_path)
+  warn "YAML file not found: #{yaml_path}"
+  exit 2
+end
+
+default_name = File.basename(yaml_path, File.extname(yaml_path))
+output_path = ARGV[1] || "out/#{default_name}.rmdoc"
+
+page = Remarkable::RmPage.new
+Remarkable::YamlShapeRenderer.render_file(page, yaml_path)
+Remarkable::RmdocWriter.write(output_path, page.to_rm_bytes)

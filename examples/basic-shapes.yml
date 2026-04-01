@@ -1,0 +1,53 @@
+canvas:
+  width: 900
+  height: 520
+  placement: top
+
+objects:
+  - type: circle_fill
+    x: 40
+    y: 40
+    width: 160
+    height: 160
+    color: red
+
+  - type: circle_outline_fill
+    x: 250
+    y: 40
+    width: 160
+    height: 160
+    fill_rgba: "0xFFBFE3FF"
+    outline_color: blue
+    stroke_width: 6
+
+  - type: rectangle_fill
+    x: 470
+    y: 50
+    width: 220
+    height: 110
+    rgba: "0xFF99DD88"
+
+  - type: rectangle_outline
+    x: 720
+    y: 50
+    width: 140
+    height: 110
+    color: black
+    stroke_width: 5
+
+  - type: line
+    x1: 40
+    y1: 270
+    x2: 860
+    y2: 270
+    stroke_width: 10
+    rgba: "0xFF444444"
+
+  - type: image
+    path: cat.png
+    x: 280
+    y: 310
+    width: 260
+    height: 170
+    pixel_gap: 0.0
+

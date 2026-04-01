@@ -1,0 +1,360 @@
+# frozen_string_literal: true
+
+require "psych"
+
+require_relative "../io/rm_page"
+require_relative "shapes"
+
+module Remarkable
+  # Renders a simple user-facing YAML page description into reMarkable lines.
+  module YamlShapeRenderer
+    # Left edge of the standard drawable page box.
+    BOX_LEFT = 130.0
+    # Top edge of the standard drawable page box.
+    BOX_TOP = 130.0
+    # Right edge of the standard drawable page box.
+    BOX_RIGHT = 1270.0
+    # Bottom edge of the standard drawable page box.
+    BOX_BOTTOM = 1740.0
+
+    # Default canvas width used when none is provided.
+    DEFAULT_CANVAS_WIDTH = BOX_RIGHT - BOX_LEFT
+    # Default canvas height used when none is provided.
+    DEFAULT_CANVAS_HEIGHT = BOX_BOTTOM - BOX_TOP
+    # Default placement for the user canvas.
+    DEFAULT_PLACEMENT = "center"
+    # Default stroke width for outline objects.
+    DEFAULT_STROKE_WIDTH = 4.0
+
+    module_function
+
+    # Loads a YAML file and renders it onto the page.
+    #
+    # @param page [Remarkable::RmPage]
+    # @param yaml_path [String]
+    # @return [Hash] resolved canvas layout
+    def render_file(page, yaml_path)
+      config = Psych.safe_load(File.read(yaml_path), permitted_classes: [], aliases: false) || {}
+      config = stringify_keys(config)
+      render(page, config, base_dir: File.dirname(File.expand_path(yaml_path)))
+    end
+
+    # Renders a YAML-derived configuration hash onto the page.
+    #
+    # @param page [Remarkable::RmPage]
+    # @param config [Hash]
+    # @param base_dir [String]
+    # @return [Hash] resolved canvas layout
+    def render(page, config, base_dir: nil)
+      base_dir ||= Dir.pwd
+      canvas = stringify_keys(config.fetch("canvas", {}))
+      layout = resolve_canvas_layout(canvas)
+      objects = config.fetch("objects", [])
+      raise ArgumentError, "objects must be an array" unless objects.is_a?(Array)
+
+      objects.each do |object|
+        render_object(page, stringify_keys(object), layout, base_dir:)
+      end
+
+      layout
+    end
+
+    # Resolves the user canvas into standard page coordinates.
+    #
+    # @param canvas [Hash]
+    # @return [Hash]
+    def resolve_canvas_layout(canvas)
+      width = (canvas["width"] || DEFAULT_CANVAS_WIDTH).to_f
+      height = (canvas["height"] || DEFAULT_CANVAS_HEIGHT).to_f
+      raise ArgumentError, "canvas width must be positive" unless width.positive?
+      raise ArgumentError, "canvas height must be positive" unless height.positive?
+
+      available_width = BOX_RIGHT - BOX_LEFT
+      available_height = BOX_BOTTOM - BOX_TOP
+      raise ArgumentError, "canvas does not fit within the standard page box" if width > available_width || height > available_height
+
+      placement = (canvas["placement"] || DEFAULT_PLACEMENT).to_s
+      x = placement_x(placement, width, available_width)
+      y = placement_y(placement, height, available_height)
+
+      {
+        x:,
+        y:,
+        width:,
+        height:,
+        placement:
+      }
+    end
+
+    # Resolves an object's local bounding box into page coordinates.
+    #
+    # @return [Hash]
+    def resolve_box(layout, object)
+      x = layout[:x] + fetch_number(object, "x")
+      y = layout[:y] + fetch_number(object, "y")
+      width = fetch_number(object, "width")
+      height = fetch_number(object, "height")
+      raise ArgumentError, "object width must be positive" unless width.positive?
+      raise ArgumentError, "object height must be positive" unless height.positive?
+
+      {
+        x:,
+        y:,
+        width:,
+        height:,
+        center_x: x + (width / 2.0),
+        center_y: y + (height / 2.0)
+      }
+    end
+
+    # Draws one generic object from the YAML config.
+    #
+    # @return [void]
+    def render_object(page, object, layout, base_dir:)
+      type = object.fetch("type") { raise ArgumentError, "object type is required" }.to_s
+      style = style_options_for(object)
+      brush = brush_for(object["brush"])
+
+      case type
+      when "line"
+        draw_line_object(page, object, layout, style:, brush:)
+      when "circle_fill"
+        draw_circle_fill_object(page, object, layout, style:, brush:)
+      when "circle_outline"
+        draw_circle_outline_object(page, object, layout, style:, brush:)
+      when "circle_outline_fill"
+        draw_circle_outline_fill_object(page, object, layout, brush:)
+      when "rectangle_fill"
+        draw_rectangle_fill_object(page, object, layout, style:, brush:)
+      when "rectangle_outline"
+        draw_rectangle_outline_object(page, object, layout, style:, brush:)
+      when "rectangle_outline_fill"
+        draw_rectangle_outline_fill_object(page, object, layout, brush:)
+      when "image"
+        draw_image_object(page, object, layout, base_dir:, brush:)
+      else
+        raise ArgumentError, "unsupported object type: #{type}"
+      end
+    end
+
+    # Converts nested hash keys to strings.
+    #
+    # @return [Object]
+    def stringify_keys(value)
+      case value
+      when Hash
+        value.each_with_object({}) do |(key, inner), result|
+          result[key.to_s] = stringify_keys(inner)
+        end
+      when Array
+        value.map { |item| stringify_keys(item) }
+      else
+        value
+      end
+    end
+
+    # Returns the horizontal offset for a named placement.
+    #
+    # @return [Float]
+    def placement_x(placement, width, available_width)
+      case placement
+      when "top", "bottom", "center"
+        BOX_LEFT + ((available_width - width) / 2.0)
+      when "left", "top-left", "bottom-left"
+        BOX_LEFT
+      when "right", "top-right", "bottom-right"
+        BOX_RIGHT - width
+      else
+        raise ArgumentError, "unsupported placement: #{placement}"
+      end
+    end
+
+    # Returns the vertical offset for a named placement.
+    #
+    # @return [Float]
+    def placement_y(placement, height, available_height)
+      case placement
+      when "left", "right", "center"
+        BOX_TOP + ((available_height - height) / 2.0)
+      when "top", "top-left", "top-right"
+        BOX_TOP
+      when "bottom", "bottom-left", "bottom-right"
+        BOX_BOTTOM - height
+      else
+        raise ArgumentError, "unsupported placement: #{placement}"
+      end
+    end
+
+    # Builds normalized drawing style options from an object config.
+    #
+    # @return [Hash]
+    def style_options_for(object, prefix = nil)
+      color_key = prefixed_key(prefix, "color")
+      rgba_key = prefixed_key(prefix, "rgba")
+      style_value =
+        if object.key?(rgba_key)
+          parse_rgba(object[rgba_key])
+        elsif object.key?(color_key)
+          parse_color(object[color_key])
+        else
+          Shapes::DEFAULT_RGBA
+        end
+
+      Shapes.style_options(style_value)
+    end
+
+    # Parses a color value into either a tablet color constant or RGBA integer.
+    #
+    # @return [Integer]
+    def parse_color(value)
+      return parse_rgba(value) if value.is_a?(Integer)
+
+      key = value.to_s.strip.upcase.gsub(/[^A-Z0-9]+/, "_")
+      if RmPage::Colour.const_defined?(key, false)
+        RmPage::Colour.const_get(key, false)
+      else
+        parse_rgba(value)
+      end
+    end
+
+    # Parses a hex RGBA string or integer into an ARGB integer.
+    #
+    # @return [Integer]
+    def parse_rgba(value)
+      return value if value.is_a?(Integer)
+
+      text = value.to_s.strip
+      text = text[2..] if text.start_with?("0x", "0X")
+      raise ArgumentError, "rgba must be 8 hex digits" unless text.match?(/\A[0-9A-Fa-f]{8}\z/)
+
+      text.to_i(16)
+    end
+
+    # Parses an optional brush name.
+    #
+    # @return [Integer]
+    def brush_for(value)
+      return Shapes::DEFAULT_BRUSH if value.nil?
+      return value if value.is_a?(Integer)
+
+      key = value.to_s.strip.upcase.gsub(/[^A-Z0-9]+/, "_")
+      raise ArgumentError, "unsupported brush: #{value}" unless RmPage::Pen.const_defined?(key, false)
+
+      RmPage::Pen.const_get(key, false)
+    end
+
+    # Fetches a numeric field from an object hash.
+    #
+    # @return [Float]
+    def fetch_number(object, key, default = nil)
+      value = object.fetch(key, default)
+      raise ArgumentError, "#{key} is required" if value.nil?
+
+      Float(value)
+    rescue ArgumentError, TypeError
+      raise ArgumentError, "#{key} must be numeric"
+    end
+
+    # Returns a key with an optional prefix.
+    #
+    # @return [String]
+    def prefixed_key(prefix, suffix)
+      prefix ? "#{prefix}_#{suffix}" : suffix
+    end
+
+    # Draws a line object.
+    #
+    # @return [void]
+    def draw_line_object(page, object, layout, style:, brush:)
+      x1 = layout[:x] + fetch_number(object, "x1")
+      y1 = layout[:y] + fetch_number(object, "y1")
+      x2 = layout[:x] + fetch_number(object, "x2")
+      y2 = layout[:y] + fetch_number(object, "y2")
+      width = fetch_number(object, "stroke_width", DEFAULT_STROKE_WIDTH)
+      Shapes.draw_line(page, x1, y1, x2, y2, width, brush:, **style)
+    end
+
+    # Draws a filled circle object.
+    #
+    # @return [void]
+    def draw_circle_fill_object(page, object, layout, style:, brush:)
+      box = resolve_box(layout, object)
+      radius = [box[:width], box[:height]].min / 2.0
+      Shapes.circle(page, box[:center_x], box[:center_y], radius, brush:, **style)
+    end
+
+    # Draws a circle outline object.
+    #
+    # @return [void]
+    def draw_circle_outline_object(page, object, layout, style:, brush:)
+      box = resolve_box(layout, object)
+      stroke_width = fetch_number(object, "stroke_width", DEFAULT_STROKE_WIDTH)
+      radius = ([box[:width], box[:height]].min - stroke_width) / 2.0
+      raise ArgumentError, "circle outline is too small for its stroke width" unless radius.positive?
+
+      steps = 40
+      points = Array.new(steps + 1) do |index|
+        angle = (2.0 * Math::PI * index) / steps
+        [
+          box[:center_x] + (radius * Math.cos(angle)),
+          box[:center_y] + (radius * Math.sin(angle))
+        ]
+      end
+      Shapes.draw_polyline(page, points, stroke_width, brush:, **style)
+    end
+
+    # Draws a circle with separate fill and outline styles.
+    #
+    # @return [void]
+    def draw_circle_outline_fill_object(page, object, layout, brush:)
+      draw_circle_fill_object(page, object, layout, style: style_options_for(object, "fill"), brush:)
+      draw_circle_outline_object(page, object, layout, style: style_options_for(object, "outline"), brush:)
+    end
+
+    # Draws a filled rectangle object.
+    #
+    # @return [void]
+    def draw_rectangle_fill_object(page, object, layout, style:, brush:)
+      box = resolve_box(layout, object)
+      Shapes.rect(page, box[:x], box[:center_y], box[:x] + box[:width], box[:center_y], box[:height], brush:, **style)
+    end
+
+    # Draws a rectangle outline object.
+    #
+    # @return [void]
+    def draw_rectangle_outline_object(page, object, layout, style:, brush:)
+      box = resolve_box(layout, object)
+      stroke_width = fetch_number(object, "stroke_width", DEFAULT_STROKE_WIDTH)
+      Shapes.draw_box(page, box[:x], box[:y], box[:x] + box[:width], box[:y] + box[:height], stroke_width, brush:, **style)
+    end
+
+    # Draws a rectangle with separate fill and outline styles.
+    #
+    # @return [void]
+    def draw_rectangle_outline_fill_object(page, object, layout, brush:)
+      draw_rectangle_fill_object(page, object, layout, style: style_options_for(object, "fill"), brush:)
+      draw_rectangle_outline_object(page, object, layout, style: style_options_for(object, "outline"), brush:)
+    end
+
+    # Draws an image object fitted inside the given bounding box.
+    #
+    # @return [void]
+    def draw_image_object(page, object, layout, base_dir:, brush:)
+      box = resolve_box(layout, object)
+      image_path = File.expand_path(object.fetch("path") { raise ArgumentError, "image path is required" }, base_dir)
+      rgba_grid = Shapes.png_to_rgba_grid(image_path)
+      image_height = rgba_grid.length
+      image_width = rgba_grid.first&.length.to_i
+      raise ArgumentError, "image PNG must not be empty" if image_width <= 0
+
+      pixel_size = [box[:width] / image_width.to_f, box[:height] / image_height.to_f].min
+      grid_width = image_width * pixel_size
+      grid_height = image_height * pixel_size
+      x = box[:x] + ((box[:width] - grid_width) / 2.0)
+      y = box[:y] + ((box[:height] - grid_height) / 2.0)
+      pixel_gap = fetch_number(object, "pixel_gap", 0.0)
+
+      Shapes.draw_rgba_grid(page, rgba_grid, x, y, pixel_size, gap: pixel_gap, brush:)
+    end
+  end
+end
