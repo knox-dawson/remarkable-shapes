@@ -51,11 +51,12 @@ module Remarkable
     # @param page [Remarkable::RmPage]
     # @param config [Hash]
     # @param base_dir [String]
+    # @param layout_override [Hash, nil]
     # @return [Hash] resolved canvas layout
-    def render(page, config, base_dir: nil)
+    def render(page, config, base_dir: nil, layout_override: nil)
       base_dir ||= Dir.pwd
       canvas = stringify_keys(config.fetch("canvas", {}))
-      layout = resolve_canvas_layout(canvas)
+      layout = layout_override || resolve_canvas_layout(canvas)
       objects = config.fetch("objects", [])
       raise ArgumentError, "objects must be an array" unless objects.is_a?(Array)
 
@@ -105,7 +106,8 @@ module Remarkable
         placement:,
         tablet: profile.fetch(:tablet),
         physical_width: profile.fetch(:physical_width),
-        physical_height: profile.fetch(:physical_height)
+        physical_height: profile.fetch(:physical_height),
+        scale: 1.0
       }
     end
 
@@ -113,10 +115,10 @@ module Remarkable
     #
     # @return [Hash]
     def resolve_box(layout, object)
-      x = layout[:x] + fetch_number(object, "x")
-      y = layout[:y] + fetch_number(object, "y")
-      width = fetch_number(object, "width")
-      height = fetch_number(object, "height")
+      x = map_x(layout, fetch_number(object, "x"))
+      y = map_y(layout, fetch_number(object, "y"))
+      width = scale_length(layout, fetch_number(object, "width"))
+      height = scale_length(layout, fetch_number(object, "height"))
       raise ArgumentError, "object width must be positive" unless width.positive?
       raise ArgumentError, "object height must be positive" unless height.positive?
 
@@ -165,6 +167,8 @@ module Remarkable
         draw_parallelogram_object(page, object, layout, style:, brush:)
       when "image"
         draw_image_object(page, object, layout, base_dir:, brush:)
+      when "yaml"
+        draw_yaml_object(page, object, layout, base_dir:)
       else
         raise ArgumentError, "unsupported object type: #{type}"
       end
@@ -316,21 +320,67 @@ module Remarkable
       values.map do |value|
         raise ArgumentError, "each point must have two values" unless value.is_a?(Array) && value.length == 2
 
-        [layout[:x] + Float(value[0]), layout[:y] + Float(value[1])]
+        [map_x(layout, Float(value[0])), map_y(layout, Float(value[1]))]
       end
     rescue ArgumentError, TypeError
       raise ArgumentError, "points must be numeric coordinate pairs"
+    end
+
+    # Maps a local x coordinate into page coordinates.
+    #
+    # @return [Float]
+    def map_x(layout, value)
+      layout[:x] + (value.to_f * layout.fetch(:scale, 1.0))
+    end
+
+    # Maps a local y coordinate into page coordinates.
+    #
+    # @return [Float]
+    def map_y(layout, value)
+      layout[:y] + (value.to_f * layout.fetch(:scale, 1.0))
+    end
+
+    # Scales a local length into page units.
+    #
+    # @return [Float]
+    def scale_length(layout, value)
+      value.to_f * layout.fetch(:scale, 1.0)
+    end
+
+    # Builds a nested layout by fitting a child canvas into a parent box.
+    #
+    # @return [Hash]
+    def nested_layout_for(parent_layout, object, child_config)
+      box = resolve_box(parent_layout, object)
+      child_canvas = resolve_canvas_layout(stringify_keys(child_config.fetch("canvas", {})))
+      scale = [box[:width] / child_canvas[:width], box[:height] / child_canvas[:height]].min
+      raise ArgumentError, "nested yaml object box is too small" unless scale.positive?
+
+      target_width = child_canvas[:width] * scale
+      target_height = child_canvas[:height] * scale
+
+      {
+        x: box[:x] + ((box[:width] - target_width) / 2.0),
+        y: box[:y] + ((box[:height] - target_height) / 2.0),
+        width: child_canvas[:width],
+        height: child_canvas[:height],
+        placement: "nested",
+        tablet: child_canvas[:tablet],
+        physical_width: parent_layout[:physical_width],
+        physical_height: parent_layout[:physical_height],
+        scale:
+      }
     end
 
     # Draws a line object.
     #
     # @return [void]
     def draw_line_object(page, object, layout, style:, brush:)
-      x1 = layout[:x] + fetch_number(object, "x1")
-      y1 = layout[:y] + fetch_number(object, "y1")
-      x2 = layout[:x] + fetch_number(object, "x2")
-      y2 = layout[:y] + fetch_number(object, "y2")
-      width = fetch_number(object, "stroke_width", DEFAULT_STROKE_WIDTH)
+      x1 = map_x(layout, fetch_number(object, "x1"))
+      y1 = map_y(layout, fetch_number(object, "y1"))
+      x2 = map_x(layout, fetch_number(object, "x2"))
+      y2 = map_y(layout, fetch_number(object, "y2"))
+      width = scale_length(layout, fetch_number(object, "stroke_width", DEFAULT_STROKE_WIDTH))
       Shapes.draw_line(page, x1, y1, x2, y2, width, brush:, **style)
     end
 
@@ -403,7 +453,8 @@ module Remarkable
       box = resolve_box(layout, object)
       point_count = fetch_number(object, "points").to_i
       wide_point_percent = fetch_number(object, "wide_point_percent", 31.0)
-      star_width = fetch_number(object, "star_width", -1.0)
+      raw_star_width = fetch_number(object, "star_width", -1.0)
+      star_width = raw_star_width.negative? ? raw_star_width : scale_length(layout, raw_star_width)
       rotation = fetch_number(object, "rotation", 0.0)
       radius = [box[:width], box[:height]].min / 2.0
 
@@ -498,6 +549,21 @@ module Remarkable
       pixel_gap = fetch_number(object, "pixel_gap", 0.0)
 
       Shapes.draw_rgba_grid(page, rgba_grid, x, y, pixel_size, gap: pixel_gap, brush:)
+    end
+
+    # Draws a nested YAML object by fitting its child canvas into the box.
+    #
+    # @return [void]
+    def draw_yaml_object(page, object, layout, base_dir:)
+      yaml_path = File.expand_path(object.fetch("path") { raise ArgumentError, "yaml path is required" }, base_dir)
+      child_config = load_file_config(yaml_path)
+      child_layout = nested_layout_for(layout, object, child_config)
+      render(
+        page,
+        child_config,
+        base_dir: File.dirname(yaml_path),
+        layout_override: child_layout
+      )
     end
   end
 end

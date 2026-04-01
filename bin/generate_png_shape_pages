@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
+require "version"
 require "shapes/png_shape_page_generator"
 
 def print_usage
@@ -19,6 +20,11 @@ end
 
 if ARGV.empty? || %w[--help -h].include?(ARGV[0])
   print_usage
+  exit 0
+end
+
+if %w[--version -v].include?(ARGV[0])
+  puts Remarkable::VERSION
   exit 0
 end
 

@@ -127,4 +127,62 @@ RSpec.describe Remarkable::YamlShapeRenderer do
 
     expect(page.lines.length).to eq(6)
   end
+
+  it "renders a nested yaml object scaled into its box" do
+    Dir.mktmpdir do |dir|
+      child_path = File.join(dir, "child.yml")
+      File.write(
+        child_path,
+        <<~YAML
+          canvas:
+            width: 200
+            height: 100
+            placement: top-left
+          objects:
+            - type: rectangle_outline
+              x: 0
+              y: 0
+              width: 200
+              height: 100
+              stroke_width: 4
+              color: black
+            - type: line
+              x1: 0
+              y1: 0
+              x2: 200
+              y2: 100
+              stroke_width: 4
+              color: red
+        YAML
+      )
+
+      parent_path = File.join(dir, "parent.yml")
+      File.write(
+        parent_path,
+        <<~YAML
+          canvas:
+            width: 400
+            height: 300
+            placement: top-left
+          objects:
+            - type: yaml
+              path: child.yml
+              x: 50
+              y: 60
+              width: 120
+              height: 120
+        YAML
+      )
+
+      described_class.render_file(page, parent_path)
+
+      expect(page.lines.length).to eq(2)
+      xs = page.lines.flat_map { |line| line.points.map(&:x) }
+      ys = page.lines.flat_map { |line| line.points.map(&:y) }
+      expect(xs.min).to be >= 50
+      expect(ys.min).to be >= 60
+      expect(xs.max).to be <= 170
+      expect(ys.max).to be <= 180
+    end
+  end
 end

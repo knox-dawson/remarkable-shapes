@@ -1,0 +1,27 @@
+canvas:
+  width: 900
+  height: 600
+  placement: top
+
+objects:
+  - type: yaml
+    path: nested-child.yml
+    x: 40
+    y: 40
+    width: 260
+    height: 220
+
+  - type: yaml
+    path: nested-child.yml
+    x: 340
+    y: 40
+    width: 180
+    height: 140
+
+  - type: yaml
+    path: nested-child.yml
+    x: 580
+    y: 40
+    width: 240
+    height: 360
+

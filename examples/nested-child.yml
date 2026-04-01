@@ -1,0 +1,24 @@
+canvas:
+  width: 300
+  height: 180
+  placement: top-left
+
+objects:
+  - type: rectangle_outline
+    x: 0
+    y: 0
+    width: 300
+    height: 180
+    stroke_width: 8
+    color: black
+
+  - type: star
+    x: 80
+    y: 20
+    width: 140
+    height: 140
+    points: 5
+    colors:
+      - red
+      - blue
+
