@@ -24,14 +24,14 @@ objects:
     y: 360
     width: 560
     height: 500
-    gap: -0.10
+    pixel_gap: -0.10
 
   - type: text
     x: 730
     y: 360
     width: 560
     height: 260
-    text: "This text object can be placed in a box, aligned, and wrapped. The image object can use gap or overlap so pixel edges render differently."
+    text: "This text object can be placed in a box, aligned, and wrapped. The image object can use pixel_gap or overlap so pixel edges render differently."
     size: 30
     stroke_width: 3
     wrap: true

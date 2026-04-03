@@ -32,6 +32,17 @@ module Remarkable
     #
     # @param page [Remarkable::RmPage]
     # @param yaml_path [String]
+    # @example YAML file
+    #   canvas:
+    #     tablet: rm2
+    #   objects:
+    #     - type: rectangle_outline
+    #       x: 130
+    #       y: 130
+    #       width: 1140
+    #       height: 1610
+    #       stroke_width: 4
+    #       color: black
     # @return [Hash] resolved canvas layout
     def render_file(page, yaml_path)
       config = load_file_config(yaml_path)
@@ -411,6 +422,14 @@ module Remarkable
 
     # Draws a line object.
     #
+    # @example YAML object
+    #   - type: line
+    #     x1: 40
+    #     y1: 270
+    #     x2: 860
+    #     y2: 270
+    #     stroke_width: 10
+    #     rgba: "0xFF444444"
     # @return [void]
     def draw_line_object(page, object, layout, style:, brush:)
       x1 = map_x(layout, fetch_number(object, "x1"))
@@ -423,6 +442,14 @@ module Remarkable
 
     # Draws a filled semicircle object.
     #
+    # @example YAML object
+    #   - type: semicircle_fill
+    #     x: 650
+    #     y: 210
+    #     width: 140
+    #     height: 140
+    #     direction: right
+    #     color: blue
     # @return [void]
     def draw_semicircle_fill_object(page, object, layout, style:, brush:)
       box = resolve_box(layout, object)
@@ -445,6 +472,13 @@ module Remarkable
 
     # Draws a filled circle object.
     #
+    # @example YAML object
+    #   - type: circle_fill
+    #     x: 40
+    #     y: 40
+    #     width: 160
+    #     height: 160
+    #     color: red
     # @return [void]
     def draw_circle_fill_object(page, object, layout, style:, brush:)
       box = resolve_box(layout, object)
@@ -474,6 +508,15 @@ module Remarkable
 
     # Draws a circle with separate fill and outline styles.
     #
+    # @example YAML object
+    #   - type: circle_outline_fill
+    #     x: 250
+    #     y: 40
+    #     width: 160
+    #     height: 160
+    #     fill_rgba: "0xFFBFE3FF"
+    #     outline_color: blue
+    #     stroke_width: 6
     # @return [void]
     def draw_circle_outline_fill_object(page, object, layout, brush:)
       draw_circle_fill_object(page, object, layout, style: style_options_for(object, "fill"), brush:)
@@ -482,6 +525,14 @@ module Remarkable
 
     # Draws a filled isosceles triangle object.
     #
+    # @example YAML object
+    #   - type: isosceles_triangle_fill
+    #     x1: 180
+    #     y1: 560
+    #     x2: 360
+    #     y2: 650
+    #     triangle_width: 120
+    #     color: green
     # @return [void]
     def draw_isosceles_triangle_fill_object(page, object, layout, style:, brush:)
       ax = map_x(layout, fetch_number(object, "x1"))
@@ -494,6 +545,15 @@ module Remarkable
 
     # Draws a filled right triangle object.
     #
+    # @example YAML object
+    #   - type: right_triangle_fill
+    #     x1: 520
+    #     y1: 500
+    #     x2: 520
+    #     y2: 700
+    #     x3: 760
+    #     y3: 700
+    #     color: magenta
     # @return [void]
     def draw_right_triangle_fill_object(page, object, layout, style:, brush:)
       ax = map_x(layout, fetch_number(object, "x1"))
@@ -515,6 +575,14 @@ module Remarkable
 
     # Draws a rectangle outline object.
     #
+    # @example YAML object
+    #   - type: rectangle_outline
+    #     x: 720
+    #     y: 50
+    #     width: 140
+    #     height: 110
+    #     stroke_width: 5
+    #     color: black
     # @return [void]
     def draw_rectangle_outline_object(page, object, layout, style:, brush:)
       box = resolve_box(layout, object)
@@ -532,6 +600,17 @@ module Remarkable
 
     # Draws a star object using one or more cycled colours.
     #
+    # @example YAML object
+    #   - type: star
+    #     x: 1085
+    #     y: 70
+    #     width: 260
+    #     height: 300
+    #     points: 6
+    #     colors:
+    #       - yellow
+    #       - magenta
+    #       - cyan
     # @return [void]
     def draw_star_object(page, object, layout, style:, brush:)
       box = resolve_box(layout, object)
@@ -573,6 +652,15 @@ module Remarkable
 
     # Draws a freeform polygon outline object.
     #
+    # @example YAML object
+    #   - type: polygon_outline
+    #     points:
+    #       - [120, 740]
+    #       - [340, 610]
+    #       - [450, 820]
+    #       - [250, 980]
+    #     stroke_width: 12
+    #     color: green
     # @return [void]
     def draw_polygon_outline_object(page, object, layout, style:, brush:)
       stroke_width = fetch_number(object, "stroke_width", DEFAULT_STROKE_WIDTH)
@@ -616,6 +704,19 @@ module Remarkable
 
     # Draws text into a box with optional wrapping and alignment.
     #
+    # @example YAML object
+    #   - type: text
+    #     x: 40
+    #     y: 20
+    #     width: 1120
+    #     height: 220
+    #     text: "remarkable-shapes\nWrapped text and image pixel_gap example"
+    #     size: 62
+    #     stroke_width: 5
+    #     wrap: true
+    #     align: center
+    #     valign: center
+    #     color: black
     # @return [void]
     def draw_text_object(page, object, layout, style:, brush:)
       box = resolve_box(layout, object)
@@ -680,6 +781,14 @@ module Remarkable
 
     # Draws an image object fitted inside the given bounding box.
     #
+    # @example YAML object
+    #   - type: image
+    #     path: cat.png
+    #     x: 320
+    #     y: 250
+    #     width: 560
+    #     height: 500
+    #     pixel_gap: -0.10
     # @return [void]
     def draw_image_object(page, object, layout, base_dir:, brush:)
       box = resolve_box(layout, object)
@@ -694,17 +803,20 @@ module Remarkable
       grid_height = image_height * pixel_size
       x = box[:x] + ((box[:width] - grid_width) / 2.0)
       y = box[:y] + ((box[:height] - grid_height) / 2.0)
-      pixel_gap = if object.key?("gap")
-                    fetch_number(object, "gap", 0.0)
-                  else
-                    fetch_number(object, "pixel_gap", 0.0)
-                  end
+      pixel_gap = fetch_number(object, "pixel_gap", 0.0)
 
       Shapes.draw_rgba_grid(page, rgba_grid, x, y, pixel_size, gap: pixel_gap, brush:)
     end
 
     # Draws a nested YAML object by fitting its child canvas into the box.
     #
+    # @example YAML object
+    #   - type: yaml
+    #     path: nested-child.yml
+    #     x: 220
+    #     y: 320
+    #     width: 900
+    #     height: 1200
     # @return [void]
     def draw_yaml_object(page, object, layout, base_dir:)
       yaml_path = File.expand_path(object.fetch("path") { raise ArgumentError, "yaml path is required" }, base_dir)

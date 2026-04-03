@@ -2,35 +2,53 @@
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
 require "version"
+require "slop"
 require "io/rm_page"
 require "io/rmdoc_writer"
 require "shapes/yaml_shape_renderer"
 
-def print_usage
-  puts "Usage: ruby bin/generate_yaml <yaml-file> [output-file]"
-  puts
-  puts "Example:"
-  puts "  ruby bin/generate_yaml examples/basic-shapes.yml out/basic-shapes.rmdoc"
+def build_options(argv)
+  Slop.parse(argv) do |o|
+    o.banner = <<~BANNER
+      Usage: ruby bin/generate_yaml --yaml YAML_FILE [options]
+
+      Example:
+        ruby bin/generate_yaml --yaml examples/basic-shapes.yml --output out/basic-shapes.rmdoc
+    BANNER
+
+    o.string "-y", "--yaml", "YAML file to render"
+    o.string "-o", "--output", "Output .rmdoc path"
+    o.bool "-v", "--version", "Print version"
+    o.bool "-h", "--help", "Show help"
+  end
 end
 
-if ARGV.empty? || %w[--help -h].include?(ARGV[0])
-  print_usage
+options = build_options(ARGV)
+
+if options[:help]
+  puts options
   exit 0
 end
 
-if %w[--version -v].include?(ARGV[0])
+if options[:version]
   puts Remarkable::VERSION
   exit 0
 end
 
-yaml_path = ARGV[0]
+yaml_path = options[:yaml]
+if yaml_path.nil? || yaml_path.strip.empty?
+  warn "Missing required option: --yaml"
+  warn options
+  exit 2
+end
+
 unless File.file?(yaml_path)
   warn "YAML file not found: #{yaml_path}"
   exit 2
 end
 
 default_name = File.basename(yaml_path, File.extname(yaml_path))
-output_path = ARGV[1] || "out/#{default_name}.rmdoc"
+output_path = options[:output] || "out/#{default_name}.rmdoc"
 
 config = Remarkable::YamlShapeRenderer.load_file_config(yaml_path)
 layout = Remarkable::YamlShapeRenderer.resolve_canvas_layout(config.fetch("canvas", {}))

@@ -105,7 +105,7 @@ module Remarkable
           lines << "    width: #{format_number(render_width)}"
           lines << "    height: #{format_number(render_height)}"
           lines << "    brush: #{brush_name(brush)}"
-          lines << "    gap: #{format_number(pixel_gap)}"
+          lines << "    pixel_gap: #{format_number(pixel_gap)}"
         end
 
         lines << ""

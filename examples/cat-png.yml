@@ -17,4 +17,4 @@ objects:
     width: 1140
     height: 1610
     brush: highlighter_2
-    gap: 0
+    pixel_gap: 0

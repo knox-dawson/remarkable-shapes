@@ -2,6 +2,7 @@
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
 require "version"
+require "slop"
 require "io/rm_page"
 require "io/rmdoc_writer"
 require "shapes/shapes"
@@ -9,30 +10,41 @@ require "shapes/line_font"
 
 EXAMPLES_DIR = File.expand_path("../examples", __dir__)
 
-def print_usage
-  puts "Usage: ruby bin/generate_shape <shape-file-or-name> [output-file]"
-  puts
-  puts "Examples:"
-  puts "  ruby bin/generate_shape examples/us-flag.rb out/us-flag.rmdoc"
-  puts "  ruby bin/generate_shape us-flag"
-  puts "  REMARKABLE_SHAPES_PATH=/path/to/shape-repo ruby bin/generate_shape post-it/example"
-  puts
-  puts "A shape file must evaluate to a callable object, for example:"
-  puts "  ->(page) { Remarkable::Shapes.rm2_box(page) }"
+def build_options(argv)
+  Slop.parse(argv) do |o|
+    o.banner = <<~BANNER
+      Usage: ruby bin/generate_shape --shape SHAPE_FILE_OR_NAME [options]
+
+      Examples:
+        ruby bin/generate_shape --shape examples/us-flag.rb --output out/us-flag.rmdoc
+        ruby bin/generate_shape --shape us-flag
+        ruby bin/generate_shape --shape post-it/example --shapes-path /path/to/shape-repo
+
+      A shape file must evaluate to a callable object, for example:
+        ->(page) { Remarkable::Shapes.rm2_box(page) }
+    BANNER
+
+    o.string "-s", "--shape", "Shape file path or shape name"
+    o.string "-o", "--output", "Output .rmdoc path"
+    o.array "--shapes-path", "Extra search roots, repeated or comma-separated"
+    o.bool "-v", "--version", "Print version"
+    o.bool "-h", "--help", "Show help"
+  end
 end
 
-def shape_search_roots
+def shape_search_roots(extra_roots = [])
   roots = [EXAMPLES_DIR]
   env_roots = ENV.fetch("REMARKABLE_SHAPES_PATH", "")
                  .split(File::PATH_SEPARATOR)
                  .reject(&:empty?)
   roots.concat(env_roots)
+  roots.concat(extra_roots)
   roots.uniq
 end
 
-def resolve_shape_path(shape_name)
+def resolve_shape_path(shape_name, extra_roots = [])
   candidates = [shape_name, "#{shape_name}.rb"]
-  shape_search_roots.each do |root|
+  shape_search_roots(extra_roots).each do |root|
     candidates << File.join(root, shape_name)
     candidates << File.join(root, "#{shape_name}.rb")
   end
@@ -50,27 +62,35 @@ def load_local_renderer(path)
   exit 2
 end
 
-if ARGV.empty? || %w[--help -h].include?(ARGV[0])
-  print_usage
+options = build_options(ARGV)
+
+if options[:help]
+  puts options
   exit 0
 end
 
-if %w[--version -v].include?(ARGV[0])
+if options[:version]
   puts Remarkable::VERSION
   exit 0
 end
 
-shape_name = ARGV[0]
-shape_path = resolve_shape_path(shape_name)
+shape_name = options[:shape]
+if shape_name.nil? || shape_name.strip.empty?
+  warn "Missing required option: --shape"
+  warn options
+  exit 2
+end
+
+shape_path = resolve_shape_path(shape_name, options[:shapes_path] || [])
 unless shape_path
   warn "Unknown shape or file: #{shape_name}"
-  print_usage
+  warn options
   exit 2
 end
 
 renderer = load_local_renderer(shape_path)
 default_name = File.basename(shape_path, ".rb")
-output_name = ARGV[1] || "out/#{default_name}.rmdoc"
+output_name = options[:output] || "out/#{default_name}.rmdoc"
 page = Remarkable::RmPage.new
 renderer.call(page)
 Remarkable::RmdocWriter.write(output_name, page.to_rm_bytes)

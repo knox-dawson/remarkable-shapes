@@ -29,32 +29,32 @@ bundle install
 Generate a one-off image page from a PNG:
 
 ```bash
-ruby bin/generate_image examples/cat.png out/cat-image.rmdoc
+ruby bin/generate_image --input examples/cat.png --output out/cat-image.rmdoc
 ```
 
 Generate a page from a YAML description:
 
 ```bash
-ruby bin/generate_yaml examples/basic-shapes.yml out/basic-shapes.rmdoc
+ruby bin/generate_yaml --yaml examples/basic-shapes.yml --output out/basic-shapes.rmdoc
 ```
 
 Generate a page from a Ruby lambda:
 
 ```bash
-ruby bin/generate_shape examples/us-flag.rb out/us-flag.rmdoc
+ruby bin/generate_shape --shape examples/us-flag.rb --output out/us-flag.rmdoc
 ```
 
 Generate YAML pages from a directory of PNGs:
 
 ```bash
-ruby bin/generate_yaml_pages emoji 3x5 examples/emoji-pages emoji 40 30 -0.10
+ruby bin/generate_yaml_pages --image-dir emoji --layout 3x5 --output-dir examples/emoji-pages --prefix emoji --outer-padding 40 --cell-gap 30 --pixel-gap -0.10
 ```
 
 Built-in sample pages can live as either YAML or Ruby lambda files in `examples/`, for example:
 
 ```bash
-ruby bin/generate_yaml examples/shape-sampler.yml out/shape-sampler.rmdoc
-ruby bin/generate_shape examples/us-flag.rb out/us-flag.rmdoc
+ruby bin/generate_yaml --yaml examples/shape-sampler.yml --output out/shape-sampler.rmdoc
+ruby bin/generate_shape --shape examples/us-flag.rb --output out/us-flag.rmdoc
 ```
 
 After `bundle install`, the same commands can be run with `bundle exec`.

@@ -214,7 +214,7 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     expect(ys.max - ys.min).to be > 24
   end
 
-  it "accepts gap as an alias for image pixel spacing" do
+  it "uses pixel_gap for image pixel spacing" do
     Dir.mktmpdir do |dir|
       png_path = File.join(dir, "tiny.png")
       image = ChunkyPNG::Image.new(2, 1, ChunkyPNG::Color::TRANSPARENT)
@@ -232,7 +232,7 @@ RSpec.describe Remarkable::YamlShapeRenderer do
             "y" => 20,
             "width" => 100,
             "height" => 100,
-            "gap" => -0.2
+            "pixel_gap" => -0.2
           }
         ]
       }

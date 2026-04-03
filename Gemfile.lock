@@ -32,6 +32,7 @@ GEM
       simplecov_json_formatter (~> 0.1)
     simplecov-html (0.13.2)
     simplecov_json_formatter (0.1.4)
+    slop (4.10.1)
     stringio (3.2.0)
     tsort (0.2.0)
     yard (0.9.38)
@@ -45,6 +46,7 @@ DEPENDENCIES
   rdoc
   rspec
   simplecov
+  slop
   yard
 
 BUNDLED WITH

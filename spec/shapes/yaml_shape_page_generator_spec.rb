@@ -74,7 +74,7 @@ RSpec.describe Remarkable::YamlShapePageGenerator do
 
       expect(page_file).to include('path: "../images/one.png"')
       expect(page_file).to include("brush: shader")
-      expect(page_file).to include("gap: -0.1")
+      expect(page_file).to include("pixel_gap: -0.1")
     end
   end
 end

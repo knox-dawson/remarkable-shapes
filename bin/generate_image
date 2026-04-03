@@ -2,28 +2,46 @@
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
 require "version"
+require "slop"
 require "io/rm_page"
 require "io/rmdoc_writer"
 require "shapes/image_generator"
 
-def print_usage
-  puts "Usage: ruby bin/generate_image <png-path> [output-file]"
-  puts
-  puts "Example:"
-  puts "  ruby bin/generate_image examples/cat.png out/cat-image.rmdoc"
+def build_options(argv)
+  Slop.parse(argv) do |o|
+    o.banner = <<~BANNER
+      Usage: ruby bin/generate_image --input PNG_PATH [options]
+
+      Example:
+        ruby bin/generate_image --input examples/cat.png --output out/cat-image.rmdoc
+    BANNER
+
+    o.string "-i", "--input", "PNG file to render"
+    o.string "-o", "--output", "Output .rmdoc path"
+    o.bool "-v", "--version", "Print version"
+    o.bool "-h", "--help", "Show help"
+  end
 end
 
-if ARGV.empty? || %w[--help -h].include?(ARGV[0])
-  print_usage
+options = build_options(ARGV)
+
+if options[:help]
+  puts options
   exit 0
 end
 
-if %w[--version -v].include?(ARGV[0])
+if options[:version]
   puts Remarkable::VERSION
   exit 0
 end
 
-png_path = ARGV[0]
+png_path = options[:input]
+if png_path.nil? || png_path.strip.empty?
+  warn "Missing required option: --input"
+  warn options
+  exit 2
+end
+
 unless File.extname(png_path).downcase == ".png"
   warn "generate_image only supports PNG input: #{png_path}"
   exit 2
@@ -35,7 +53,7 @@ unless File.file?(png_path)
 end
 
 default_name = File.basename(png_path, ".png")
-output_path = ARGV[1] || "out/#{default_name}.rmdoc"
+output_path = options[:output] || "out/#{default_name}.rmdoc"
 
 page = Remarkable::RmPage.new
 Remarkable::ImageGenerator.draw_png(page, png_path)

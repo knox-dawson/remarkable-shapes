@@ -29,6 +29,8 @@ module Remarkable
     # @param rgba [Integer, Array<Integer>, Hash] RGBA colour
     # @param color [Integer] tablet colour code
     # @param brush [Integer] tablet pen identifier
+    # @example Ruby lambda
+    #   Remarkable::Shapes.rm2_box(page, color: Remarkable::RmPage::Colour::BLACK)
     # @return [void]
     def rm2_box(page, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
       draw_box(page, 130, 130, 1270, 1740, 4, rgba:, color:, brush:)
@@ -36,6 +38,8 @@ module Remarkable
 
     # Draws a polyline box.
     #
+    # @example Ruby lambda
+    #   Remarkable::Shapes.draw_box(page, 120, 120, 1280, 1740, 4, color: Remarkable::RmPage::Colour::GREY)
     # @return [void]
     def draw_box(page, x1, y1, x2, y2, width, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
       line = page.add_line
@@ -48,6 +52,8 @@ module Remarkable
 
     # Draws a simple two-point line.
     #
+    # @example Ruby lambda
+    #   Remarkable::Shapes.draw_line(page, 140, 240, 1240, 240, 8, rgba: 0xFF444444)
     # @return [void]
     def draw_line(page, x1, y1, x2, y2, width, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
       line = page.add_line
@@ -74,6 +80,8 @@ module Remarkable
 
     # Draws line-font text using the shared vector font renderer.
     #
+    # @example Ruby lambda
+    #   Remarkable::Shapes.text(page, "remarkable-shapes", 180, 260, size: 42, stroke_width: 3, color: Remarkable::RmPage::Colour::BLACK)
     # @return [Float] rendered width
     def text(page, string, x, baseline_y, size: 48.0, stroke_width: 2.0, style: :plain, mono: false,
              rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
@@ -93,6 +101,8 @@ module Remarkable
 
     # Draws a thick tapered rectangle-like stroke.
     #
+    # @example Ruby lambda
+    #   Remarkable::Shapes.rect(page, 220, 420, 1080, 420, 120, color: Remarkable::RmPage::Colour::YELLOW)
     # @return [void]
     def rect(page, x1, y1, x2, y2, width, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
       line = page.add_line
@@ -244,6 +254,8 @@ module Remarkable
 
     # Draws a filled circle approximated by a very short wide line.
     #
+    # @example Ruby lambda
+    #   Remarkable::Shapes.circle(page, 320, 320, 70, color: Remarkable::RmPage::Colour::RED)
     # @return [void]
     def circle(page, cx, cy, radius, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
       line = page.add_line
@@ -322,6 +334,9 @@ module Remarkable
     # @param pixel_size [Numeric] cell size in page units
     # @param gap [Numeric] empty space between cells
     # @param brush [Integer] tablet pen identifier
+    # @example Ruby lambda
+    #   rgba_grid = Remarkable::Shapes.png_to_rgba_grid("examples/cat.png")
+    #   Remarkable::Shapes.draw_rgba_grid(page, rgba_grid, 240, 260, 6.0, gap: -0.10, brush: Remarkable::RmPage::Pen::HIGHLIGHTER_2)
     # @return [void]
     def draw_rgba_grid(page, rgba_grid, x, y, pixel_size, gap: 0.0, brush: RmPage::Pen::HIGHLIGHTER_2)
       raise ArgumentError, "rgba_grid must not be empty" if rgba_grid.nil? || rgba_grid.empty?
@@ -344,6 +359,8 @@ module Remarkable
 
     # Draws a semicircle-like wide stroke in a given direction.
     #
+    # @example Ruby lambda
+    #   Remarkable::Shapes.semicircle(page, 720, 280, 70, Remarkable::Shapes::RIGHT, color: Remarkable::RmPage::Colour::BLUE)
     # @return [void]
     def semicircle(page, cx, cy, radius, angle, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
       line = page.add_line
@@ -357,6 +374,8 @@ module Remarkable
 
     # Draws a tapered isosceles triangle using a three-point stroke.
     #
+    # @example Ruby lambda
+    #   Remarkable::Shapes.triangle(page, 180, 560, 360, 650, 120, color: Remarkable::RmPage::Colour::GREEN)
     # @return [void]
     def triangle(page, ax, ay, bx, by, width, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
       dx = bx - ax
@@ -379,6 +398,8 @@ module Remarkable
 
     # Draws the exact right-triangle construction based on two isosceles triangles.
     #
+    # @example Ruby lambda
+    #   Remarkable::Shapes.right_triangle(page, 520, 500, 520, 700, 760, 700, color: Remarkable::RmPage::Colour::MAGENTA)
     # @return [void]
     def right_triangle(page, ax, ay, bx, by, cx, cy, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
       dab = Math.hypot(ax - bx, ay - by)
@@ -470,6 +491,8 @@ module Remarkable
 
     # Draws a multi-arm star as a collection of tapered strokes.
     #
+    # @example Ruby lambda
+    #   Remarkable::Shapes.stars(page, 1020, 620, 120, 5, 31, -1, color: Remarkable::RmPage::Colour::BLACK)
     # @return [void]
     def stars(page, cx, cy, radius, points, wide_point_percent, width, rotation: 0, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
       arms = generate_star_lines(cx, cy, radius, points, wide_point_percent, width, rotation)
@@ -540,6 +563,8 @@ module Remarkable
     # Draws a freeform polygon outline.
     #
     # @param points [Array<Array<Numeric>>]
+    # @example Ruby lambda
+    #   Remarkable::Shapes.polygon_outline(page, [[120, 740], [340, 610], [450, 820], [250, 980]], 12, color: Remarkable::RmPage::Colour::GREEN)
     # @return [void]
     def polygon_outline(page, points, width, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
       raise ArgumentError, "polygon requires at least 3 points" if points.length < 3
@@ -550,6 +575,8 @@ module Remarkable
 
     # Draws a regular polygon outline.
     #
+    # @example Ruby lambda
+    #   Remarkable::Shapes.regular_polygon_outline(page, 670, 850, 140, 6, 12, color: Remarkable::RmPage::Colour::BLACK)
     # @return [void]
     def regular_polygon_outline(page, cx, cy, radius, sides, width, rotation: 0,
                                 rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
@@ -559,6 +586,8 @@ module Remarkable
     # Draws a filled regular polygon using a triangle fan from the center.
     #
     # @param colors [Array<Integer, Array<Integer>, Hash>]
+    # @example Ruby lambda
+    #   Remarkable::Shapes.regular_polygon_fill(page, 1060, 850, 140, 6, colors: [0xFFFF6600, 0xFF00AAFF, 0xFF7A4DFF])
     # @return [void]
     def regular_polygon_fill(page, cx, cy, radius, sides, colors:, rotation: 0, brush: DEFAULT_BRUSH)
       raise ArgumentError, "colors must not be empty" if colors.nil? || colors.empty?
@@ -578,6 +607,8 @@ module Remarkable
     # Draws a striped flag pattern using an array of colour or RGBA values.
     #
     # @param colors [Array<Integer, Array<Integer>, Hash>] stripe colours
+    # @example Ruby lambda
+    #   Remarkable::Shapes.striped_flag(page, 200, 200, 1000, 666, :top_to_bottom, 2, colors: [Remarkable::RmPage::Colour::WHITE, Remarkable::RmPage::Colour::RED])
     # @return [void]
     def striped_flag(page, x, y, width, height, direction, stripe_count, percentages = nil, colors:, brush: DEFAULT_BRUSH)
       raise ArgumentError, "stripe_count must be > 0" if stripe_count <= 0
@@ -653,6 +684,8 @@ module Remarkable
     # @param b [Point, Array<Numeric>]
     # @param c [Point, Array<Numeric>]
     # @param d [Point, Array<Numeric>]
+    # @example Ruby lambda
+    #   Remarkable::Shapes.parallelogram(page, [150, 1120], [310, 1450], [620, 1450], [460, 1120], color: Remarkable::RmPage::Colour::CYAN)
     # @return [void]
     def parallelogram(page, a, b, c, d, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
       a = to_point(a)
