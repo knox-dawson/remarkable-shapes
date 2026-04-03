@@ -4,30 +4,18 @@ $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "version"
 require "io/rm_page"
 require "io/rmdoc_writer"
-require "shapes/shape_library"
+require "shapes/shapes"
+require "shapes/line_font"
 
 EXAMPLES_DIR = File.expand_path("../examples", __dir__)
 
-SHAPES = {
-  "shape-sampler" => Remarkable::ShapeLibrary.method(:draw_shape_sampler),
-  "color-sampler" => Remarkable::ShapeLibrary.method(:draw_color_sampler),
-  "cat-png" => Remarkable::ShapeLibrary.method(:draw_cat_png),
-  "line-font-sampler" => Remarkable::ShapeLibrary.method(:draw_line_font_sampler),
-  "us-flag" => Remarkable::ShapeLibrary.method(:draw_us_flag),
-  "greenland-flag" => Remarkable::ShapeLibrary.method(:draw_greenland_flag)
-}.freeze
-
 def print_usage
-  puts "Usage: ruby bin/generate_shape <shape-name-or-file> [output-file]"
-  puts "Available shapes:"
-  SHAPES.keys.each { |name| puts "  #{name}" }
+  puts "Usage: ruby bin/generate_shape <shape-file-or-name> [output-file]"
   puts
-  puts "External shape files:"
-  puts "  ruby bin/generate_shape /path/to/shape-repo/post-it/example.rb"
+  puts "Examples:"
+  puts "  ruby bin/generate_shape examples/us-flag.rb out/us-flag.rmdoc"
+  puts "  ruby bin/generate_shape us-flag"
   puts "  REMARKABLE_SHAPES_PATH=/path/to/shape-repo ruby bin/generate_shape post-it/example"
-  puts
-  puts "Tracked example shape files:"
-  puts "  ruby bin/generate_shape examples/emoji-pages/emoji-01.rb"
   puts
   puts "A shape file must evaluate to a callable object, for example:"
   puts "  ->(page) { Remarkable::Shapes.rm2_box(page) }"
@@ -58,7 +46,7 @@ def load_local_renderer(path)
   renderer = eval(File.read(path), TOPLEVEL_BINDING, path)
   return renderer if renderer.respond_to?(:call)
 
-  warn "Local shape file must evaluate to a callable object: #{path}"
+  warn "Shape file must evaluate to a callable object: #{path}"
   exit 2
 end
 
@@ -73,19 +61,15 @@ if %w[--version -v].include?(ARGV[0])
 end
 
 shape_name = ARGV[0]
-renderer = SHAPES[shape_name]
-shape_path = nil
-unless renderer
-  shape_path = resolve_shape_path(shape_name)
-  renderer = load_local_renderer(shape_path) if shape_path
-end
-unless renderer
+shape_path = resolve_shape_path(shape_name)
+unless shape_path
   warn "Unknown shape or file: #{shape_name}"
   print_usage
   exit 2
 end
 
-default_name = shape_path ? File.basename(shape_path, ".rb") : shape_name
+renderer = load_local_renderer(shape_path)
+default_name = File.basename(shape_path, ".rb")
 output_name = ARGV[1] || "out/#{default_name}.rmdoc"
 page = Remarkable::RmPage.new
 renderer.call(page)

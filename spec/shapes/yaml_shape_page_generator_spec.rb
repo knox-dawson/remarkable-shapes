@@ -4,7 +4,7 @@ require "tmpdir"
 
 require_relative "../spec_helper"
 
-RSpec.describe Remarkable::PngShapePageGenerator do
+RSpec.describe Remarkable::YamlShapePageGenerator do
   it "parses row and column layouts" do
     expect(described_class.parse_layout("3x5")).to eq([3, 5])
   end
@@ -21,7 +21,7 @@ RSpec.describe Remarkable::PngShapePageGenerator do
     end.to raise_error(ArgumentError, /must be positive/)
   end
 
-  it "generates one or more local shape files from a png directory" do
+  it "generates one or more yaml page files from a png directory" do
     Dir.mktmpdir do |dir|
       image_dir = File.join(dir, "images")
       output_dir = File.join(dir, "pages")
@@ -35,7 +35,7 @@ RSpec.describe Remarkable::PngShapePageGenerator do
       generated = described_class.generate(image_dir:, layout: "1x1", output_dir:, prefix: "emoji")
 
       expect(generated.length).to eq(2)
-      expect(File.read(generated.first)).to include("Remarkable::ShapeLibrary.draw_png_shape")
+      expect(File.read(generated.first)).to include("type: image")
     end
   end
 
@@ -51,7 +51,7 @@ RSpec.describe Remarkable::PngShapePageGenerator do
     end
   end
 
-  it "builds page files with relative png paths" do
+  it "builds page files with relative png paths and yaml image objects" do
     Dir.mktmpdir do |dir|
       images_dir = File.join(dir, "images")
       output_dir = File.join(dir, "pages")
@@ -62,7 +62,7 @@ RSpec.describe Remarkable::PngShapePageGenerator do
       image.save(image_path)
 
       page_file = described_class.build_page_file(
-        File.join(output_dir, "emoji-01.rb"),
+        File.join(output_dir, "emoji-01.yml"),
         [image_path],
         rows: 1,
         cols: 1,
@@ -72,9 +72,9 @@ RSpec.describe Remarkable::PngShapePageGenerator do
         brush: Remarkable::RmPage::Pen::SHADER
       )
 
-      expect(page_file).to include('File.expand_path("../images/one.png", __dir__)')
-      expect(page_file).to include("brush: #{Remarkable::RmPage::Pen::SHADER}")
-      expect(page_file).to include("gap: -0.10000")
+      expect(page_file).to include('path: "../images/one.png"')
+      expect(page_file).to include("brush: shader")
+      expect(page_file).to include("gap: -0.1")
     end
   end
 end

@@ -2,19 +2,20 @@
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
 require "version"
-require "shapes/png_shape_page_generator"
+require "io/rm_page"
+require "shapes/yaml_shape_page_generator"
 
 def print_usage
-  puts "Usage: ruby bin/generate_png_shape_pages <image-dir> <rows>x<cols> [output-dir] [prefix] [outer-padding] [cell-gap] [pixel-gap]"
+  puts "Usage: ruby bin/generate_yaml_pages <image-dir> <rows>x<cols> [output-dir] [prefix] [outer-padding] [cell-gap] [pixel-gap]"
   puts
   puts "Example:"
-  puts "  ruby bin/generate_png_shape_pages emoji 3x5 examples/emoji-pages emoji 40 30 -0.10"
-  puts "  ruby bin/generate_png_shape_pages emoji 3x5 /path/to/shape-repo/emoji-pages emoji"
+  puts "  ruby bin/generate_yaml_pages emoji 3x5 examples/emoji-pages emoji 40 30 -0.10"
+  puts "  ruby bin/generate_yaml_pages emoji 3x5 /path/to/shape-repo/emoji-pages emoji"
   puts
   puts "Notes:"
   puts "  outer-padding adds margin inside the rm2 box"
-  puts "  cell-gap sets spacing between emoji cells"
-  puts "  pixel-gap is passed to the PNG grid renderer"
+  puts "  cell-gap sets spacing between image cells"
+  puts "  pixel-gap is written to each YAML image object as gap"
   puts "  use a negative pixel-gap for slight pixel overlap"
 end
 
@@ -33,11 +34,11 @@ layout = ARGV[1] || abort("Missing layout, for example 3x5")
 default_dirname = "#{File.basename(File.expand_path(image_dir))}-pages"
 output_dir = ARGV[2] || File.join("examples", default_dirname)
 prefix = ARGV[3]
-outer_padding = (ARGV[4] || Remarkable::PngShapePageGenerator::DEFAULT_OUTER_PADDING).to_f
-cell_gap = (ARGV[5] || Remarkable::PngShapePageGenerator::DEFAULT_CELL_GAP).to_f
-pixel_gap = (ARGV[6] || Remarkable::PngShapePageGenerator::DEFAULT_PIXEL_GAP).to_f
+outer_padding = (ARGV[4] || Remarkable::YamlShapePageGenerator::DEFAULT_OUTER_PADDING).to_f
+cell_gap = (ARGV[5] || Remarkable::YamlShapePageGenerator::DEFAULT_CELL_GAP).to_f
+pixel_gap = (ARGV[6] || Remarkable::YamlShapePageGenerator::DEFAULT_PIXEL_GAP).to_f
 
-generated = Remarkable::PngShapePageGenerator.generate(
+generated = Remarkable::YamlShapePageGenerator.generate(
   image_dir:,
   layout:,
   output_dir:,

@@ -1,0 +1,707 @@
+canvas:
+  tablet: rm2
+
+objects:
+  - type: rectangle_outline
+    x: 130
+    y: 130
+    width: 1140
+    height: 1610
+    stroke_width: 4
+    color: black
+
+  - type: rectangle_outline
+    x: 170
+    y: 185
+    width: 470
+    height: 475
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    x1: 205
+    y1: 203
+    x2: 605
+    y2: 203
+    stroke_width: 12
+    brush: fineliner_2
+    color: black
+
+  - type: line
+    x1: 205
+    y1: 242.90909
+    x2: 605
+    y2: 242.90909
+    stroke_width: 12
+    brush: fineliner_2
+    color: grey
+
+  - type: line
+    x1: 205
+    y1: 282.81818
+    x2: 605
+    y2: 282.81818
+    stroke_width: 12
+    brush: fineliner_2
+    color: highlighter_yellow
+
+  - type: line
+    x1: 205
+    y1: 322.72727
+    x2: 605
+    y2: 322.72727
+    stroke_width: 12
+    brush: fineliner_2
+    color: highlighter_green
+
+  - type: line
+    x1: 205
+    y1: 362.63636
+    x2: 605
+    y2: 362.63636
+    stroke_width: 12
+    brush: fineliner_2
+    color: highlighter_pink
+
+  - type: line
+    x1: 205
+    y1: 402.54545
+    x2: 605
+    y2: 402.54545
+    stroke_width: 12
+    brush: fineliner_2
+    color: blue
+
+  - type: line
+    x1: 205
+    y1: 442.45455
+    x2: 605
+    y2: 442.45455
+    stroke_width: 12
+    brush: fineliner_2
+    color: red
+
+  - type: line
+    x1: 205
+    y1: 482.36364
+    x2: 605
+    y2: 482.36364
+    stroke_width: 12
+    brush: fineliner_2
+    color: highlighter_grey
+
+  - type: line
+    x1: 205
+    y1: 522.27273
+    x2: 605
+    y2: 522.27273
+    stroke_width: 12
+    brush: fineliner_2
+    color: green
+
+  - type: line
+    x1: 205
+    y1: 562.18182
+    x2: 605
+    y2: 562.18182
+    stroke_width: 12
+    brush: fineliner_2
+    color: cyan
+
+  - type: line
+    x1: 205
+    y1: 602.09091
+    x2: 605
+    y2: 602.09091
+    stroke_width: 12
+    brush: fineliner_2
+    color: magenta
+
+  - type: line
+    x1: 205
+    y1: 642
+    x2: 605
+    y2: 642
+    stroke_width: 12
+    brush: fineliner_2
+    color: yellow
+
+  - type: rectangle_outline
+    x: 725
+    y: 185
+    width: 470
+    height: 475
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    x1: 760
+    y1: 203
+    x2: 1160
+    y2: 203
+    stroke_width: 16
+    brush: highlighter_2
+    color: black
+
+  - type: line
+    x1: 760
+    y1: 242.90909
+    x2: 1160
+    y2: 242.90909
+    stroke_width: 16
+    brush: highlighter_2
+    color: grey
+
+  - type: line
+    x1: 760
+    y1: 282.81818
+    x2: 1160
+    y2: 282.81818
+    stroke_width: 16
+    brush: highlighter_2
+    color: highlighter_yellow
+
+  - type: line
+    x1: 760
+    y1: 322.72727
+    x2: 1160
+    y2: 322.72727
+    stroke_width: 16
+    brush: highlighter_2
+    color: highlighter_green
+
+  - type: line
+    x1: 760
+    y1: 362.63636
+    x2: 1160
+    y2: 362.63636
+    stroke_width: 16
+    brush: highlighter_2
+    color: highlighter_pink
+
+  - type: line
+    x1: 760
+    y1: 402.54545
+    x2: 1160
+    y2: 402.54545
+    stroke_width: 16
+    brush: highlighter_2
+    color: blue
+
+  - type: line
+    x1: 760
+    y1: 442.45455
+    x2: 1160
+    y2: 442.45455
+    stroke_width: 16
+    brush: highlighter_2
+    color: red
+
+  - type: line
+    x1: 760
+    y1: 482.36364
+    x2: 1160
+    y2: 482.36364
+    stroke_width: 16
+    brush: highlighter_2
+    color: highlighter_grey
+
+  - type: line
+    x1: 760
+    y1: 522.27273
+    x2: 1160
+    y2: 522.27273
+    stroke_width: 16
+    brush: highlighter_2
+    color: green
+
+  - type: line
+    x1: 760
+    y1: 562.18182
+    x2: 1160
+    y2: 562.18182
+    stroke_width: 16
+    brush: highlighter_2
+    color: cyan
+
+  - type: line
+    x1: 760
+    y1: 602.09091
+    x2: 1160
+    y2: 602.09091
+    stroke_width: 16
+    brush: highlighter_2
+    color: magenta
+
+  - type: line
+    x1: 760
+    y1: 642
+    x2: 1160
+    y2: 642
+    stroke_width: 16
+    brush: highlighter_2
+    color: yellow
+
+  - type: rectangle_outline
+    x: 170
+    y: 695
+    width: 470
+    height: 475
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    x1: 205
+    y1: 713
+    x2: 605
+    y2: 713
+    stroke_width: 12
+    brush: shader
+    rgba: "0x40211E1C"
+
+  - type: line
+    x1: 205
+    y1: 752.90909
+    x2: 605
+    y2: 752.90909
+    stroke_width: 12
+    brush: shader
+    rgba: "0x4D304AE0"
+
+  - type: line
+    x1: 205
+    y1: 792.81818
+    x2: 605
+    y2: 792.81818
+    stroke_width: 12
+    brush: shader
+    rgba: "0x6674D2E8"
+
+  - type: line
+    x1: 205
+    y1: 832.72727
+    x2: 605
+    y2: 832.72727
+    stroke_width: 12
+    brush: shader
+    rgba: "0x66C23132"
+
+  - type: line
+    x1: 205
+    y1: 872.63636
+    x2: 605
+    y2: 872.63636
+    stroke_width: 12
+    brush: shader
+    rgba: "0x73FAE719"
+
+  - type: line
+    x1: 205
+    y1: 912.54545
+    x2: 605
+    y2: 912.54545
+    stroke_width: 12
+    brush: shader
+    rgba: "0x73FEB200"
+
+  - type: line
+    x1: 205
+    y1: 952.45455
+    x2: 605
+    y2: 952.45455
+    stroke_width: 12
+    brush: shader
+    rgba: "0x8091DA71"
+
+  - type: line
+    x1: 205
+    y1: 992.36364
+    x2: 605
+    y2: 992.36364
+    stroke_width: 12
+    brush: shader
+    rgba: "0x80C07FD2"
+
+  - type: line
+    x1: 205
+    y1: 1032.27273
+    x2: 605
+    y2: 1032.27273
+    stroke_width: 12
+    brush: shader
+    rgba: "0x40211E1C"
+
+  - type: line
+    x1: 205
+    y1: 1072.18182
+    x2: 605
+    y2: 1072.18182
+    stroke_width: 12
+    brush: shader
+    rgba: "0x4D304AE0"
+
+  - type: line
+    x1: 205
+    y1: 1112.09091
+    x2: 605
+    y2: 1112.09091
+    stroke_width: 12
+    brush: shader
+    rgba: "0x6674D2E8"
+
+  - type: line
+    x1: 205
+    y1: 1152
+    x2: 605
+    y2: 1152
+    stroke_width: 12
+    brush: shader
+    rgba: "0x66C23132"
+
+  - type: rectangle_outline
+    x: 725
+    y: 695
+    width: 470
+    height: 475
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    x1: 760
+    y1: 713
+    x2: 1160
+    y2: 713
+    stroke_width: 12
+    brush: shader
+    rgba: "0xFFFF0000"
+
+  - type: line
+    x1: 760
+    y1: 752.90909
+    x2: 1160
+    y2: 752.90909
+    stroke_width: 12
+    brush: shader
+    rgba: "0xFFFF6600"
+
+  - type: line
+    x1: 760
+    y1: 792.81818
+    x2: 1160
+    y2: 792.81818
+    stroke_width: 12
+    brush: shader
+    rgba: "0xFFFFCC00"
+
+  - type: line
+    x1: 760
+    y1: 832.72727
+    x2: 1160
+    y2: 832.72727
+    stroke_width: 12
+    brush: shader
+    rgba: "0xFFCCFF00"
+
+  - type: line
+    x1: 760
+    y1: 872.63636
+    x2: 1160
+    y2: 872.63636
+    stroke_width: 12
+    brush: shader
+    rgba: "0xFF66FF00"
+
+  - type: line
+    x1: 760
+    y1: 912.54545
+    x2: 1160
+    y2: 912.54545
+    stroke_width: 12
+    brush: shader
+    rgba: "0xFF00FF66"
+
+  - type: line
+    x1: 760
+    y1: 952.45455
+    x2: 1160
+    y2: 952.45455
+    stroke_width: 12
+    brush: shader
+    rgba: "0xFF00FFCC"
+
+  - type: line
+    x1: 760
+    y1: 992.36364
+    x2: 1160
+    y2: 992.36364
+    stroke_width: 12
+    brush: shader
+    rgba: "0xFF00CCFF"
+
+  - type: line
+    x1: 760
+    y1: 1032.27273
+    x2: 1160
+    y2: 1032.27273
+    stroke_width: 12
+    brush: shader
+    rgba: "0xFF0066FF"
+
+  - type: line
+    x1: 760
+    y1: 1072.18182
+    x2: 1160
+    y2: 1072.18182
+    stroke_width: 12
+    brush: shader
+    rgba: "0xFF6600FF"
+
+  - type: line
+    x1: 760
+    y1: 1112.09091
+    x2: 1160
+    y2: 1112.09091
+    stroke_width: 12
+    brush: shader
+    rgba: "0xFFCC00FF"
+
+  - type: line
+    x1: 760
+    y1: 1152
+    x2: 1160
+    y2: 1152
+    stroke_width: 12
+    brush: shader
+    rgba: "0xFFFF0099"
+
+  - type: rectangle_outline
+    x: 170
+    y: 1205
+    width: 470
+    height: 475
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    x1: 205
+    y1: 1223
+    x2: 605
+    y2: 1223
+    stroke_width: 12
+    brush: fineliner_2
+    rgba: "0xFFFF0000"
+
+  - type: line
+    x1: 205
+    y1: 1262.90909
+    x2: 605
+    y2: 1262.90909
+    stroke_width: 12
+    brush: fineliner_2
+    rgba: "0xFFFF6600"
+
+  - type: line
+    x1: 205
+    y1: 1302.81818
+    x2: 605
+    y2: 1302.81818
+    stroke_width: 12
+    brush: fineliner_2
+    rgba: "0xFFFFCC00"
+
+  - type: line
+    x1: 205
+    y1: 1342.72727
+    x2: 605
+    y2: 1342.72727
+    stroke_width: 12
+    brush: fineliner_2
+    rgba: "0xFFCCFF00"
+
+  - type: line
+    x1: 205
+    y1: 1382.63636
+    x2: 605
+    y2: 1382.63636
+    stroke_width: 12
+    brush: fineliner_2
+    rgba: "0xFF66FF00"
+
+  - type: line
+    x1: 205
+    y1: 1422.54545
+    x2: 605
+    y2: 1422.54545
+    stroke_width: 12
+    brush: fineliner_2
+    rgba: "0xFF00FF66"
+
+  - type: line
+    x1: 205
+    y1: 1462.45455
+    x2: 605
+    y2: 1462.45455
+    stroke_width: 12
+    brush: fineliner_2
+    rgba: "0xFF00FFCC"
+
+  - type: line
+    x1: 205
+    y1: 1502.36364
+    x2: 605
+    y2: 1502.36364
+    stroke_width: 12
+    brush: fineliner_2
+    rgba: "0xFF00CCFF"
+
+  - type: line
+    x1: 205
+    y1: 1542.27273
+    x2: 605
+    y2: 1542.27273
+    stroke_width: 12
+    brush: fineliner_2
+    rgba: "0xFF0066FF"
+
+  - type: line
+    x1: 205
+    y1: 1582.18182
+    x2: 605
+    y2: 1582.18182
+    stroke_width: 12
+    brush: fineliner_2
+    rgba: "0xFF6600FF"
+
+  - type: line
+    x1: 205
+    y1: 1622.09091
+    x2: 605
+    y2: 1622.09091
+    stroke_width: 12
+    brush: fineliner_2
+    rgba: "0xFFCC00FF"
+
+  - type: line
+    x1: 205
+    y1: 1662
+    x2: 605
+    y2: 1662
+    stroke_width: 12
+    brush: fineliner_2
+    rgba: "0xFFFF0099"
+
+  - type: rectangle_outline
+    x: 725
+    y: 1205
+    width: 470
+    height: 475
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    x1: 760
+    y1: 1223
+    x2: 1160
+    y2: 1223
+    stroke_width: 16
+    brush: highlighter_2
+    rgba: "0xFFFF0000"
+
+  - type: line
+    x1: 760
+    y1: 1262.90909
+    x2: 1160
+    y2: 1262.90909
+    stroke_width: 16
+    brush: highlighter_2
+    rgba: "0xFFFF6600"
+
+  - type: line
+    x1: 760
+    y1: 1302.81818
+    x2: 1160
+    y2: 1302.81818
+    stroke_width: 16
+    brush: highlighter_2
+    rgba: "0xFFFFCC00"
+
+  - type: line
+    x1: 760
+    y1: 1342.72727
+    x2: 1160
+    y2: 1342.72727
+    stroke_width: 16
+    brush: highlighter_2
+    rgba: "0xFFCCFF00"
+
+  - type: line
+    x1: 760
+    y1: 1382.63636
+    x2: 1160
+    y2: 1382.63636
+    stroke_width: 16
+    brush: highlighter_2
+    rgba: "0xFF66FF00"
+
+  - type: line
+    x1: 760
+    y1: 1422.54545
+    x2: 1160
+    y2: 1422.54545
+    stroke_width: 16
+    brush: highlighter_2
+    rgba: "0xFF00FF66"
+
+  - type: line
+    x1: 760
+    y1: 1462.45455
+    x2: 1160
+    y2: 1462.45455
+    stroke_width: 16
+    brush: highlighter_2
+    rgba: "0xFF00FFCC"
+
+  - type: line
+    x1: 760
+    y1: 1502.36364
+    x2: 1160
+    y2: 1502.36364
+    stroke_width: 16
+    brush: highlighter_2
+    rgba: "0xFF00CCFF"
+
+  - type: line
+    x1: 760
+    y1: 1542.27273
+    x2: 1160
+    y2: 1542.27273
+    stroke_width: 16
+    brush: highlighter_2
+    rgba: "0xFF0066FF"
+
+  - type: line
+    x1: 760
+    y1: 1582.18182
+    x2: 1160
+    y2: 1582.18182
+    stroke_width: 16
+    brush: highlighter_2
+    rgba: "0xFF6600FF"
+
+  - type: line
+    x1: 760
+    y1: 1622.09091
+    x2: 1160
+    y2: 1622.09091
+    stroke_width: 16
+    brush: highlighter_2
+    rgba: "0xFFCC00FF"
+
+  - type: line
+    x1: 760
+    y1: 1662
+    x2: 1160
+    y2: 1662
+    stroke_width: 16
+    brush: highlighter_2
+    rgba: "0xFFFF0099"

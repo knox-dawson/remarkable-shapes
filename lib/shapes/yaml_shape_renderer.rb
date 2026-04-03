@@ -144,12 +144,18 @@ module Remarkable
       case type
       when "line"
         draw_line_object(page, object, layout, style:, brush:)
+      when "semicircle_fill"
+        draw_semicircle_fill_object(page, object, layout, style:, brush:)
       when "circle_fill"
         draw_circle_fill_object(page, object, layout, style:, brush:)
       when "circle_outline"
         draw_circle_outline_object(page, object, layout, style:, brush:)
       when "circle_outline_fill"
         draw_circle_outline_fill_object(page, object, layout, brush:)
+      when "isosceles_triangle_fill"
+        draw_isosceles_triangle_fill_object(page, object, layout, style:, brush:)
+      when "right_triangle_fill"
+        draw_right_triangle_fill_object(page, object, layout, style:, brush:)
       when "rectangle_fill"
         draw_rectangle_fill_object(page, object, layout, style:, brush:)
       when "rectangle_outline"
@@ -415,6 +421,28 @@ module Remarkable
       Shapes.draw_line(page, x1, y1, x2, y2, width, brush:, **style)
     end
 
+    # Draws a filled semicircle object.
+    #
+    # @return [void]
+    def draw_semicircle_fill_object(page, object, layout, style:, brush:)
+      box = resolve_box(layout, object)
+      direction = object.fetch("direction") { raise ArgumentError, "direction is required" }.to_s
+      angle = case direction
+              when "right"
+                Shapes::RIGHT
+              when "down"
+                Shapes::DOWN
+              when "left"
+                Shapes::LEFT
+              when "up"
+                Shapes::UP
+              else
+                raise ArgumentError, "unsupported semicircle direction: #{direction}"
+              end
+      radius = [box[:width], box[:height]].min / 2.0
+      Shapes.semicircle(page, box[:center_x], box[:center_y], radius, angle, brush:, **style)
+    end
+
     # Draws a filled circle object.
     #
     # @return [void]
@@ -450,6 +478,31 @@ module Remarkable
     def draw_circle_outline_fill_object(page, object, layout, brush:)
       draw_circle_fill_object(page, object, layout, style: style_options_for(object, "fill"), brush:)
       draw_circle_outline_object(page, object, layout, style: style_options_for(object, "outline"), brush:)
+    end
+
+    # Draws a filled isosceles triangle object.
+    #
+    # @return [void]
+    def draw_isosceles_triangle_fill_object(page, object, layout, style:, brush:)
+      ax = map_x(layout, fetch_number(object, "x1"))
+      ay = map_y(layout, fetch_number(object, "y1"))
+      bx = map_x(layout, fetch_number(object, "x2"))
+      by = map_y(layout, fetch_number(object, "y2"))
+      width = scale_length(layout, fetch_number(object, "triangle_width"))
+      Shapes.triangle(page, ax, ay, bx, by, width, brush:, **style)
+    end
+
+    # Draws a filled right triangle object.
+    #
+    # @return [void]
+    def draw_right_triangle_fill_object(page, object, layout, style:, brush:)
+      ax = map_x(layout, fetch_number(object, "x1"))
+      ay = map_y(layout, fetch_number(object, "y1"))
+      bx = map_x(layout, fetch_number(object, "x2"))
+      by = map_y(layout, fetch_number(object, "y2"))
+      cx = map_x(layout, fetch_number(object, "x3"))
+      cy = map_y(layout, fetch_number(object, "y3"))
+      Shapes.right_triangle(page, ax, ay, bx, by, cx, cy, brush:, **style)
     end
 
     # Draws a filled rectangle object.

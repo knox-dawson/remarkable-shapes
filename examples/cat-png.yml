@@ -1,0 +1,20 @@
+canvas:
+  tablet: rm2
+
+objects:
+  - type: rectangle_outline
+    x: 130
+    y: 130
+    width: 1140
+    height: 1610
+    stroke_width: 4
+    color: black
+
+  - type: image
+    path: cat.png
+    x: 130
+    y: 130
+    width: 1140
+    height: 1610
+    brush: highlighter_2
+    gap: 0

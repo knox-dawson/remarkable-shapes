@@ -1,0 +1,49 @@
+canvas:
+  tablet: rm2
+
+objects:
+  - type: rectangle_outline
+    x: 130
+    y: 130
+    width: 1140
+    height: 1610
+    stroke_width: 4
+    color: black
+
+  - type: rectangle_outline
+    x: 200
+    y: 200
+    width: 1000
+    height: 666.66667
+    stroke_width: 5
+    color: grey
+
+  - type: rectangle_fill
+    x: 200
+    y: 200
+    width: 1000
+    height: 333.33333
+    color: white
+
+  - type: rectangle_fill
+    x: 200
+    y: 533.33333
+    width: 1000
+    height: 333.33334
+    color: red
+
+  - type: semicircle_fill
+    x: 311.11111
+    y: 311.11111
+    width: 444.44444
+    height: 444.44444
+    color: red
+    direction: up
+
+  - type: semicircle_fill
+    x: 311.11111
+    y: 311.11111
+    width: 444.44444
+    height: 444.44444
+    color: white
+    direction: down

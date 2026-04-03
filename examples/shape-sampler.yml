@@ -1,0 +1,68 @@
+canvas:
+  tablet: rm2
+
+objects:
+  - type: rectangle_outline
+    x: 130
+    y: 130
+    width: 1140
+    height: 1610
+    stroke_width: 3
+    color: black
+
+  - type: circle_fill
+    x: 210
+    y: 210
+    width: 140
+    height: 140
+    color: red
+
+  - type: circle_fill
+    x: 430
+    y: 210
+    width: 140
+    height: 140
+    rgba: "0xFF223344"
+    brush: shader
+
+  - type: semicircle_fill
+    x: 650
+    y: 210
+    width: 140
+    height: 140
+    color: blue
+    direction: right
+
+  - type: rectangle_fill
+    x: 880
+    y: 200
+    width: 280
+    height: 80
+    color: yellow
+
+  - type: isosceles_triangle_fill
+    x1: 180
+    y1: 560
+    x2: 360
+    y2: 650
+    triangle_width: 120
+    color: green
+
+  - type: right_triangle_fill
+    x1: 520
+    y1: 500
+    x2: 520
+    y2: 700
+    x3: 760
+    y3: 700
+    color: magenta
+
+  - type: star
+    x: 900
+    y: 500
+    width: 240
+    height: 240
+    points: 5
+    wide_point_percent: 31
+    star_width: -1
+    color: black
