@@ -13,18 +13,18 @@ EXAMPLES_DIR = File.expand_path("../examples", __dir__)
 def build_options(argv)
   Slop.parse(argv) do |o|
     o.banner = <<~BANNER
-      Usage: ruby bin/generate_shape --shape SHAPE_FILE_OR_NAME [options]
+      Usage: bin/generate_shape --input SHAPE_FILE_OR_NAME [options]
 
       Examples:
-        ruby bin/generate_shape --shape examples/us-flag.rb --output out/us-flag.rmdoc
-        ruby bin/generate_shape --shape us-flag
-        ruby bin/generate_shape --shape post-it/example --shapes-path /path/to/shape-repo
+        bin/generate_shape --input examples/us-flag.rb --output out/us-flag.rmdoc
+        bin/generate_shape --input us-flag
+        bin/generate_shape --input post-it/example --shapes-path /path/to/shape-repo
 
       A shape file must evaluate to a callable object, for example:
         ->(page) { Remarkable::Shapes.rm2_box(page) }
     BANNER
 
-    o.string "-s", "--shape", "Shape file path or shape name"
+    o.string "-i", "--input", "Shape file path or shape name"
     o.string "-o", "--output", "Output .rmdoc path"
     o.array "--shapes-path", "Extra search roots, repeated or comma-separated"
     o.bool "-v", "--version", "Print version"
@@ -74,9 +74,9 @@ if options[:version]
   exit 0
 end
 
-shape_name = options[:shape]
+shape_name = options[:input]
 if shape_name.nil? || shape_name.strip.empty?
-  warn "Missing required option: --shape"
+  warn "Missing required option: --input"
   warn options
   exit 2
 end

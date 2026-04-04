@@ -35,13 +35,13 @@ bin/generate_image --input examples/cat.png --output out/cat-image.rmdoc
 Generate a page from a YAML description:
 
 ```bash
-bin/generate_yaml --yaml examples/basic-shapes.yml --output out/basic-shapes.rmdoc
+bin/generate_yaml --input examples/basic-shapes.yml --output out/basic-shapes.rmdoc
 ```
 
 Generate a page from a Ruby shape file (lambda):
 
 ```bash
-bin/generate_shape --shape examples/us-flag.rb --output out/us-flag.rmdoc
+bin/generate_shape --input examples/us-flag.rb --output out/us-flag.rmdoc
 ```
 
 ## Wiki

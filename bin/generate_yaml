@@ -7,20 +7,47 @@ require "io/rm_page"
 require "io/rmdoc_writer"
 require "shapes/yaml_shape_renderer"
 
+EXAMPLES_DIR = File.expand_path("../examples", __dir__)
+
 def build_options(argv)
   Slop.parse(argv) do |o|
     o.banner = <<~BANNER
-      Usage: ruby bin/generate_yaml --yaml YAML_FILE [options]
+      Usage: bin/generate_yaml --input YAML_FILE_OR_NAME [options]
 
-      Example:
-        ruby bin/generate_yaml --yaml examples/basic-shapes.yml --output out/basic-shapes.rmdoc
+      Examples:
+        bin/generate_yaml --input examples/basic-shapes.yml --output out/basic-shapes.rmdoc
+        bin/generate_yaml --input basic-shapes --shapes-path /path/to/shape-repo
     BANNER
 
-    o.string "-y", "--yaml", "YAML file to render"
+    o.string "-i", "--input", "YAML file path or example name"
     o.string "-o", "--output", "Output .rmdoc path"
+    o.array "--shapes-path", "Extra search roots, repeated or comma-separated"
     o.bool "-v", "--version", "Print version"
     o.bool "-h", "--help", "Show help"
   end
+end
+
+def shape_search_roots(extra_roots = [])
+  roots = [EXAMPLES_DIR]
+  env_roots = ENV.fetch("REMARKABLE_SHAPES_PATH", "")
+                 .split(File::PATH_SEPARATOR)
+                 .reject(&:empty?)
+  roots.concat(env_roots)
+  roots.concat(extra_roots)
+  roots.uniq
+end
+
+def resolve_yaml_path(input_name, extra_roots = [])
+  candidates = [input_name, "#{input_name}.yml", "#{input_name}.yaml"]
+  shape_search_roots(extra_roots).each do |root|
+    candidates << File.join(root, input_name)
+    candidates << File.join(root, "#{input_name}.yml")
+    candidates << File.join(root, "#{input_name}.yaml")
+  end
+
+  candidates
+    .map { |path| File.expand_path(path, Dir.pwd) }
+    .find { |path| File.file?(path) }
 end
 
 options = build_options(ARGV)
@@ -35,15 +62,16 @@ if options[:version]
   exit 0
 end
 
-yaml_path = options[:yaml]
-if yaml_path.nil? || yaml_path.strip.empty?
-  warn "Missing required option: --yaml"
+input_name = options[:input]
+if input_name.nil? || input_name.strip.empty?
+  warn "Missing required option: --input"
   warn options
   exit 2
 end
 
-unless File.file?(yaml_path)
-  warn "YAML file not found: #{yaml_path}"
+yaml_path = resolve_yaml_path(input_name, options[:shapes_path] || [])
+unless yaml_path
+  warn "YAML file not found: #{input_name}"
   exit 2
 end
 
