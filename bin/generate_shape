@@ -3,6 +3,7 @@ $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
 require "version"
 require "slop"
+require "pathname"
 require "io/rm_page"
 require "io/rmdoc_writer"
 require "shapes/shapes"
@@ -43,15 +44,32 @@ def shape_search_roots(extra_roots = [])
 end
 
 def resolve_shape_path(shape_name, extra_roots = [])
-  candidates = [shape_name, "#{shape_name}.rb"]
+  candidates = [
+    { path: shape_name, root: nil },
+    { path: "#{shape_name}.rb", root: nil }
+  ]
   shape_search_roots(extra_roots).each do |root|
-    candidates << File.join(root, shape_name)
-    candidates << File.join(root, "#{shape_name}.rb")
+    candidates << { path: File.join(root, shape_name), root: root }
+    candidates << { path: File.join(root, "#{shape_name}.rb"), root: root }
   end
 
   candidates
-    .map { |path| File.expand_path(path, Dir.pwd) }
-    .find { |path| File.file?(path) }
+    .map do |candidate|
+      {
+        path: File.expand_path(candidate.fetch(:path), Dir.pwd),
+        root: candidate.fetch(:root)&.then { |root| File.expand_path(root, Dir.pwd) }
+      }
+    end
+    .find { |candidate| File.file?(candidate.fetch(:path)) }
+end
+
+def resolve_output_path(output_name, resolved_root)
+  return output_name if output_name.nil? || output_name.strip.empty?
+  return output_name if Pathname.new(output_name).absolute?
+  return output_name if resolved_root.nil?
+  return output_name if resolved_root == File.expand_path(EXAMPLES_DIR)
+
+  File.expand_path(output_name, resolved_root)
 end
 
 def load_local_renderer(path)
@@ -81,16 +99,18 @@ if shape_name.nil? || shape_name.strip.empty?
   exit 2
 end
 
-shape_path = resolve_shape_path(shape_name, options[:shapes_path] || [])
-unless shape_path
+shape_resolution = resolve_shape_path(shape_name, options[:shapes_path] || [])
+unless shape_resolution
   warn "Unknown shape or file: #{shape_name}"
   warn options
   exit 2
 end
 
+shape_path = shape_resolution.fetch(:path)
+resolved_root = shape_resolution.fetch(:root)
 renderer = load_local_renderer(shape_path)
 default_name = File.basename(shape_path, ".rb")
-output_name = options[:output] || "out/#{default_name}.rmdoc"
+output_name = resolve_output_path(options[:output] || "out/#{default_name}.rmdoc", resolved_root)
 page = Remarkable::RmPage.new
 renderer.call(page)
 Remarkable::RmdocWriter.write(output_name, page.to_rm_bytes)

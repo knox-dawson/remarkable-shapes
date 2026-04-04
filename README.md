@@ -2,7 +2,7 @@
 
 Tools for generating uploadable `.rmdoc` files for reMarkable tablets.
 
-Current version: `0.9.0-beta.2`
+Current version: `0.9.0-beta.3`
 
 ## Installation
 
@@ -42,6 +42,17 @@ Generate a page from a Ruby shape file (lambda):
 
 ```bash
 bin/generate_shape --input examples/us-flag.rb --output out/us-flag.rmdoc
+```
+
+For `bin/generate_shape` and `bin/generate_yaml`, relative `--output` paths are normally relative to your current working directory. If `--input` is resolved through an external library root from `REMARKABLE_SHAPES_PATH` or `--shapes-path`, then a relative `--output` path is rooted to that same external library root.
+
+Example:
+
+```bash
+REMARKABLE_SHAPES_PATH=/path/to/remarkable-shapes-library \
+bin/generate_shape \
+  --input post-it/p-4u-wgro-m-01.rb \
+  --output post-it/out/p-4u-wgro-m-01.rmdoc
 ```
 
 ## Wiki

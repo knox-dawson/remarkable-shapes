@@ -3,6 +3,7 @@ $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
 require "version"
 require "slop"
+require "pathname"
 require "io/rm_page"
 require "io/rmdoc_writer"
 require "shapes/yaml_shape_renderer"
@@ -38,16 +39,34 @@ def shape_search_roots(extra_roots = [])
 end
 
 def resolve_yaml_path(input_name, extra_roots = [])
-  candidates = [input_name, "#{input_name}.yml", "#{input_name}.yaml"]
+  candidates = [
+    { path: input_name, root: nil },
+    { path: "#{input_name}.yml", root: nil },
+    { path: "#{input_name}.yaml", root: nil }
+  ]
   shape_search_roots(extra_roots).each do |root|
-    candidates << File.join(root, input_name)
-    candidates << File.join(root, "#{input_name}.yml")
-    candidates << File.join(root, "#{input_name}.yaml")
+    candidates << { path: File.join(root, input_name), root: root }
+    candidates << { path: File.join(root, "#{input_name}.yml"), root: root }
+    candidates << { path: File.join(root, "#{input_name}.yaml"), root: root }
   end
 
   candidates
-    .map { |path| File.expand_path(path, Dir.pwd) }
-    .find { |path| File.file?(path) }
+    .map do |candidate|
+      {
+        path: File.expand_path(candidate.fetch(:path), Dir.pwd),
+        root: candidate.fetch(:root)&.then { |root| File.expand_path(root, Dir.pwd) }
+      }
+    end
+    .find { |candidate| File.file?(candidate.fetch(:path)) }
+end
+
+def resolve_output_path(output_name, resolved_root)
+  return output_name if output_name.nil? || output_name.strip.empty?
+  return output_name if Pathname.new(output_name).absolute?
+  return output_name if resolved_root.nil?
+  return output_name if resolved_root == File.expand_path(EXAMPLES_DIR)
+
+  File.expand_path(output_name, resolved_root)
 end
 
 options = build_options(ARGV)
@@ -69,14 +88,16 @@ if input_name.nil? || input_name.strip.empty?
   exit 2
 end
 
-yaml_path = resolve_yaml_path(input_name, options[:shapes_path] || [])
-unless yaml_path
+yaml_resolution = resolve_yaml_path(input_name, options[:shapes_path] || [])
+unless yaml_resolution
   warn "YAML file not found: #{input_name}"
   exit 2
 end
 
+yaml_path = yaml_resolution.fetch(:path)
+resolved_root = yaml_resolution.fetch(:root)
 default_name = File.basename(yaml_path, File.extname(yaml_path))
-output_path = options[:output] || "out/#{default_name}.rmdoc"
+output_path = resolve_output_path(options[:output] || "out/#{default_name}.rmdoc", resolved_root)
 
 config = Remarkable::YamlShapeRenderer.load_file_config(yaml_path)
 layout = Remarkable::YamlShapeRenderer.resolve_canvas_layout(config.fetch("canvas", {}))

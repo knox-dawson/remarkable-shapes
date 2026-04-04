@@ -9,7 +9,7 @@ objects:
     y: 20
     width: 1120
     height: 220
-    text: "remarkable-shapes 0.9.0-beta.2\nWrapped text and image pixel_gap example"
+    text: "remarkable-shapes\nWrapped text and image pixel_gap example"
     size: 62
     stroke_width: 5
     wrap: true
