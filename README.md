@@ -44,19 +44,6 @@ Generate a page from a Ruby shape file (lambda):
 bin/generate_shape --shape examples/us-flag.rb --output out/us-flag.rmdoc
 ```
 
-Generate YAML pages from a directory of PNGs:
-
-```bash
-bin/generate_yaml_pages --image-dir emoji --layout 3x5 --output-dir examples/emoji-pages --prefix emoji --outer-padding 40 --cell-gap 30 --pixel-gap -0.10
-```
-
-Built-in sample pages can live as either YAML or Ruby shape files in `examples/`, for example:
-
-```bash
-bin/generate_yaml --yaml examples/shape-sampler.yml --output out/shape-sampler.rmdoc
-bin/generate_shape --shape examples/us-flag.rb --output out/us-flag.rmdoc
-```
-
 ## Wiki
 
 More documentation can be found in the [Wiki](https://github.com/knox-dawson/remarkable-shapes/wiki).
