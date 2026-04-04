@@ -1,6 +1,6 @@
 # remarkable-shapes
 
-Ruby tools for generating uploadable `.rmdoc` files for reMarkable tablets.
+Tools for generating uploadable `.rmdoc` files for reMarkable tablets.
 
 Current version: `0.9.0-beta.2`
 
@@ -29,35 +29,37 @@ bundle install
 Generate a one-off image page from a PNG:
 
 ```bash
-ruby bin/generate_image --input examples/cat.png --output out/cat-image.rmdoc
+bin/generate_image --input examples/cat.png --output out/cat-image.rmdoc
 ```
 
 Generate a page from a YAML description:
 
 ```bash
-ruby bin/generate_yaml --yaml examples/basic-shapes.yml --output out/basic-shapes.rmdoc
+bin/generate_yaml --yaml examples/basic-shapes.yml --output out/basic-shapes.rmdoc
 ```
 
-Generate a page from a Ruby lambda:
+Generate a page from a Ruby shape file (lambda):
 
 ```bash
-ruby bin/generate_shape --shape examples/us-flag.rb --output out/us-flag.rmdoc
+bin/generate_shape --shape examples/us-flag.rb --output out/us-flag.rmdoc
 ```
 
 Generate YAML pages from a directory of PNGs:
 
 ```bash
-ruby bin/generate_yaml_pages --image-dir emoji --layout 3x5 --output-dir examples/emoji-pages --prefix emoji --outer-padding 40 --cell-gap 30 --pixel-gap -0.10
+bin/generate_yaml_pages --image-dir emoji --layout 3x5 --output-dir examples/emoji-pages --prefix emoji --outer-padding 40 --cell-gap 30 --pixel-gap -0.10
 ```
 
-Built-in sample pages can live as either YAML or Ruby lambda files in `examples/`, for example:
+Built-in sample pages can live as either YAML or Ruby shape files in `examples/`, for example:
 
 ```bash
-ruby bin/generate_yaml --yaml examples/shape-sampler.yml --output out/shape-sampler.rmdoc
-ruby bin/generate_shape --shape examples/us-flag.rb --output out/us-flag.rmdoc
+bin/generate_yaml --yaml examples/shape-sampler.yml --output out/shape-sampler.rmdoc
+bin/generate_shape --shape examples/us-flag.rb --output out/us-flag.rmdoc
 ```
 
-After `bundle install`, the same commands can be run with `bundle exec`.
+## Wiki
+
+More documentation can be found in the [Wiki](https://github.com/knox-dawson/remarkable-shapes/wiki).
 
 ## Development
 
