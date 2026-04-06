@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.9.0-beta.3] - 2026-04-06
+
+### Changed
+
+- Updated `bin/generate_shape` and `bin/generate_yaml` so relative `--output` paths are rooted to the resolved external shapes-library path when `--input` is resolved through `REMARKABLE_SHAPES_PATH` or `--shapes-path`.
+- Expanded the YAML object system with new geometry options, including `point_count` for stars, center-and-radius support for circles and semicircles, box-based triangle placement, triangle outline and outline-fill variants, regular polygon outline-fill, and broader `rotation` and `direction` handling.
+- Added canvas `margin` plus cell-based grid layout support in YAML, including `grid`, `cell_padding`, `gutter`, per-cell borders, object `cell` placement, and default wrapping for text placed in grid cells.
+- Reworked the `simple-shapes-grid` example to use the new grid system instead of fully manual coordinates.
+- Updated the YAML object inventory and related wiki pages to reflect the expanded object set and the new grid layout workflow.
+- Removed the embedded release version string from the text-and-image example text so it no longer needs to be updated for each release.
+
+### Added
+
+- Added support for the full current pen constant set in `Remarkable::RmPage::Pen`, including ballpoint, marker, paintbrush, mechanical pencil, eraser, calligraphy, and both v1 and v2 tool variants.
+- Added a local `RmPage` spec suite covering the emitted v6 header, block order, point payload encoding, scene-space coordinates, and conditional RGBA tagging without requiring external reader dependencies.
+- Added a user-facing `YAML Object Inventory` wiki guide describing the available YAML objects, their options, and practical usage.
+
+### Fixed
+
+- Repaired the converted `p-4u-wgro*` and `p-4u-ygpb*` shape-library files by regenerating them from the original parameter sources so the missing variables and shifted geometry logic match the source layouts again.
+- Verified that all `post-it` shapes in the external library render cleanly after the conversion fixes.
+
 ## [0.9.0-beta.2] - 2026-04-04
 
 ### Changed

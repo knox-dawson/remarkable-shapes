@@ -1,95 +1,74 @@
 canvas:
   tablet: rm2
-  width: 1404
-  height: 1872
-  placement: top-left
+  margin: 70
+  grid:
+    size: 3x3
+    cell_padding: 18
+    gutter: 24
+    border:
+      stroke_width: 8
+      color: black
 
 objects:
   - type: rectangle_outline
-    x: 70
-    y: 80
-    width: 420
-    height: 280
+    cell: 1
     stroke_width: 12
     color: black
 
   - type: circle_fill
-    x: 560
-    y: 90
-    width: 250
-    height: 250
+    cell: 2
     color: red
 
   - type: circle_outline_fill
-    x: 870
-    y: 90
-    width: 250
-    height: 250
+    cell: 3
     fill_rgba: "0xFFBFE3FF"
     outline_color: blue
     stroke_width: 12
 
   - type: star
-    x: 1085
-    y: 70
-    width: 260
-    height: 300
-    points: 6
+    cell: 4
+    point_count: 6
     colors:
       - yellow
       - magenta
       - cyan
 
-  - type: line
-    x1: 100
-    y1: 470
-    x2: 1290
-    y2: 540
-    stroke_width: 28
-    rgba: "0xFF444444"
-
-  - type: polygon_outline
-    points:
-      - [120, 740]
-      - [340, 610]
-      - [450, 820]
-      - [250, 980]
-    stroke_width: 12
-    color: green
-
   - type: regular_polygon_outline
-    x: 520
-    y: 700
-    width: 300
-    height: 300
+    cell: 5
     sides: 6
     stroke_width: 12
     color: black
 
-  - type: regular_polygon_fill
-    x: 910
-    y: 700
-    width: 300
-    height: 300
+  - type: regular_polygon_outline_fill
+    cell: 6
     sides: 6
+    direction: horizontal
+    stroke_width: 12
     colors:
       - "0xFFFF6600"
       - "0xFF00AAFF"
       - "0xFF7A4DFF"
+    outline_color: black
 
-  - type: regular_polygon_outline
-    x: 910
-    y: 700
-    width: 300
-    height: 300
-    sides: 6
-    stroke_width: 12
+  - type: right_triangle_outline_fill
+    cell: 7
+    rotation: 90
+    stroke_width: 10
+    fill_color: cyan
+    outline_color: blue
+
+  - type: isosceles_triangle_outline_fill
+    cell: 8
+    direction: down
+    stroke_width: 10
+    fill_color: yellow
+    outline_color: black
+
+  - type: text
+    cell: 9
+    text: "Grid layout\nwith cell placement"
+    size: 40
+    stroke_width: 4
+    align: center
+    valign: center
     color: black
-
-  - type: parallelogram
-    points:
-      - [150, 1120]
-      - [310, 1450]
-      - [620, 1450]
-      - [460, 1120]
-    color: cyan

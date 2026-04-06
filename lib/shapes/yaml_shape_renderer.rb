@@ -25,6 +25,10 @@ module Remarkable
     DEFAULT_PLACEMENT = "center"
     # Default stroke width for outline objects.
     DEFAULT_STROKE_WIDTH = 4.0
+    # Default cell padding for grid layouts.
+    DEFAULT_CELL_PADDING = 0.0
+    # Default gutter for grid layouts.
+    DEFAULT_GUTTER = 0.0
 
     module_function
 
@@ -72,8 +76,10 @@ module Remarkable
       objects = config.fetch("objects", [])
       raise ArgumentError, "objects must be an array" unless objects.is_a?(Array)
 
+      draw_grid_borders(page, layout)
+      used_cells = {}
       objects.each do |object|
-        render_object(page, stringify_keys(object), layout, base_dir:)
+        render_object(page, stringify_keys(object), layout, base_dir:, used_cells:)
       end
 
       layout
@@ -109,18 +115,97 @@ module Remarkable
       placement = (canvas["placement"] || DEFAULT_PLACEMENT).to_s
       x = placement_x(placement, width, profile.fetch(:physical_width))
       y = placement_y(placement, height, profile.fetch(:physical_height))
+      margin = fetch_number(canvas, "margin", 0.0)
+      raise ArgumentError, "canvas margin must be non-negative" if margin.negative?
+
+      content_x = x + margin
+      content_y = y + margin
+      content_width = width - (margin * 2.0)
+      content_height = height - (margin * 2.0)
+      raise ArgumentError, "canvas margin leaves no drawable width" unless content_width.positive?
+      raise ArgumentError, "canvas margin leaves no drawable height" unless content_height.positive?
+
+      grid = resolve_grid_layout(canvas["grid"], content_x, content_y, content_width, content_height)
 
       {
         x:,
         y:,
         width:,
         height:,
+        content_x:,
+        content_y:,
+        content_width:,
+        content_height:,
+        margin:,
+        grid:,
         placement:,
         tablet: profile.fetch(:tablet),
         physical_width: profile.fetch(:physical_width),
         physical_height: profile.fetch(:physical_height),
         scale: 1.0
       }
+    end
+
+    # Resolves an optional grid specification inside the canvas content area.
+    #
+    # @return [Hash, nil]
+    def resolve_grid_layout(grid_value, x, y, width, height)
+      return nil if grid_value.nil?
+
+      rows, cols, options = parse_grid_definition(grid_value)
+      cell_padding = fetch_number(options, "cell_padding", DEFAULT_CELL_PADDING)
+      gutter = fetch_number(options, "gutter", DEFAULT_GUTTER)
+      raise ArgumentError, "grid cell_padding must be non-negative" if cell_padding.negative?
+      raise ArgumentError, "grid gutter must be non-negative" if gutter.negative?
+
+      cell_width = (width - (gutter * (cols - 1))) / cols.to_f
+      cell_height = (height - (gutter * (rows - 1))) / rows.to_f
+      raise ArgumentError, "grid cells must have positive width" unless cell_width.positive?
+      raise ArgumentError, "grid cells must have positive height" unless cell_height.positive?
+
+      border = options["border"]
+      {
+        rows:,
+        cols:,
+        x:,
+        y:,
+        width:,
+        height:,
+        gutter:,
+        cell_padding:,
+        cell_width:,
+        cell_height:,
+        border: border ? stringify_keys(border) : nil
+      }
+    end
+
+    # Parses a grid definition into rows, cols, and options.
+    #
+    # @return [Array(Integer, Integer, Hash)]
+    def parse_grid_definition(value)
+      case value
+      when String
+        match = value.strip.match(/\A(\d+)x(\d+)\z/i)
+        raise ArgumentError, "grid must look like 2x2" unless match
+
+        rows = match[1].to_i
+        cols = match[2].to_i
+        [rows, cols, {}]
+      when Hash
+        grid = stringify_keys(value)
+        if grid.key?("size")
+          rows, cols, = parse_grid_definition(grid["size"])
+        else
+          rows = fetch_number(grid, "rows").to_i
+          cols = fetch_number(grid, "cols").to_i
+        end
+        raise ArgumentError, "grid rows must be positive" unless rows.positive?
+        raise ArgumentError, "grid cols must be positive" unless cols.positive?
+
+        [rows, cols, grid]
+      else
+        raise ArgumentError, "grid must be a string like 2x2 or a hash"
+      end
     end
 
     # Resolves an object's local bounding box into page coordinates.
@@ -147,8 +232,9 @@ module Remarkable
     # Draws one generic object from the YAML config.
     #
     # @return [void]
-    def render_object(page, object, layout, base_dir:)
+    def render_object(page, object, layout, base_dir:, used_cells:)
       type = object.fetch("type") { raise ArgumentError, "object type is required" }.to_s
+      object = apply_cell_layout(object, layout, type, used_cells)
       style = style_options_for(object)
       brush = brush_for(object["brush"])
 
@@ -217,6 +303,203 @@ module Remarkable
         value.map { |item| stringify_keys(item) }
       else
         value
+      end
+    end
+
+    # Resolves a cell-based object into explicit box geometry.
+    #
+    # @return [Hash]
+    def apply_cell_layout(object, layout, type, used_cells)
+      return object unless object.key?("cell")
+
+      raise ArgumentError, "cell placement requires a canvas grid" unless layout[:grid]
+      ensure_no_explicit_geometry_with_cell!(object)
+
+      cell_index = parse_cell_identifier(object["cell"], layout[:grid])
+      raise ArgumentError, "cell #{object['cell']} is already used" if used_cells[cell_index]
+
+      used_cells[cell_index] = true
+      outer_box = grid_cell_outer_box(layout[:grid], cell_index)
+      inner_box = inset_box(outer_box, layout[:grid][:cell_padding])
+      placement = (object["placement"] || "center").to_s
+
+      updated = object.dup
+      updated["wrap"] = true if type == "text" && !updated.key?("wrap")
+
+      box =
+        if square_fit_type?(type)
+          side = [inner_box[:width], inner_box[:height]].min
+          place_box_in_box(inner_box, side, side, placement)
+        elsif full_cell_type?(type)
+          inner_box
+        else
+          raise ArgumentError, "object type #{type} does not support cell placement without explicit geometry"
+        end
+
+      updated["x"] = box[:x]
+      updated["y"] = box[:y]
+      updated["width"] = box[:width]
+      updated["height"] = box[:height]
+      updated
+    end
+
+    # Returns whether the object type should fit a square inside a cell.
+    #
+    # @return [Boolean]
+    def square_fit_type?(type)
+      %w[
+        semicircle_fill
+        circle_fill
+        circle_outline
+        circle_outline_fill
+        star
+        regular_polygon_outline
+        regular_polygon_fill
+        regular_polygon_outline_fill
+      ].include?(type)
+    end
+
+    # Returns whether the object type should fill the cell box directly.
+    #
+    # @return [Boolean]
+    def full_cell_type?(type)
+      %w[
+        rectangle_fill
+        rectangle_outline
+        rectangle_outline_fill
+        isosceles_triangle_fill
+        isosceles_triangle_outline
+        isosceles_triangle_outline_fill
+        right_triangle_fill
+        right_triangle_outline
+        right_triangle_outline_fill
+        text
+        image
+        yaml
+      ].include?(type)
+    end
+
+    # Raises when an object combines cell placement with explicit geometry.
+    #
+    # @return [void]
+    def ensure_no_explicit_geometry_with_cell!(object)
+      geometry_keys = %w[
+        x y width height
+        center_x center_y radius
+        x1 y1 x2 y2 x3 y3
+        triangle_width
+        points
+      ]
+      used = geometry_keys.select { |key| object.key?(key) }
+      return if used.empty?
+
+      raise ArgumentError, "cell placement cannot be combined with explicit geometry keys: #{used.join(', ')}"
+    end
+
+    # Parses one cell identifier.
+    #
+    # @return [Integer]
+    def parse_cell_identifier(value, grid)
+      text = value.to_s.strip
+      if text.match?(/\A\d+\z/)
+        index = text.to_i
+      elsif (match = text.match(/\Acell(\d+)\z/i))
+        index = match[1].to_i
+      elsif (match = text.match(/\Ar(\d+)c(\d+)\z/i))
+        row = match[1].to_i
+        col = match[2].to_i
+        raise ArgumentError, "grid row out of range in cell #{value}" unless row.between?(1, grid[:rows])
+        raise ArgumentError, "grid col out of range in cell #{value}" unless col.between?(1, grid[:cols])
+
+        index = ((row - 1) * grid[:cols]) + col
+      else
+        raise ArgumentError, "unsupported cell identifier: #{value}"
+      end
+
+      max = grid[:rows] * grid[:cols]
+      raise ArgumentError, "cell index out of range: #{value}" unless index.between?(1, max)
+
+      index
+    end
+
+    # Returns the outer box of one grid cell.
+    #
+    # @return [Hash]
+    def grid_cell_outer_box(grid, cell_index)
+      zero = cell_index - 1
+      row = zero / grid[:cols]
+      col = zero % grid[:cols]
+      x = grid[:x] + (col * (grid[:cell_width] + grid[:gutter]))
+      y = grid[:y] + (row * (grid[:cell_height] + grid[:gutter]))
+      {
+        x:,
+        y:,
+        width: grid[:cell_width],
+        height: grid[:cell_height],
+        center_x: x + (grid[:cell_width] / 2.0),
+        center_y: y + (grid[:cell_height] / 2.0)
+      }
+    end
+
+    # Insets a box by a uniform amount.
+    #
+    # @return [Hash]
+    def inset_box(box, inset)
+      width = box[:width] - (inset * 2.0)
+      height = box[:height] - (inset * 2.0)
+      raise ArgumentError, "grid cell padding leaves no usable width" unless width.positive?
+      raise ArgumentError, "grid cell padding leaves no usable height" unless height.positive?
+
+      {
+        x: box[:x] + inset,
+        y: box[:y] + inset,
+        width:,
+        height:,
+        center_x: box[:x] + inset + (width / 2.0),
+        center_y: box[:y] + inset + (height / 2.0)
+      }
+    end
+
+    # Places a child box inside a parent box using named placement.
+    #
+    # @return [Hash]
+    def place_box_in_box(parent_box, width, height, placement)
+      x = parent_box[:x] + placement_x(placement, width, parent_box[:width])
+      y = parent_box[:y] + placement_y(placement, height, parent_box[:height])
+      {
+        x:,
+        y:,
+        width:,
+        height:,
+        center_x: x + (width / 2.0),
+        center_y: y + (height / 2.0)
+      }
+    end
+
+    # Draws optional grid cell borders.
+    #
+    # @return [void]
+    def draw_grid_borders(page, layout)
+      grid = layout[:grid]
+      return unless grid && grid[:border]
+
+      border = grid[:border]
+      stroke_width = fetch_number(border, "stroke_width", DEFAULT_STROKE_WIDTH)
+      style = style_options_for(border)
+      brush = brush_for(border["brush"])
+
+      (1..(grid[:rows] * grid[:cols])).each do |cell_index|
+        box = grid_cell_outer_box(grid, cell_index)
+        Shapes.draw_box(
+          page,
+          box[:x],
+          box[:y],
+          box[:x] + box[:width],
+          box[:y] + box[:height],
+          stroke_width,
+          brush:,
+          **style
+        )
       end
     end
 

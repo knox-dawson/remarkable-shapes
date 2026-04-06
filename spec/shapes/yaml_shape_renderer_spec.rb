@@ -46,6 +46,27 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     expect(layout[:y]).to be < 0
   end
 
+  it "resolves grid metadata inside a margined canvas" do
+    layout = described_class.resolve_canvas_layout(
+      "tablet" => "rm2",
+      "margin" => 40,
+      "grid" => {
+        "size" => "2x2",
+        "cell_padding" => 12,
+        "gutter" => 20
+      }
+    )
+
+    expect(layout[:content_x]).to eq(40.0)
+    expect(layout[:content_y]).to eq(40.0)
+    expect(layout[:content_width]).to eq(1324.0)
+    expect(layout[:content_height]).to eq(1792.0)
+    expect(layout[:grid][:rows]).to eq(2)
+    expect(layout[:grid][:cols]).to eq(2)
+    expect(layout[:grid][:cell_padding]).to eq(12.0)
+    expect(layout[:grid][:gutter]).to eq(20.0)
+  end
+
   it "renders generic shape objects from a config hash" do
     config = {
       "canvas" => { "width" => 800, "height" => 500, "placement" => "center" },
@@ -369,5 +390,112 @@ RSpec.describe Remarkable::YamlShapeRenderer do
 
     expect(page.lines.length).to eq(1)
     expect(page.lines.first.brush_type).to eq(Remarkable::RmPage::Pen::BALLPOINT_2)
+  end
+
+  it "draws one border box per grid cell when a grid border is configured" do
+    config = {
+      "canvas" => {
+        "grid" => {
+          "size" => "2x2",
+          "border" => {
+            "stroke_width" => 5,
+            "color" => "black"
+          }
+        }
+      },
+      "objects" => []
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines.length).to eq(4)
+  end
+
+  it "places box-capable objects into grid cells" do
+    config = {
+      "canvas" => {
+        "margin" => 40,
+        "grid" => {
+          "size" => "2x2",
+          "cell_padding" => 10,
+          "gutter" => 20
+        }
+      },
+      "objects" => [
+        {
+          "type" => "circle_fill",
+          "cell" => "cell1",
+          "placement" => "top-left",
+          "color" => "red"
+        },
+        {
+          "type" => "rectangle_outline",
+          "cell" => "r2c2",
+          "stroke_width" => 6,
+          "color" => "black"
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines.length).to eq(2)
+    xs = page.lines.flat_map { |line| line.points.map(&:x) }
+    ys = page.lines.flat_map { |line| line.points.map(&:y) }
+    expect(xs.min).to be >= 50
+    expect(ys.min).to be >= 50
+  end
+
+  it "defaults cell-based text objects to wrap" do
+    config = {
+      "canvas" => {
+        "width" => 300,
+        "height" => 220,
+        "placement" => "top-left",
+        "grid" => "1x1"
+      },
+      "objects" => [
+        {
+          "type" => "text",
+          "cell" => 1,
+          "text" => "This is a wrapped text example for a narrow grid cell.",
+          "size" => 24,
+          "stroke_width" => 2,
+          "color" => "black"
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    ys = page.lines.flat_map { |line| line.points.map(&:y) }
+    expect(ys.max - ys.min).to be > 24
+  end
+
+  it "rejects duplicate cell assignments" do
+    config = {
+      "canvas" => { "grid" => "2x2" },
+      "objects" => [
+        { "type" => "rectangle_fill", "cell" => 1, "color" => "red" },
+        { "type" => "circle_fill", "cell" => "cell1", "color" => "blue" }
+      ]
+    }
+
+    expect do
+      described_class.render(page, config)
+    end.to raise_error(ArgumentError, /already used/)
+  end
+
+  it "rejects mixing cell placement with explicit geometry" do
+    config = {
+      "canvas" => { "grid" => "2x2" },
+      "objects" => [
+        { "type" => "rectangle_fill", "cell" => 1, "x" => 20, "color" => "red" }
+      ]
+    }
+
+    expect do
+      described_class.render(page, config)
+    end.to raise_error(ArgumentError, /cannot be combined/)
   end
 end
