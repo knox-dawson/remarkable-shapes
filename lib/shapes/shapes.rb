@@ -573,6 +573,29 @@ module Remarkable
       draw_polyline(page, closed, width, rgba:, color:, brush:)
     end
 
+    # Draws a filled convex polygon using a triangle fan from its centroid.
+    #
+    # @param points [Array<Array<Numeric>>]
+    # @param colors [Array<Integer, Array<Integer>, Hash>]
+    # @return [void]
+    def polygon_fill(page, points, colors:, brush: DEFAULT_BRUSH)
+      raise ArgumentError, "polygon requires at least 3 points" if points.length < 3
+      raise ArgumentError, "colors must not be empty" if colors.nil? || colors.empty?
+
+      centroid_x = points.sum { |point| point[0].to_f } / points.length.to_f
+      centroid_y = points.sum { |point| point[1].to_f } / points.length.to_f
+
+      points.length.times do |index|
+        a = points[index]
+        b = points[(index + 1) % points.length]
+        mid_x = (a[0] + b[0]) / 2.0
+        mid_y = (a[1] + b[1]) / 2.0
+        width = Math.hypot(b[0] - a[0], b[1] - a[1])
+        style = style_options(colors[index % colors.length])
+        triangle(page, centroid_x, centroid_y, mid_x, mid_y, width, brush:, **style)
+      end
+    end
+
     # Draws a regular polygon outline.
     #
     # @example Ruby lambda
@@ -593,15 +616,7 @@ module Remarkable
       raise ArgumentError, "colors must not be empty" if colors.nil? || colors.empty?
 
       vertices = regular_polygon_points(cx, cy, radius, sides, rotation:)
-      sides.times do |index|
-        a = vertices[index]
-        b = vertices[(index + 1) % sides]
-        mid_x = (a[0] + b[0]) / 2.0
-        mid_y = (a[1] + b[1]) / 2.0
-        width = Math.hypot(b[0] - a[0], b[1] - a[1])
-        style = style_options(colors[index % colors.length])
-        triangle(page, cx, cy, mid_x, mid_y, width, brush:, **style)
-      end
+      polygon_fill(page, vertices, colors:, brush:)
     end
 
     # Draws a striped flag pattern using an array of colour or RGBA values.

@@ -165,8 +165,16 @@ module Remarkable
         draw_circle_outline_fill_object(page, object, layout, brush:)
       when "isosceles_triangle_fill"
         draw_isosceles_triangle_fill_object(page, object, layout, style:, brush:)
+      when "isosceles_triangle_outline"
+        draw_isosceles_triangle_outline_object(page, object, layout, style:, brush:)
+      when "isosceles_triangle_outline_fill"
+        draw_isosceles_triangle_outline_fill_object(page, object, layout, brush:)
       when "right_triangle_fill"
         draw_right_triangle_fill_object(page, object, layout, style:, brush:)
+      when "right_triangle_outline"
+        draw_right_triangle_outline_object(page, object, layout, style:, brush:)
+      when "right_triangle_outline_fill"
+        draw_right_triangle_outline_fill_object(page, object, layout, brush:)
       when "rectangle_fill"
         draw_rectangle_fill_object(page, object, layout, style:, brush:)
       when "rectangle_outline"
@@ -181,6 +189,8 @@ module Remarkable
         draw_regular_polygon_outline_object(page, object, layout, style:, brush:)
       when "regular_polygon_fill"
         draw_regular_polygon_fill_object(page, object, layout, style:, brush:)
+      when "regular_polygon_outline_fill"
+        draw_regular_polygon_outline_fill_object(page, object, layout, brush:)
       when "parallelogram"
         draw_parallelogram_object(page, object, layout, style:, brush:)
       when "text"
@@ -420,6 +430,195 @@ module Remarkable
       }
     end
 
+    # Resolves a box or a center/radius triple into circle geometry.
+    #
+    # @return [Hash]
+    def resolve_circle_geometry(layout, object)
+      if object.key?("center_x") || object.key?("center_y") || object.key?("radius")
+        center_x = map_x(layout, fetch_number(object, "center_x"))
+        center_y = map_y(layout, fetch_number(object, "center_y"))
+        radius = scale_length(layout, fetch_number(object, "radius"))
+        raise ArgumentError, "radius must be positive" unless radius.positive?
+
+        { center_x:, center_y:, radius: }
+      else
+        box = resolve_box(layout, object)
+        {
+          center_x: box[:center_x],
+          center_y: box[:center_y],
+          radius: [box[:width], box[:height]].min / 2.0
+        }
+      end
+    end
+
+    # Resolves a rotation value, optionally using a named direction fallback.
+    #
+    # @return [Float]
+    def resolve_rotation(object, direction_map = nil, default = 0.0)
+      return fetch_number(object, "rotation") if object.key?("rotation")
+
+      direction = object["direction"]
+      return default if direction.nil?
+      raise ArgumentError, "direction is not supported for this object" unless direction_map
+
+      mapped = direction_map[direction.to_s]
+      raise ArgumentError, "unsupported direction: #{direction}" if mapped.nil?
+
+      mapped
+    end
+
+    # Returns the points of a rotated rectangle fitted into a box.
+    #
+    # @return [Array<Array<Float>>]
+    def box_polygon_points(box, rotation = 0.0)
+      angle = rotation.to_f * Math::PI / 180.0
+      cos = Math.cos(angle)
+      sin = Math.sin(angle)
+      half_width = box[:width] / 2.0
+      half_height = box[:height] / 2.0
+
+      offsets = [
+        [-half_width, -half_height],
+        [half_width, -half_height],
+        [half_width, half_height],
+        [-half_width, half_height]
+      ]
+
+      offsets.map do |dx, dy|
+        [
+          box[:center_x] + (dx * cos) - (dy * sin),
+          box[:center_y] + (dx * sin) + (dy * cos)
+        ]
+      end
+    end
+
+    # Returns triangle points from a box and orientation.
+    #
+    # @return [Array<Array<Float>>]
+    def box_triangle_points(box, mode:, rotation: 0.0)
+      base_points = case mode
+                    when :isosceles
+                      [
+                        [box[:center_x], box[:y]],
+                        [box[:x] + box[:width], box[:y] + box[:height]],
+                        [box[:x], box[:y] + box[:height]]
+                      ]
+                    when :right
+                      [
+                        [box[:x], box[:y]],
+                        [box[:x], box[:y] + box[:height]],
+                        [box[:x] + box[:width], box[:y] + box[:height]]
+                      ]
+                    else
+                      raise ArgumentError, "unsupported triangle mode: #{mode}"
+                    end
+
+      return base_points if rotation.to_f.zero?
+
+      angle = rotation.to_f * Math::PI / 180.0
+      cos = Math.cos(angle)
+      sin = Math.sin(angle)
+      base_points.map do |x, y|
+        dx = x - box[:center_x]
+        dy = y - box[:center_y]
+        [
+          box[:center_x] + (dx * cos) - (dy * sin),
+          box[:center_y] + (dx * sin) + (dy * cos)
+        ]
+      end
+    end
+
+    # Returns the vertices for an isosceles triangle from explicit point geometry.
+    #
+    # @return [Array<Array<Float>>]
+    def isosceles_triangle_points_from_segment(layout, object)
+      ax = map_x(layout, fetch_number(object, "x1"))
+      ay = map_y(layout, fetch_number(object, "y1"))
+      bx = map_x(layout, fetch_number(object, "x2"))
+      by = map_y(layout, fetch_number(object, "y2"))
+      width = scale_length(layout, fetch_number(object, "triangle_width"))
+
+      dx = bx - ax
+      dy = by - ay
+      len = Math.hypot(dx, dy)
+      raise ArgumentError, "triangle segment must not be zero length" if len.zero?
+
+      ux = dx / len
+      uy = dy / len
+      px = -uy * (width / 2.0)
+      py = ux * (width / 2.0)
+
+      [
+        [ax, ay],
+        [bx + px, by + py],
+        [bx - px, by - py]
+      ]
+    end
+
+    # Resolves isosceles triangle points from either point-based or box-based geometry.
+    #
+    # @return [Array<Array<Float>>]
+    def resolve_isosceles_triangle_points(layout, object)
+      if object.key?("x1")
+        isosceles_triangle_points_from_segment(layout, object)
+      else
+        box = resolve_box(layout, object)
+        rotation = resolve_rotation(
+          object,
+          { "up" => 0.0, "right" => 90.0, "down" => 180.0, "left" => 270.0 }
+        )
+        box_triangle_points(box, mode: :isosceles, rotation:)
+      end
+    end
+
+    # Resolves right triangle points from either point-based or box-based geometry.
+    #
+    # @return [Array<Array<Float>>]
+    def resolve_right_triangle_points(layout, object)
+      if object.key?("x1")
+        [
+          [map_x(layout, fetch_number(object, "x1")), map_y(layout, fetch_number(object, "y1"))],
+          [map_x(layout, fetch_number(object, "x2")), map_y(layout, fetch_number(object, "y2"))],
+          [map_x(layout, fetch_number(object, "x3")), map_y(layout, fetch_number(object, "y3"))]
+        ]
+      else
+        box = resolve_box(layout, object)
+        rotation = resolve_rotation(object)
+        box_triangle_points(box, mode: :right, rotation:)
+      end
+    end
+
+    # Returns a rotation for regular polygons from explicit rotation or named direction.
+    #
+    # @return [Float]
+    def resolve_regular_polygon_rotation(object, sides)
+      return fetch_number(object, "rotation") if object.key?("rotation")
+
+      direction = object["direction"]
+      return 0.0 if direction.nil?
+
+      direction = direction.to_s
+      if sides.even?
+        case direction
+        when "vertical"
+          0.0
+        when "horizontal"
+          180.0 / sides.to_f
+        else
+          raise ArgumentError, "even-sided regular polygons support direction horizontal or vertical"
+        end
+      else
+        case direction
+        when "up"
+          0.0
+        when "down"
+          180.0
+        else
+          raise ArgumentError, "odd-sided regular polygons support direction up or down"
+        end
+      end
+    end
+
     # Draws a line object.
     #
     # @example YAML object
@@ -452,22 +651,13 @@ module Remarkable
     #     color: blue
     # @return [void]
     def draw_semicircle_fill_object(page, object, layout, style:, brush:)
-      box = resolve_box(layout, object)
-      direction = object.fetch("direction") { raise ArgumentError, "direction is required" }.to_s
-      angle = case direction
-              when "right"
-                Shapes::RIGHT
-              when "down"
-                Shapes::DOWN
-              when "left"
-                Shapes::LEFT
-              when "up"
-                Shapes::UP
-              else
-                raise ArgumentError, "unsupported semicircle direction: #{direction}"
-              end
-      radius = [box[:width], box[:height]].min / 2.0
-      Shapes.semicircle(page, box[:center_x], box[:center_y], radius, angle, brush:, **style)
+      circle = resolve_circle_geometry(layout, object)
+      rotation = resolve_rotation(
+        object,
+        { "right" => 0.0, "down" => 90.0, "left" => 180.0, "up" => 270.0 }
+      )
+      angle = rotation * Math::PI / 180.0
+      Shapes.semicircle(page, circle[:center_x], circle[:center_y], circle[:radius], angle, brush:, **style)
     end
 
     # Draws a filled circle object.
@@ -481,26 +671,25 @@ module Remarkable
     #     color: red
     # @return [void]
     def draw_circle_fill_object(page, object, layout, style:, brush:)
-      box = resolve_box(layout, object)
-      radius = [box[:width], box[:height]].min / 2.0
-      Shapes.circle(page, box[:center_x], box[:center_y], radius, brush:, **style)
+      circle = resolve_circle_geometry(layout, object)
+      Shapes.circle(page, circle[:center_x], circle[:center_y], circle[:radius], brush:, **style)
     end
 
     # Draws a circle outline object.
     #
     # @return [void]
     def draw_circle_outline_object(page, object, layout, style:, brush:)
-      box = resolve_box(layout, object)
+      circle = resolve_circle_geometry(layout, object)
       stroke_width = fetch_number(object, "stroke_width", DEFAULT_STROKE_WIDTH)
-      radius = ([box[:width], box[:height]].min - stroke_width) / 2.0
+      radius = circle[:radius] - (stroke_width / 2.0)
       raise ArgumentError, "circle outline is too small for its stroke width" unless radius.positive?
 
       steps = 40
       points = Array.new(steps + 1) do |index|
         angle = (2.0 * Math::PI * index) / steps
         [
-          box[:center_x] + (radius * Math.cos(angle)),
-          box[:center_y] + (radius * Math.sin(angle))
+          circle[:center_x] + (radius * Math.cos(angle)),
+          circle[:center_y] + (radius * Math.sin(angle))
         ]
       end
       Shapes.draw_polyline(page, points, stroke_width, brush:, **style)
@@ -535,12 +724,33 @@ module Remarkable
     #     color: green
     # @return [void]
     def draw_isosceles_triangle_fill_object(page, object, layout, style:, brush:)
-      ax = map_x(layout, fetch_number(object, "x1"))
-      ay = map_y(layout, fetch_number(object, "y1"))
-      bx = map_x(layout, fetch_number(object, "x2"))
-      by = map_y(layout, fetch_number(object, "y2"))
-      width = scale_length(layout, fetch_number(object, "triangle_width"))
-      Shapes.triangle(page, ax, ay, bx, by, width, brush:, **style)
+      if object.key?("x1")
+        ax = map_x(layout, fetch_number(object, "x1"))
+        ay = map_y(layout, fetch_number(object, "y1"))
+        bx = map_x(layout, fetch_number(object, "x2"))
+        by = map_y(layout, fetch_number(object, "y2"))
+        width = scale_length(layout, fetch_number(object, "triangle_width"))
+        Shapes.triangle(page, ax, ay, bx, by, width, brush:, **style)
+      else
+        points = resolve_isosceles_triangle_points(layout, object)
+        Shapes.polygon_fill(page, points, colors: [style[:color] == RmPage::Colour::RGBA ? style[:rgba] : style[:color]], brush:)
+      end
+    end
+
+    # Draws an isosceles triangle outline object.
+    #
+    # @return [void]
+    def draw_isosceles_triangle_outline_object(page, object, layout, style:, brush:)
+      stroke_width = fetch_number(object, "stroke_width", DEFAULT_STROKE_WIDTH)
+      Shapes.polygon_outline(page, resolve_isosceles_triangle_points(layout, object), stroke_width, brush:, **style)
+    end
+
+    # Draws an isosceles triangle with separate fill and outline styles.
+    #
+    # @return [void]
+    def draw_isosceles_triangle_outline_fill_object(page, object, layout, brush:)
+      draw_isosceles_triangle_fill_object(page, object, layout, style: style_options_for(object, "fill"), brush:)
+      draw_isosceles_triangle_outline_object(page, object, layout, style: style_options_for(object, "outline"), brush:)
     end
 
     # Draws a filled right triangle object.
@@ -556,13 +766,34 @@ module Remarkable
     #     color: magenta
     # @return [void]
     def draw_right_triangle_fill_object(page, object, layout, style:, brush:)
-      ax = map_x(layout, fetch_number(object, "x1"))
-      ay = map_y(layout, fetch_number(object, "y1"))
-      bx = map_x(layout, fetch_number(object, "x2"))
-      by = map_y(layout, fetch_number(object, "y2"))
-      cx = map_x(layout, fetch_number(object, "x3"))
-      cy = map_y(layout, fetch_number(object, "y3"))
-      Shapes.right_triangle(page, ax, ay, bx, by, cx, cy, brush:, **style)
+      if object.key?("x1")
+        ax = map_x(layout, fetch_number(object, "x1"))
+        ay = map_y(layout, fetch_number(object, "y1"))
+        bx = map_x(layout, fetch_number(object, "x2"))
+        by = map_y(layout, fetch_number(object, "y2"))
+        cx = map_x(layout, fetch_number(object, "x3"))
+        cy = map_y(layout, fetch_number(object, "y3"))
+        Shapes.right_triangle(page, ax, ay, bx, by, cx, cy, brush:, **style)
+      else
+        points = resolve_right_triangle_points(layout, object)
+        Shapes.polygon_fill(page, points, colors: [style[:color] == RmPage::Colour::RGBA ? style[:rgba] : style[:color]], brush:)
+      end
+    end
+
+    # Draws a right triangle outline object.
+    #
+    # @return [void]
+    def draw_right_triangle_outline_object(page, object, layout, style:, brush:)
+      stroke_width = fetch_number(object, "stroke_width", DEFAULT_STROKE_WIDTH)
+      Shapes.polygon_outline(page, resolve_right_triangle_points(layout, object), stroke_width, brush:, **style)
+    end
+
+    # Draws a right triangle with separate fill and outline styles.
+    #
+    # @return [void]
+    def draw_right_triangle_outline_fill_object(page, object, layout, brush:)
+      draw_right_triangle_fill_object(page, object, layout, style: style_options_for(object, "fill"), brush:)
+      draw_right_triangle_outline_object(page, object, layout, style: style_options_for(object, "outline"), brush:)
     end
 
     # Draws a filled rectangle object.
@@ -570,7 +801,12 @@ module Remarkable
     # @return [void]
     def draw_rectangle_fill_object(page, object, layout, style:, brush:)
       box = resolve_box(layout, object)
-      Shapes.rect(page, box[:x], box[:center_y], box[:x] + box[:width], box[:center_y], box[:height], brush:, **style)
+      rotation = resolve_rotation(object)
+      if rotation.zero?
+        Shapes.rect(page, box[:x], box[:center_y], box[:x] + box[:width], box[:center_y], box[:height], brush:, **style)
+      else
+        Shapes.polygon_fill(page, box_polygon_points(box, rotation), colors: [style[:color] == RmPage::Colour::RGBA ? style[:rgba] : style[:color]], brush:)
+      end
     end
 
     # Draws a rectangle outline object.
@@ -587,7 +823,12 @@ module Remarkable
     def draw_rectangle_outline_object(page, object, layout, style:, brush:)
       box = resolve_box(layout, object)
       stroke_width = fetch_number(object, "stroke_width", DEFAULT_STROKE_WIDTH)
-      Shapes.draw_box(page, box[:x], box[:y], box[:x] + box[:width], box[:y] + box[:height], stroke_width, brush:, **style)
+      rotation = resolve_rotation(object)
+      if rotation.zero?
+        Shapes.draw_box(page, box[:x], box[:y], box[:x] + box[:width], box[:y] + box[:height], stroke_width, brush:, **style)
+      else
+        Shapes.polygon_outline(page, box_polygon_points(box, rotation), stroke_width, brush:, **style)
+      end
     end
 
     # Draws a rectangle with separate fill and outline styles.
@@ -614,7 +855,7 @@ module Remarkable
     # @return [void]
     def draw_star_object(page, object, layout, style:, brush:)
       box = resolve_box(layout, object)
-      point_count = fetch_number(object, "points").to_i
+      point_count = fetch_number(object, "point_count", object["points"]).to_i
       wide_point_percent = fetch_number(object, "wide_point_percent", 31.0)
       raw_star_width = fetch_number(object, "star_width", -1.0)
       star_width = raw_star_width.negative? ? raw_star_width : scale_length(layout, raw_star_width)
@@ -675,7 +916,7 @@ module Remarkable
       box = resolve_box(layout, object)
       stroke_width = fetch_number(object, "stroke_width", DEFAULT_STROKE_WIDTH)
       sides = fetch_number(object, "sides").to_i
-      rotation = fetch_number(object, "rotation", 0.0)
+      rotation = resolve_regular_polygon_rotation(object, sides)
       radius = [box[:width], box[:height]].min / 2.0
       Shapes.regular_polygon_outline(page, box[:center_x], box[:center_y], radius, sides, stroke_width, rotation:, brush:, **style)
     end
@@ -686,10 +927,18 @@ module Remarkable
     def draw_regular_polygon_fill_object(page, object, layout, style:, brush:)
       box = resolve_box(layout, object)
       sides = fetch_number(object, "sides").to_i
-      rotation = fetch_number(object, "rotation", 0.0)
+      rotation = resolve_regular_polygon_rotation(object, sides)
       radius = [box[:width], box[:height]].min / 2.0
       colors = object.key?("colors") ? parse_color_list(object["colors"]) : [style[:color] == RmPage::Colour::RGBA ? style[:rgba] : style[:color]]
       Shapes.regular_polygon_fill(page, box[:center_x], box[:center_y], radius, sides, colors:, rotation:, brush:)
+    end
+
+    # Draws a regular polygon with separate fill and outline styles.
+    #
+    # @return [void]
+    def draw_regular_polygon_outline_fill_object(page, object, layout, brush:)
+      draw_regular_polygon_fill_object(page, object, layout, style: style_options_for(object, "fill"), brush:)
+      draw_regular_polygon_outline_object(page, object, layout, style: style_options_for(object, "outline"), brush:)
     end
 
     # Draws a parallelogram from four local points.

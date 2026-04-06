@@ -54,12 +54,40 @@ module Remarkable
 
     # Pen identifiers used by the tablet.
     module Pen
+      # Paintbrush v1 brush.
+      PAINTBRUSH_1 = 0
       # Tilt pencil brush.
       PENCIL_TILT = 1
+      # Ballpoint v1 brush.
+      BALLPOINT_1 = 2
+      # Marker v1 brush.
+      MARKER_1 = 3
+      # Fineliner v1 brush.
+      FINELINER_1 = 4
+      # Highlighter v1 brush.
+      HIGHLIGHTER_1 = 5
+      # Eraser brush.
+      ERASER = 6
+      # Mechanical pencil v1 brush.
+      MECHANICAL_PENCIL_1 = 7
+      # Area eraser brush.
+      ERASER_AREA = 8
+      # Paintbrush v2 brush.
+      PAINTBRUSH_2 = 12
+      # Mechanical pencil v2 brush.
+      MECHANICAL_PENCIL_2 = 13
+      # Pencil v2 brush.
+      PENCIL_2 = 14
+      # Ballpoint v2 brush.
+      BALLPOINT_2 = 15
+      # Marker v2 brush.
+      MARKER_2 = 16
       # Fineliner brush.
       FINELINER_2 = 17
       # Highlighter brush.
       HIGHLIGHTER_2 = 18
+      # Calligraphy brush.
+      CALLIGRAPHY = 21
       # Shader brush.
       SHADER = 23
     end

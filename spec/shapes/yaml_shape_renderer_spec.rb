@@ -103,7 +103,7 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     config = {
       "canvas" => { "width" => 900, "height" => 600, "placement" => "top-left" },
       "objects" => [
-        { "type" => "star", "x" => 20, "y" => 20, "width" => 120, "height" => 120, "points" => 5, "colors" => ["red", "blue"] },
+        { "type" => "star", "x" => 20, "y" => 20, "width" => 120, "height" => 120, "point_count" => 5, "colors" => ["red", "blue"] },
         { "type" => "regular_polygon_outline", "x" => 180, "y" => 20, "width" => 120, "height" => 120, "sides" => 6, "stroke_width" => 5, "color" => "black" },
         { "type" => "regular_polygon_fill", "x" => 340, "y" => 20, "width" => 120, "height" => 120, "sides" => 5, "colors" => ["0xFFFF0000", "0xFF0000FF"] }
       ]
@@ -241,5 +241,133 @@ RSpec.describe Remarkable::YamlShapeRenderer do
 
       expect(page.lines.length).to eq(2)
     end
+  end
+
+  it "renders circles from center_x, center_y, and radius" do
+    config = {
+      "objects" => [
+        {
+          "type" => "circle_outline_fill",
+          "center_x" => 200,
+          "center_y" => 240,
+          "radius" => 60,
+          "stroke_width" => 6,
+          "fill_color" => "yellow",
+          "outline_color" => "black"
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines.length).to eq(2)
+  end
+
+  it "renders semicircles from rotation as an alternative to direction" do
+    config = {
+      "objects" => [
+        {
+          "type" => "semicircle_fill",
+          "center_x" => 300,
+          "center_y" => 320,
+          "radius" => 50,
+          "rotation" => 90,
+          "color" => "blue"
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines.length).to eq(1)
+    expect(page.lines.first.points.length).to eq(2)
+  end
+
+  it "renders box-based and outline triangle variants" do
+    config = {
+      "canvas" => { "width" => 900, "height" => 600, "placement" => "top-left" },
+      "objects" => [
+        {
+          "type" => "isosceles_triangle_fill",
+          "x" => 20,
+          "y" => 20,
+          "width" => 120,
+          "height" => 100,
+          "direction" => "right",
+          "color" => "green"
+        },
+        {
+          "type" => "isosceles_triangle_outline_fill",
+          "x" => 180,
+          "y" => 20,
+          "width" => 120,
+          "height" => 100,
+          "direction" => "down",
+          "stroke_width" => 5,
+          "fill_color" => "yellow",
+          "outline_color" => "black"
+        },
+        {
+          "type" => "right_triangle_outline_fill",
+          "x" => 340,
+          "y" => 20,
+          "width" => 120,
+          "height" => 100,
+          "rotation" => 90,
+          "stroke_width" => 5,
+          "fill_color" => "cyan",
+          "outline_color" => "blue"
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines.length).to eq(11)
+  end
+
+  it "renders regular_polygon_outline_fill with direction and alternating fill colors" do
+    config = {
+      "canvas" => { "width" => 600, "height" => 400, "placement" => "top-left" },
+      "objects" => [
+        {
+          "type" => "regular_polygon_outline_fill",
+          "x" => 40,
+          "y" => 40,
+          "width" => 140,
+          "height" => 140,
+          "sides" => 6,
+          "direction" => "horizontal",
+          "stroke_width" => 6,
+          "colors" => ["red", "blue"],
+          "outline_color" => "black"
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines.length).to eq(7)
+  end
+
+  it "allows the expanded pen list through brush names" do
+    config = {
+      "objects" => [
+        {
+          "type" => "rectangle_fill",
+          "x" => 20,
+          "y" => 20,
+          "width" => 120,
+          "height" => 60,
+          "color" => "red",
+          "brush" => "ballpoint_2"
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines.length).to eq(1)
+    expect(page.lines.first.brush_type).to eq(Remarkable::RmPage::Pen::BALLPOINT_2)
   end
 end
