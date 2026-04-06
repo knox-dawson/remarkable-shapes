@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.9.0-beta.4] - 2026-04-06
+
+### Fixed
+
+- Fixed box-based triangle layout in YAML grid cells so rotated triangle outlines are fitted back into their target cell boxes instead of extending outside the cell after rotation.
+- Fixed box-based triangle fills in the YAML renderer so `right_triangle_*` objects use the right-triangle fill construction and `isosceles_triangle_*` objects use the correct apex and base points for their fill geometry.
+
 ## [0.9.0-beta.3] - 2026-04-06
 
 ### Changed

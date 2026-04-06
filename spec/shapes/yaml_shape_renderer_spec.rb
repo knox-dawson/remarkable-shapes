@@ -344,7 +344,23 @@ RSpec.describe Remarkable::YamlShapeRenderer do
 
     described_class.render(page, config)
 
-    expect(page.lines.length).to eq(11)
+    expect(page.lines.length).to eq(6)
+  end
+
+  it "fits rotated box-based right triangles inside their target box" do
+    box = { x: 100.0, y: 200.0, width: 120.0, height: 80.0, center_x: 160.0, center_y: 240.0 }
+
+    points = described_class.box_triangle_points(box, mode: :right, rotation: 90)
+
+    expect(points).to match_array([[220.0, 200.0], [100.0, 200.0], [100.0, 280.0]])
+  end
+
+  it "fits downward box-based isosceles triangles inside their target box" do
+    box = { x: 300.0, y: 400.0, width: 120.0, height: 100.0, center_x: 360.0, center_y: 450.0 }
+
+    points = described_class.box_triangle_points(box, mode: :isosceles, rotation: 180)
+
+    expect(points).to match_array([[360.0, 500.0], [300.0, 400.0], [420.0, 400.0]])
   end
 
   it "renders regular_polygon_outline_fill with direction and alternating fill colors" do

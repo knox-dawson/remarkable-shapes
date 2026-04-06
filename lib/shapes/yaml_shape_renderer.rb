@@ -779,36 +779,78 @@ module Remarkable
     #
     # @return [Array<Array<Float>>]
     def box_triangle_points(box, mode:, rotation: 0.0)
+      angle = rotation.to_f * Math::PI / 180.0
+      cos = Math.cos(angle)
+      sin = Math.sin(angle)
       base_points = case mode
                     when :isosceles
                       [
-                        [box[:center_x], box[:y]],
-                        [box[:x] + box[:width], box[:y] + box[:height]],
-                        [box[:x], box[:y] + box[:height]]
+                        [0.0, -0.5],
+                        [0.5, 0.5],
+                        [-0.5, 0.5]
                       ]
                     when :right
                       [
-                        [box[:x], box[:y]],
-                        [box[:x], box[:y] + box[:height]],
-                        [box[:x] + box[:width], box[:y] + box[:height]]
+                        [-0.5, -0.5],
+                        [-0.5, 0.5],
+                        [0.5, 0.5]
                       ]
                     else
                       raise ArgumentError, "unsupported triangle mode: #{mode}"
                     end
 
-      return base_points if rotation.to_f.zero?
-
-      angle = rotation.to_f * Math::PI / 180.0
-      cos = Math.cos(angle)
-      sin = Math.sin(angle)
-      base_points.map do |x, y|
-        dx = x - box[:center_x]
-        dy = y - box[:center_y]
+      rotated = base_points.map do |x, y|
         [
-          box[:center_x] + (dx * cos) - (dy * sin),
-          box[:center_y] + (dx * sin) + (dy * cos)
+          (x * cos) - (y * sin),
+          (x * sin) + (y * cos)
         ]
       end
+
+      min_x = rotated.min_by { |x, _y| x }.first
+      max_x = rotated.max_by { |x, _y| x }.first
+      min_y = rotated.min_by { |_x, y| y }.last
+      max_y = rotated.max_by { |_x, y| y }.last
+      rotated_width = max_x - min_x
+      rotated_height = max_y - min_y
+
+      rotated.map do |x, y|
+        [
+          box[:x] + ((x - min_x) / rotated_width) * box[:width],
+          box[:y] + ((y - min_y) / rotated_height) * box[:height]
+        ]
+      end
+    end
+
+    # Draws an isosceles triangle fill from resolved vertex points.
+    #
+    # @return [void]
+    def draw_isosceles_triangle_fill_from_points(page, points, style:, brush:)
+      apex = points[0]
+      base_start = points[1]
+      base_end = points[2]
+      mid_x = (base_start[0] + base_end[0]) / 2.0
+      mid_y = (base_start[1] + base_end[1]) / 2.0
+      width = Math.hypot(base_end[0] - base_start[0], base_end[1] - base_start[1])
+
+      Shapes.triangle(page, apex[0], apex[1], mid_x, mid_y, width, brush:, **style)
+    end
+
+    # Draws a right triangle fill from resolved vertex points.
+    #
+    # @return [void]
+    def draw_right_triangle_fill_from_points(page, points, style:, brush:)
+      edges = [
+        [points[0], points[1]],
+        [points[1], points[2]],
+        [points[2], points[0]]
+      ]
+      hypotenuse = edges.max_by do |(a, b)|
+        Math.hypot(b[0] - a[0], b[1] - a[1])
+      end
+
+      a, c = hypotenuse
+      b = points.find { |point| point != a && point != c }
+      Shapes.right_triangle(page, a[0], a[1], b[0], b[1], c[0], c[1], brush:, **style)
     end
 
     # Returns the vertices for an isosceles triangle from explicit point geometry.
@@ -1015,8 +1057,7 @@ module Remarkable
         width = scale_length(layout, fetch_number(object, "triangle_width"))
         Shapes.triangle(page, ax, ay, bx, by, width, brush:, **style)
       else
-        points = resolve_isosceles_triangle_points(layout, object)
-        Shapes.polygon_fill(page, points, colors: [style[:color] == RmPage::Colour::RGBA ? style[:rgba] : style[:color]], brush:)
+        draw_isosceles_triangle_fill_from_points(page, resolve_isosceles_triangle_points(layout, object), style:, brush:)
       end
     end
 
@@ -1058,8 +1099,7 @@ module Remarkable
         cy = map_y(layout, fetch_number(object, "y3"))
         Shapes.right_triangle(page, ax, ay, bx, by, cx, cy, brush:, **style)
       else
-        points = resolve_right_triangle_points(layout, object)
-        Shapes.polygon_fill(page, points, colors: [style[:color] == RmPage::Colour::RGBA ? style[:rgba] : style[:color]], brush:)
+        draw_right_triangle_fill_from_points(page, resolve_right_triangle_points(layout, object), style:, brush:)
       end
     end
 
