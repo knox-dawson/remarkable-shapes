@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added percentage-based YAML grid track sizing through `row_sizes` and `column_sizes`, while preserving `rows` and `cols` as the count-based grid definition.
 - Added YAML grid annotations that can draw borders around every cell and label each cell with its `x`, `y`, `w`, and `h` values, with configurable border and text styling plus `annotations.show` for toggling the overlay.
 - Added named box-based right-triangle directions (`upper-left`, `upper-right`, `lower-left`, `lower-right`) so the 90-degree corner can be selected without using raw rotation values.
+- Improved default image rendering with `pixel_gap: -3.0` and `type: image` using `highlighter_2` by default
 
 ### Fixed
 
