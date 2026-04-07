@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.9.0-beta.5] - 2026-04-07
+
+### Added
+
+- Added `bin/generate_yaml_book` for end-to-end multipage `.rmdoc` generation.
+- Added a YAML page-list workflow that renders an ordered set of YAML layouts into per-page `.rmdoc` files, writes an `rmcat` script, and can build the final multipage `.rmdoc`.
+- Added a cover/template/items workflow for multipage generation, including support for `--cover-yaml`, `--template-yaml`, `--items-yaml`, and `--image-dir`.
+- Added template-driven page generation with `slots` and `template` blocks so one page layout can be repeated across many items with image and label placeholders.
+- Added saved `rmcat` script generation plus optional automatic concatenation when `rmcat` (https://github.com/kg4zow/rm2-scripts/tree/main/rmcat/) is available.
+
 ## [0.9.0-beta.4] - 2026-04-07
 
 ### Added

@@ -1,0 +1,95 @@
+#!/usr/bin/env ruby
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+
+require "version"
+require "slop"
+require "shapes/yaml_book_generator"
+
+def build_options(argv)
+  Slop.parse(argv) do |o|
+    o.banner = <<~BANNER
+      Usage:
+        bin/generate_yaml_book --yaml-list PAGES.yml [options]
+        bin/generate_yaml_book --template-yaml TEMPLATE.yml [--cover-yaml COVER.yml] (--items-yaml ITEMS.yml | --image-dir DIR) [options]
+
+      Examples:
+        bin/generate_yaml_book --yaml-list examples/book-pages.yml --output out/book.rmdoc
+        bin/generate_yaml_book --cover-yaml examples/cover.yml --template-yaml examples/page-template.yml --items-yaml examples/items.yml --output out/book.rmdoc
+        bin/generate_yaml_book --template-yaml examples/page-template.yml --image-dir scans --output out/scans.rmdoc
+    BANNER
+
+    o.string "--yaml-list", "YAML file containing an ordered page list"
+    o.string "--cover-yaml", "Optional cover page YAML file"
+    o.string "--template-yaml", "Template YAML for generated interior pages"
+    o.string "--items-yaml", "YAML file describing items for the page template"
+    o.string "--image-dir", "Directory of PNG files used as template items"
+    o.string "-o", "--output", "Final multipage .rmdoc path"
+    o.string "--output-dir", "Working directory for generated YAML, page .rmdoc files, and concat script"
+    o.string "-p", "--prefix", "Prefix for generated page YAML and .rmdoc files"
+    o.string "--concat-script", "Path for the generated rmcat script"
+    o.string "--rmcat-command", "rmcat executable or path"
+    o.bool "--skip-rmcat", "Only write the page outputs and concat script"
+    o.bool "-v", "--version", "Print version"
+    o.bool "-h", "--help", "Show help"
+  end
+end
+
+options = build_options(ARGV)
+
+if options[:help]
+  puts options
+  exit 0
+end
+
+if options[:version]
+  puts Remarkable::VERSION
+  exit 0
+end
+
+final_output = options[:output]
+if final_output.nil? || final_output.strip.empty?
+  warn "Missing required option: --output"
+  warn options
+  exit 2
+end
+
+output_dir = options[:output_dir] || File.join("out", File.basename(final_output, ".rmdoc"))
+prefix = options[:prefix]
+concat_script_path = options[:concat_script]
+rmcat_command = options[:rmcat_command] || Remarkable::YamlBookGenerator::DEFAULT_RMCAT_COMMAND
+run_concat = !options[:skip_rmcat]
+
+if options[:yaml_list]
+  result = Remarkable::YamlBookGenerator.generate_from_yaml_list(
+    list_path: options[:yaml_list],
+    output_dir:,
+    final_output:,
+    concat_script_path:,
+    rmcat_command:,
+    run_concat:
+  )
+else
+  template_yaml = options[:template_yaml]
+  if template_yaml.nil? || template_yaml.strip.empty?
+    warn "Missing required option: --template-yaml or --yaml-list"
+    warn options
+    exit 2
+  end
+
+  result = Remarkable::YamlBookGenerator.generate_from_template(
+    template_yaml:,
+    cover_yaml: options[:cover_yaml],
+    items_yaml: options[:items_yaml],
+    image_dir: options[:image_dir],
+    output_dir:,
+    final_output:,
+    prefix:,
+    concat_script_path:,
+    rmcat_command:,
+    run_concat:
+  )
+end
+
+result.fetch(:rmdoc_paths).each { |path| puts path }
+puts result.fetch(:concat_script_path)
+puts result.fetch(:final_output) if result[:concat_ran]
