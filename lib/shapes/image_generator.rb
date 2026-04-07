@@ -24,7 +24,7 @@ module Remarkable
     # Default brush used for PNG-backed image rendering.
     DEFAULT_BRUSH = RmPage::Pen::HIGHLIGHTER_2
     # Default gap between rendered pixel cells.
-    DEFAULT_PIXEL_GAP = 0.0
+    DEFAULT_PIXEL_GAP = -3.0
 
     module_function
 

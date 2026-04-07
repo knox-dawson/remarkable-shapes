@@ -29,6 +29,20 @@ module Remarkable
     DEFAULT_CELL_PADDING = 0.0
     # Default gutter for grid layouts.
     DEFAULT_GUTTER = 0.0
+    # Default annotation border stroke width.
+    DEFAULT_ANNOTATION_BORDER_STROKE_WIDTH = 4.0
+    # Default annotation border color.
+    DEFAULT_ANNOTATION_BORDER_COLOR = "black"
+    # Default annotation text size.
+    DEFAULT_ANNOTATION_TEXT_SIZE = 18.0
+    # Default annotation text stroke width.
+    DEFAULT_ANNOTATION_TEXT_STROKE_WIDTH = 2.0
+    # Default annotation text color.
+    DEFAULT_ANNOTATION_TEXT_COLOR = "grey"
+    # Default annotation text padding.
+    DEFAULT_ANNOTATION_TEXT_PADDING = 8.0
+    # Default brush for image objects.
+    DEFAULT_IMAGE_BRUSH = RmPage::Pen::HIGHLIGHTER_2
 
     module_function
 
@@ -76,11 +90,12 @@ module Remarkable
       objects = config.fetch("objects", [])
       raise ArgumentError, "objects must be an array" unless objects.is_a?(Array)
 
-      draw_grid_borders(page, layout)
+      draw_grid_borders(page, layout) unless layout[:grid] && layout[:grid][:annotations]
       used_cells = {}
       objects.each do |object|
         render_object(page, stringify_keys(object), layout, base_dir:, used_cells:)
       end
+      draw_grid_annotations(page, layout)
 
       layout
     end
@@ -158,12 +173,16 @@ module Remarkable
       raise ArgumentError, "grid cell_padding must be non-negative" if cell_padding.negative?
       raise ArgumentError, "grid gutter must be non-negative" if gutter.negative?
 
-      cell_width = (width - (gutter * (cols - 1))) / cols.to_f
-      cell_height = (height - (gutter * (rows - 1))) / rows.to_f
-      raise ArgumentError, "grid cells must have positive width" unless cell_width.positive?
-      raise ArgumentError, "grid cells must have positive height" unless cell_height.positive?
+      usable_width = width - (gutter * (cols - 1))
+      usable_height = height - (gutter * (rows - 1))
+      raise ArgumentError, "grid cells must have positive width" unless usable_width.positive?
+      raise ArgumentError, "grid cells must have positive height" unless usable_height.positive?
+
+      column_widths = resolve_grid_track_sizes(options["column_sizes"], cols, usable_width, "column_sizes")
+      row_heights = resolve_grid_track_sizes(resolve_row_track_definition(options), rows, usable_height, "rows")
 
       border = options["border"]
+      annotations = resolve_grid_annotations(options)
       {
         rows:,
         cols:,
@@ -173,9 +192,12 @@ module Remarkable
         height:,
         gutter:,
         cell_padding:,
-        cell_width:,
-        cell_height:,
-        border: border ? stringify_keys(border) : nil
+        cell_width: column_widths.first,
+        cell_height: row_heights.first,
+        column_widths:,
+        row_heights:,
+        border: border ? stringify_keys(border) : nil,
+        annotations:
       }
     end
 
@@ -208,10 +230,87 @@ module Remarkable
       end
     end
 
+    # Returns the row track definition when present.
+    #
+    # @return [Object, nil]
+    def resolve_row_track_definition(options)
+      return nil unless options.key?("size")
+
+      options["row_sizes"]
+    end
+
+    # Resolves row or column percentages into absolute sizes.
+    #
+    # @return [Array<Float>]
+    def resolve_grid_track_sizes(value, count, total_size, label)
+      return Array.new(count, total_size / count.to_f) if value.nil?
+
+      entries =
+        case value
+        when Array
+          value
+        when String
+          value.strip.split(/\s+/)
+        else
+          raise ArgumentError, "grid #{label} must be an array or a space-separated string"
+        end
+
+      raise ArgumentError, "grid #{label} must have #{count} entries" unless entries.length == count
+
+      weights = entries.map do |entry|
+        text = entry.to_s.strip.delete_suffix("%")
+        Float(text)
+      rescue ArgumentError, TypeError
+        raise ArgumentError, "grid #{label} entries must be numeric percentages"
+      end
+      raise ArgumentError, "grid #{label} entries must be positive" unless weights.all?(&:positive?)
+
+      total_weight = weights.sum
+      weights.map { |weight| total_size * (weight / total_weight.to_f) }
+    end
+
+    # Resolves optional grid annotation settings.
+    #
+    # @return [Hash, nil]
+    def resolve_grid_annotations(options)
+      value = options["annotations"]
+      return nil if value.nil? || value == false
+
+      annotation_options =
+        case value
+        when true
+          {}
+        when Hash
+          stringify_keys(value)
+        else
+          raise ArgumentError, "grid annotations must be true or a hash"
+        end
+
+      border = stringify_keys(annotation_options.fetch("border", {}))
+      text = stringify_keys(annotation_options.fetch("text", {}))
+
+      {
+        show: annotation_options.fetch("show", true),
+        border: {
+          "stroke_width" => fetch_number(border, "stroke_width", DEFAULT_ANNOTATION_BORDER_STROKE_WIDTH),
+          "color" => border.fetch("color", DEFAULT_ANNOTATION_BORDER_COLOR),
+          "brush" => border["brush"]
+        },
+        text: {
+          "size" => fetch_number(text, "size", DEFAULT_ANNOTATION_TEXT_SIZE),
+          "stroke_width" => fetch_number(text, "stroke_width", DEFAULT_ANNOTATION_TEXT_STROKE_WIDTH),
+          "color" => text.fetch("color", DEFAULT_ANNOTATION_TEXT_COLOR),
+          "brush" => text["brush"],
+          "padding" => fetch_number(text, "padding", DEFAULT_ANNOTATION_TEXT_PADDING)
+        }
+      }
+    end
+
     # Resolves an object's local bounding box into page coordinates.
     #
     # @return [Hash]
     def resolve_box(layout, object)
+      ensure_box_geometry!(object)
       x = map_x(layout, fetch_number(object, "x"))
       y = map_y(layout, fetch_number(object, "y"))
       width = scale_length(layout, fetch_number(object, "width"))
@@ -229,6 +328,18 @@ module Remarkable
       }
     end
 
+    # Raises a clearer error when a non-cell object omits required box geometry.
+    #
+    # @return [void]
+    def ensure_box_geometry!(object)
+      required = %w[x y width height]
+      missing = required.reject { |key| object.key?(key) }
+      return if missing.empty?
+
+      raise ArgumentError,
+            "objects not placed in a grid cell must provide x, y, width, and height; missing: #{missing.join(', ')}"
+    end
+
     # Draws one generic object from the YAML config.
     #
     # @return [void]
@@ -236,7 +347,7 @@ module Remarkable
       type = object.fetch("type") { raise ArgumentError, "object type is required" }.to_s
       object = apply_cell_layout(object, layout, type, used_cells)
       style = style_options_for(object)
-      brush = brush_for(object["brush"])
+      brush = object.key?("brush") ? brush_for(object["brush"]) : default_brush_for_type(type)
 
       case type
       when "line"
@@ -288,6 +399,13 @@ module Remarkable
       else
         raise ArgumentError, "unsupported object type: #{type}"
       end
+    end
+
+    # Returns the default brush for one object type.
+    #
+    # @return [Integer]
+    def default_brush_for_type(type)
+      type == "image" ? DEFAULT_IMAGE_BRUSH : Shapes::DEFAULT_BRUSH
     end
 
     # Converts nested hash keys to strings.
@@ -429,15 +547,17 @@ module Remarkable
       zero = cell_index - 1
       row = zero / grid[:cols]
       col = zero % grid[:cols]
-      x = grid[:x] + (col * (grid[:cell_width] + grid[:gutter]))
-      y = grid[:y] + (row * (grid[:cell_height] + grid[:gutter]))
+      width = grid[:column_widths][col]
+      height = grid[:row_heights][row]
+      x = grid[:x] + grid[:column_widths].take(col).sum + (col * grid[:gutter])
+      y = grid[:y] + grid[:row_heights].take(row).sum + (row * grid[:gutter])
       {
         x:,
         y:,
-        width: grid[:cell_width],
-        height: grid[:cell_height],
-        center_x: x + (grid[:cell_width] / 2.0),
-        center_y: y + (grid[:cell_height] / 2.0)
+        width:,
+        height:,
+        center_x: x + (width / 2.0),
+        center_y: y + (height / 2.0)
       }
     end
 
@@ -501,6 +621,88 @@ module Remarkable
           **style
         )
       end
+    end
+
+    # Draws annotation borders and text for a grid, when enabled.
+    #
+    # @return [void]
+    def draw_grid_annotations(page, layout)
+      grid = layout[:grid]
+      return unless grid && grid[:annotations] && grid[:annotations][:show]
+
+      draw_annotation_borders(page, grid)
+      draw_annotation_text(page, grid)
+    end
+
+    # Draws the annotation border set.
+    #
+    # @return [void]
+    def draw_annotation_borders(page, grid)
+      border = grid[:annotations][:border]
+      stroke_width = fetch_number(border, "stroke_width", DEFAULT_ANNOTATION_BORDER_STROKE_WIDTH)
+      style = style_options_for(border)
+      brush = border["brush"] ? brush_for(border["brush"]) : Shapes::DEFAULT_BRUSH
+
+      (1..(grid[:rows] * grid[:cols])).each do |cell_index|
+        box = grid_cell_outer_box(grid, cell_index)
+        Shapes.draw_box(
+          page,
+          box[:x],
+          box[:y],
+          box[:x] + box[:width],
+          box[:y] + box[:height],
+          stroke_width,
+          brush:,
+          **style
+        )
+      end
+    end
+
+    # Draws the annotation text for every grid cell.
+    #
+    # @return [void]
+    def draw_annotation_text(page, grid)
+      text = grid[:annotations][:text]
+      size = fetch_number(text, "size", DEFAULT_ANNOTATION_TEXT_SIZE)
+      stroke_width = fetch_number(text, "stroke_width", DEFAULT_ANNOTATION_TEXT_STROKE_WIDTH)
+      padding = fetch_number(text, "padding", DEFAULT_ANNOTATION_TEXT_PADDING)
+      style = style_options_for(text)
+      brush = text["brush"] ? brush_for(text["brush"]) : Shapes::DEFAULT_BRUSH
+      line_height = size * 1.2
+
+      (1..(grid[:rows] * grid[:cols])).each do |cell_index|
+        box = grid_cell_outer_box(grid, cell_index)
+        baseline = (box[:y] + padding) - LineFont.baseline_to_top(size)
+        annotation_lines_for_cell(box).each_with_index do |line, index|
+          Shapes.text(
+            page,
+            line,
+            box[:x] + padding,
+            baseline + (index * line_height),
+            size:,
+            stroke_width:,
+            brush:,
+            **style
+          )
+        end
+      end
+    end
+
+    # Returns the annotation text lines for one grid cell.
+    #
+    # @return [Array<String>]
+    def annotation_lines_for_cell(box)
+      [
+        "x=#{format_annotation_number(box[:x])} y=#{format_annotation_number(box[:y])}",
+        "w=#{format_annotation_number(box[:width])} h=#{format_annotation_number(box[:height])}"
+      ]
+    end
+
+    # Formats one annotation number compactly.
+    #
+    # @return [String]
+    def format_annotation_number(value)
+      format("%.2f", value).sub(/\.?0+\z/, "")
     end
 
     # Returns the horizontal offset for a named placement.
@@ -908,7 +1110,15 @@ module Remarkable
         ]
       else
         box = resolve_box(layout, object)
-        rotation = resolve_rotation(object)
+        rotation = resolve_rotation(
+          object,
+          {
+            "lower-left" => 0.0,
+            "upper-left" => 90.0,
+            "upper-right" => 180.0,
+            "lower-right" => 270.0
+          }
+        )
         box_triangle_points(box, mode: :right, rotation:)
       end
     end
@@ -1375,7 +1585,7 @@ module Remarkable
       grid_height = image_height * pixel_size
       x = box[:x] + ((box[:width] - grid_width) / 2.0)
       y = box[:y] + ((box[:height] - grid_height) / 2.0)
-      pixel_gap = fetch_number(object, "pixel_gap", 0.0)
+      pixel_gap = fetch_number(object, "pixel_gap", -3.0)
 
       Shapes.draw_rgba_grid(page, rgba_grid, x, y, pixel_size, gap: pixel_gap, brush:)
     end

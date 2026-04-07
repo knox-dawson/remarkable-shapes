@@ -13,8 +13,8 @@ module Remarkable
     PAGE_BOTTOM = 1740.0
     DEFAULT_OUTER_PADDING = 40.0
     DEFAULT_CELL_GAP = 30.0
-    DEFAULT_PIXEL_GAP = 0.0
-    DEFAULT_BRUSH = RmPage::Pen::FINELINER_2
+    DEFAULT_PIXEL_GAP = -3.0
+    DEFAULT_BRUSH = RmPage::Pen::HIGHLIGHTER_2
 
     BRUSH_NAMES = RmPage::Pen.constants(false).each_with_object({}) do |name, result|
       result[RmPage::Pen.const_get(name, false)] = name.to_s.downcase

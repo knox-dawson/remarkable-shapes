@@ -77,4 +77,23 @@ RSpec.describe Remarkable::YamlShapePageGenerator do
       expect(page_file).to include("pixel_gap: -0.1")
     end
   end
+
+  it "uses -3.0 as the default pixel gap in generated yaml image objects" do
+    Dir.mktmpdir do |dir|
+      images_dir = File.join(dir, "images")
+      output_dir = File.join(dir, "pages")
+      Dir.mkdir(images_dir)
+      image_path = File.join(images_dir, "one.png")
+
+      image = ChunkyPNG::Image.new(10, 12, ChunkyPNG::Color.rgba(255, 0, 0, 255))
+      image.save(image_path)
+
+      generated = described_class.generate(image_dir: images_dir, layout: "1x1", output_dir:)
+
+      expect(described_class::DEFAULT_PIXEL_GAP).to eq(-3.0)
+      expect(described_class::DEFAULT_BRUSH).to eq(Remarkable::RmPage::Pen::HIGHLIGHTER_2)
+      expect(File.read(generated.first)).to include("brush: highlighter_2")
+      expect(File.read(generated.first)).to include("pixel_gap: -3")
+    end
+  end
 end

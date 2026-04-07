@@ -338,7 +338,7 @@ module Remarkable
     #   rgba_grid = Remarkable::Shapes.png_to_rgba_grid("examples/cat.png")
     #   Remarkable::Shapes.draw_rgba_grid(page, rgba_grid, 240, 260, 6.0, gap: -0.10, brush: Remarkable::RmPage::Pen::HIGHLIGHTER_2)
     # @return [void]
-    def draw_rgba_grid(page, rgba_grid, x, y, pixel_size, gap: 0.0, brush: RmPage::Pen::HIGHLIGHTER_2)
+    def draw_rgba_grid(page, rgba_grid, x, y, pixel_size, gap: -3.0, brush: RmPage::Pen::HIGHLIGHTER_2)
       raise ArgumentError, "rgba_grid must not be empty" if rgba_grid.nil? || rgba_grid.empty?
 
       draw_size = pixel_size - gap

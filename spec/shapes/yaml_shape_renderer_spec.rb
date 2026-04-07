@@ -67,6 +67,22 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     expect(layout[:grid][:gutter]).to eq(20.0)
   end
 
+  it "resolves percentage-based grid row_sizes and column_sizes" do
+    layout = described_class.resolve_canvas_layout(
+      "width" => 400,
+      "height" => 300,
+      "placement" => "top-left",
+      "grid" => {
+        "size" => "2x2",
+        "row_sizes" => "10% 90%",
+        "column_sizes" => "25% 75%"
+      }
+    )
+
+    expect(layout[:grid][:column_widths]).to eq([100.0, 300.0])
+    expect(layout[:grid][:row_heights]).to eq([30.0, 270.0])
+  end
+
   it "renders generic shape objects from a config hash" do
     config = {
       "canvas" => { "width" => 800, "height" => 500, "placement" => "center" },
@@ -264,6 +280,49 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     end
   end
 
+  it "uses -3.0 as the default pixel_gap for image objects" do
+    Dir.mktmpdir do |dir|
+      png_path = File.join(dir, "tiny.png")
+      image = ChunkyPNG::Image.new(1, 1, ChunkyPNG::Color.rgba(255, 0, 0, 255))
+      image.save(png_path)
+
+      config = {
+        "canvas" => { "width" => 300, "height" => 200, "placement" => "top-left" },
+        "objects" => [
+          {
+            "type" => "image",
+            "path" => png_path,
+            "x" => 20,
+            "y" => 20,
+            "width" => 100,
+            "height" => 100
+          }
+        ]
+      }
+
+      described_class.render(page, config)
+
+      expect(page.lines.length).to eq(1)
+      expect(page.lines.first.brush_type).to eq(Remarkable::RmPage::Pen::HIGHLIGHTER_2)
+      expect(page.lines.first.points.map(&:width).max).to eq(103.0)
+    end
+  end
+
+  it "raises a clear error when a non-cell object omits box geometry" do
+    config = {
+      "objects" => [
+        {
+          "type" => "rectangle_fill",
+          "color" => "red"
+        }
+      ]
+    }
+
+    expect do
+      described_class.render(page, config)
+    end.to raise_error(ArgumentError, /not placed in a grid cell must provide x, y, width, and height/)
+  end
+
   it "renders circles from center_x, center_y, and radius" do
     config = {
       "objects" => [
@@ -355,6 +414,31 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     expect(points).to match_array([[220.0, 200.0], [100.0, 200.0], [100.0, 280.0]])
   end
 
+  it "supports named directions for box-based right triangles" do
+    config = {
+      "canvas" => { "width" => 400, "height" => 300, "placement" => "top-left" },
+      "objects" => [
+        {
+          "type" => "right_triangle_outline",
+          "x" => 100,
+          "y" => 80,
+          "width" => 120,
+          "height" => 100,
+          "direction" => "upper-right",
+          "stroke_width" => 5,
+          "color" => "black"
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    points = page.lines.first.points.map { |point| [point.x.round(6), point.y.round(6)] }.uniq
+    expect(points).to include([220.0, 80.0])
+    expect(points).to include([100.0, 80.0])
+    expect(points).to include([220.0, 180.0])
+  end
+
   it "fits downward box-based isosceles triangles inside their target box" do
     box = { x: 300.0, y: 400.0, width: 120.0, height: 100.0, center_x: 360.0, center_y: 450.0 }
 
@@ -425,6 +509,69 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     described_class.render(page, config)
 
     expect(page.lines.length).to eq(4)
+  end
+
+  it "draws annotation borders and text for each grid cell" do
+    config = {
+      "canvas" => {
+        "width" => 300,
+        "height" => 220,
+        "placement" => "top-left",
+        "grid" => {
+          "size" => "2x2",
+          "annotations" => {
+            "border" => {
+              "stroke_width" => 5,
+              "color" => "black"
+            },
+            "text" => {
+              "size" => 12,
+              "stroke_width" => 1,
+              "color" => "grey",
+              "padding" => 6
+            }
+          }
+        }
+      },
+      "objects" => []
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines.length).to be > 4
+    expect(page.lines.first.points.length).to eq(5)
+    expect(page.lines.first.thickness_scale).to eq(5.0)
+  end
+
+  it "does not draw annotations when show is false" do
+    config = {
+      "canvas" => {
+        "width" => 300,
+        "height" => 220,
+        "placement" => "top-left",
+        "grid" => {
+          "size" => "2x2",
+          "annotations" => {
+            "show" => false,
+            "border" => {
+              "stroke_width" => 5,
+              "color" => "black"
+            },
+            "text" => {
+              "size" => 12,
+              "stroke_width" => 1,
+              "color" => "grey",
+              "padding" => 6
+            }
+          }
+        }
+      },
+      "objects" => []
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines).to be_empty
   end
 
   it "places box-capable objects into grid cells" do

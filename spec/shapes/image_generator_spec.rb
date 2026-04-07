@@ -37,4 +37,19 @@ RSpec.describe Remarkable::ImageGenerator do
       expect(page.lines.length).to eq(2)
     end
   end
+
+  it "uses -3.0 as the default pixel gap for png rendering" do
+    Dir.mktmpdir do |dir|
+      png_path = File.join(dir, "tiny.png")
+      image = ChunkyPNG::Image.new(1, 1, ChunkyPNG::Color.rgba(255, 0, 0, 255))
+      image.save(png_path)
+
+      page = Remarkable::RmPage.new
+      layout = described_class.draw_png(page, png_path)
+
+      expected_width = layout[:pixel_size] - described_class::DEFAULT_PIXEL_GAP
+      expect(described_class::DEFAULT_PIXEL_GAP).to eq(-3.0)
+      expect(page.lines.first.points.map(&:width)).to eq([expected_width, expected_width])
+    end
+  end
 end

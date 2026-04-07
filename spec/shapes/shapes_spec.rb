@@ -34,6 +34,13 @@ RSpec.describe Remarkable::Shapes do
     expect(page.lines.map(&:rgba)).to contain_exactly(0xFFFF0000, 0xFF00FF00)
   end
 
+  it "uses -3.0 as the default rgba grid gap" do
+    described_class.draw_rgba_grid(page, [[0xFFFFFFFF]], 100, 200, 10)
+
+    expect(page.lines.length).to eq(1)
+    expect(page.lines.first.points.map(&:width)).to eq([13.0, 13.0])
+  end
+
   it "raises for an empty rgba grid" do
     expect do
       described_class.draw_rgba_grid(page, [], 100, 200, 10)

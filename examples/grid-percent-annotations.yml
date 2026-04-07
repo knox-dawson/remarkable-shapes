@@ -1,0 +1,68 @@
+canvas:
+  tablet: rm2
+  margin: 70
+  grid:
+    size: 2x3
+    row_sizes: 30% 70%
+    column_sizes: 20% 35% 45%
+    cell_padding: 18
+    gutter: 24
+    annotations:
+      show: true
+      border:
+        stroke_width: 6
+        color: black
+      text:
+        size: 16
+        stroke_width: 2
+        color: grey
+        padding: 8
+
+objects:
+  - type: rectangle_outline
+    cell: 1
+    stroke_width: 10
+    color: black
+
+  - type: circle_outline_fill
+    cell: 2
+    fill_color: yellow
+    outline_color: blue
+    stroke_width: 10
+
+  - type: text
+    cell: 3
+    text: "20 / 35 / 45"
+    size: 28
+    stroke_width: 3
+    align: center
+    valign: center
+    color: black
+
+  - type: right_triangle_outline_fill
+    cell: 4
+    rotation: 90
+    stroke_width: 10
+    fill_color: cyan
+    outline_color: blue
+
+  - type: regular_polygon_outline_fill
+    cell: 5
+    sides: 6
+    direction: horizontal
+    stroke_width: 10
+    colors:
+      - red
+      - yellow
+      - blue
+    outline_color: black
+
+  - type: text
+    cell: 6
+    text: "Annotations show\nx, y, w, h"
+    size: 28
+    stroke_width: 3
+    wrap: true
+    align: center
+    valign: center
+    color: black
