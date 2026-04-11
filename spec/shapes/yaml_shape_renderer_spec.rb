@@ -308,19 +308,26 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     end
   end
 
-  it "raises a clear error when a non-cell object omits box geometry" do
+  it "uses the full canvas as the default box for non-cell box objects" do
     config = {
+      "canvas" => { "width" => 300, "height" => 220, "placement" => "top-left" },
       "objects" => [
         {
-          "type" => "rectangle_fill",
+          "type" => "rectangle_outline",
+          "stroke_width" => 4,
           "color" => "red"
         }
       ]
     }
 
-    expect do
-      described_class.render(page, config)
-    end.to raise_error(ArgumentError, /not placed in a grid cell must provide x, y, width, and height/)
+    described_class.render(page, config)
+
+    xs = page.lines.first.points.map(&:x)
+    ys = page.lines.first.points.map(&:y)
+    expect(xs.min).to eq(0.0)
+    expect(xs.max).to eq(300.0)
+    expect(ys.min).to eq(0.0)
+    expect(ys.max).to eq(220.0)
   end
 
   it "renders circles from center_x, center_y, and radius" do
@@ -635,18 +642,18 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     expect(ys.max - ys.min).to be > 24
   end
 
-  it "rejects duplicate cell assignments" do
+  it "allows multiple objects to share the same cell" do
     config = {
       "canvas" => { "grid" => "2x2" },
       "objects" => [
-        { "type" => "rectangle_fill", "cell" => 1, "color" => "red" },
-        { "type" => "circle_fill", "cell" => "cell1", "color" => "blue" }
+        { "type" => "rectangle_outline", "cell" => 1, "stroke_width" => 4, "color" => "black" },
+        { "type" => "text", "cell" => "cell1", "text" => "Shared", "size" => 18, "stroke_width" => 2, "align" => "center", "valign" => "bottom", "color" => "blue" }
       ]
     }
 
-    expect do
-      described_class.render(page, config)
-    end.to raise_error(ArgumentError, /already used/)
+    described_class.render(page, config)
+
+    expect(page.lines.length).to be > 1
   end
 
   it "rejects mixing cell placement with explicit geometry" do

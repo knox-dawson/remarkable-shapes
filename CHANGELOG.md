@@ -11,8 +11,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added `bin/generate_yaml_book` for end-to-end multipage `.rmdoc` generation.
 - Added a YAML page-list workflow that renders an ordered set of YAML layouts into per-page `.rmdoc` files, writes an `rmcat` script, and can build the final multipage `.rmdoc`.
 - Added a cover/template/items workflow for multipage generation, including support for `--cover-yaml`, `--template-yaml`, `--items-yaml`, and `--image-dir`.
-- Added template-driven page generation with `slots` and `template` blocks so one page layout can be repeated across many items with image and label placeholders.
+- Added template-driven page generation with `template` blocks and grid-driven `cell: auto` placement so multiple objects for one item can share the same assigned cell.
 - Added saved `rmcat` script generation plus optional automatic concatenation when `rmcat` (https://github.com/kg4zow/rm2-scripts/tree/main/rmcat/) is available.
+
+### Changed
+
+- Changed the template workflow so page capacity comes from the template canvas grid instead of separate `slots` definitions.
+- Changed box-capable YAML objects so when neither `cell` nor `x`, `y`, `width`, and `height` are given, the object box defaults to the full canvas.
+- Changed grid cell placement to allow multiple objects to share the same cell, which supports item templates like an image and label in one cell with different placement values.
 
 ## [0.9.0-beta.4] - 2026-04-07
 

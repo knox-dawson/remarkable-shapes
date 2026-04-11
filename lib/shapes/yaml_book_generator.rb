@@ -16,6 +16,17 @@ module Remarkable
     DEFAULT_RMCAT_COMMAND = "rmcat"
 
     class << self
+      def parse_layout(layout)
+        match = layout.to_s.match(/\A(\d+)x(\d+)\z/i)
+        raise ArgumentError, "Layout must look like 3x5" unless match
+
+        rows = match[1].to_i
+        cols = match[2].to_i
+        raise ArgumentError, "Layout dimensions must be positive" unless rows.positive? && cols.positive?
+
+        [rows, cols]
+      end
+
       def generate_from_yaml_list(list_path:, output_dir:, final_output:, concat_script_path: nil,
                                   rmcat_command: DEFAULT_RMCAT_COMMAND, run_concat: true)
         yaml_paths = load_yaml_list(list_path)
@@ -132,21 +143,18 @@ module Remarkable
         canvas = config.fetch("canvas") { raise ArgumentError, "template yaml must contain canvas" }
         static_objects = config.fetch("objects", [])
         template_objects = config.fetch("template") { raise ArgumentError, "template yaml must contain template" }
-        slots = config.fetch("slots") { raise ArgumentError, "template yaml must contain slots" }
         raise ArgumentError, "template must be an array" unless template_objects.is_a?(Array)
-        raise ArgumentError, "slots must be an array" unless slots.is_a?(Array)
-        raise ArgumentError, "slots must not be empty" if slots.empty?
+        per_page = template_page_capacity(canvas)
 
         template_dir = File.dirname(File.expand_path(template_path))
-        items.each_slice(slots.length).each_with_index.map do |page_items, page_index|
+        items.each_slice(per_page).each_with_index.map do |page_items, page_index|
           page_objects = deep_copy(static_objects)
-          page_items.each_with_index do |item, slot_index|
+          page_items.each_with_index do |item, item_index|
             context = build_template_context(
               item:,
-              slot: stringify_keys(slots[slot_index]),
               page_number: page_index + 1,
-              slot_number: slot_index + 1,
-              item_number: (page_index * slots.length) + slot_index + 1
+              item_number: (page_index * per_page) + item_index + 1,
+              cell_number: item_index + 1
             )
             template_objects.each do |template_object|
               page_objects << instantiate_template_object(template_object, context, output_dir, template_dir)
@@ -163,13 +171,28 @@ module Remarkable
         end
       end
 
-      def build_template_context(item:, slot:, page_number:, slot_number:, item_number:)
+      def build_template_context(item:, page_number:, item_number:, cell_number:)
         stringify_keys(item).merge(
-          stringify_keys(slot),
           "page_number" => page_number,
-          "slot_number" => slot_number,
-          "item_number" => item_number
+          "item_number" => item_number,
+          "cell" => cell_number,
+          "auto_cell" => cell_number
         )
+      end
+
+      def template_page_capacity(canvas)
+        grid = stringify_keys(canvas.fetch("grid") { raise ArgumentError, "template canvas must contain grid" })
+        rows, cols =
+          if grid["size"]
+            parse_layout(grid["size"])
+          else
+            [Integer(grid.fetch("rows")), Integer(grid.fetch("cols"))]
+          end
+        raise ArgumentError, "template grid must have positive rows and cols" unless rows.positive? && cols.positive?
+
+        rows * cols
+      rescue KeyError
+        raise ArgumentError, "template grid must define size or rows and cols"
       end
 
       def instantiate_template_object(value, context, output_dir, template_dir, key = nil)
@@ -188,6 +211,8 @@ module Remarkable
       end
 
       def instantiate_template_string(value, context, output_dir, template_dir, key)
+        return context.fetch("cell") if value == "auto" && key == "cell"
+
         exact = value.match(/\A\{\{([A-Za-z0-9_]+)\}\}\z/)
         if exact
           resolved = context.fetch(exact[1]) { raise ArgumentError, "unknown template placeholder: #{exact[1]}" }

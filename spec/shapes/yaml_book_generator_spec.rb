@@ -98,17 +98,18 @@ RSpec.describe Remarkable::YamlBookGenerator do
             grid:
               size: 2x2
               cell_padding: 10
-          slots:
-            - image_cell: 1
-              label_cell: 3
-            - image_cell: 2
-              label_cell: 4
+          objects:
+            - type: rectangle_outline
+              stroke_width: 4
+              color: black
           template:
             - type: image
-              cell: "{{image_cell}}"
+              cell: auto
+              placement: top
               path: "{{image}}"
             - type: text
-              cell: "{{label_cell}}"
+              cell: auto
+              placement: bottom
               text: "{{label}}"
               size: 20
               stroke_width: 2
@@ -141,6 +142,9 @@ RSpec.describe Remarkable::YamlBookGenerator do
 
       expect(result[:generated_yaml_paths].length).to eq(1)
       generated_yaml = File.read(result[:generated_yaml_paths].first)
+      expect(generated_yaml).to include("stroke_width: 4")
+      expect(generated_yaml.scan("cell: 1").length).to eq(2)
+      expect(generated_yaml.scan("cell: 2").length).to eq(2)
       expect(generated_yaml).to include("text: Alpha")
       expect(generated_yaml).to include("text: beta 02")
       expect(generated_yaml).to include('path: "../../alpha-01.png"')

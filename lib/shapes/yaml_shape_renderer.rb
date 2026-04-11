@@ -310,11 +310,27 @@ module Remarkable
     #
     # @return [Hash]
     def resolve_box(layout, object)
-      ensure_box_geometry!(object)
-      x = map_x(layout, fetch_number(object, "x"))
-      y = map_y(layout, fetch_number(object, "y"))
-      width = scale_length(layout, fetch_number(object, "width"))
-      height = scale_length(layout, fetch_number(object, "height"))
+      geometry_keys = %w[x y width height]
+      present = geometry_keys.select { |key| object.key?(key) }
+
+      if present.empty?
+        x = layout[:x]
+        y = layout[:y]
+        width = layout[:width]
+        height = layout[:height]
+      else
+        missing = geometry_keys - present
+        unless missing.empty?
+          raise ArgumentError,
+                "objects with partial box geometry must provide x, y, width, and height; missing: #{missing.join(', ')}"
+        end
+
+        x = map_x(layout, fetch_number(object, "x"))
+        y = map_y(layout, fetch_number(object, "y"))
+        width = scale_length(layout, fetch_number(object, "width"))
+        height = scale_length(layout, fetch_number(object, "height"))
+      end
+
       raise ArgumentError, "object width must be positive" unless width.positive?
       raise ArgumentError, "object height must be positive" unless height.positive?
 
@@ -326,18 +342,6 @@ module Remarkable
         center_x: x + (width / 2.0),
         center_y: y + (height / 2.0)
       }
-    end
-
-    # Raises a clearer error when a non-cell object omits required box geometry.
-    #
-    # @return [void]
-    def ensure_box_geometry!(object)
-      required = %w[x y width height]
-      missing = required.reject { |key| object.key?(key) }
-      return if missing.empty?
-
-      raise ArgumentError,
-            "objects not placed in a grid cell must provide x, y, width, and height; missing: #{missing.join(', ')}"
     end
 
     # Draws one generic object from the YAML config.
@@ -434,9 +438,6 @@ module Remarkable
       ensure_no_explicit_geometry_with_cell!(object)
 
       cell_index = parse_cell_identifier(object["cell"], layout[:grid])
-      raise ArgumentError, "cell #{object['cell']} is already used" if used_cells[cell_index]
-
-      used_cells[cell_index] = true
       outer_box = grid_cell_outer_box(layout[:grid], cell_index)
       inner_box = inset_box(outer_box, layout[:grid][:cell_padding])
       placement = (object["placement"] || "center").to_s
