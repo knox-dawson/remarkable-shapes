@@ -153,4 +153,52 @@ RSpec.describe Remarkable::YamlBookGenerator do
       expect(result[:concat_ran]).to be(true)
     end
   end
+
+  it "accepts a relative output_dir in the template workflow" do
+    Dir.mktmpdir do |dir|
+      cover_yaml = File.join(dir, "cover.yml")
+      template_yaml = File.join(dir, "template.yml")
+      items_yaml = File.join(dir, "items.yml")
+      final_output = File.join(dir, "catalog.rmdoc")
+      fake_rmcat = File.join(dir, "rmcat")
+      image_a = File.join(dir, "alpha-01.png")
+
+      write_simple_yaml(cover_yaml, "Catalog Cover")
+      ChunkyPNG::Image.new(2, 2, ChunkyPNG::Color.rgba(255, 0, 0, 255)).save(image_a)
+      File.write(
+        template_yaml,
+        <<~YAML
+          canvas:
+            width: 400
+            height: 300
+            placement: top-left
+            grid:
+              size: 1x1
+          template:
+            - type: image
+              cell: auto
+              path: "{{image}}"
+        YAML
+      )
+      File.write(items_yaml, { "items" => [{ "image" => image_a, "label" => "Alpha" }] }.to_yaml)
+      write_fake_rmcat(fake_rmcat)
+
+      Dir.chdir(dir) do
+        result = described_class.generate_from_template(
+          cover_yaml:,
+          template_yaml:,
+          items_yaml:,
+          output_dir: "out",
+          final_output:,
+          prefix: "catalog",
+          rmcat_command: fake_rmcat,
+          run_concat: true
+        )
+
+        expect(result[:generated_yaml_paths].first).to start_with(File.join(dir, "out", "yaml"))
+        expect(File.file?(result[:generated_yaml_paths].first)).to be(true)
+        expect(File.file?(final_output)).to be(true)
+      end
+    end
+  end
 end

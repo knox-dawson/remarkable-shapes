@@ -29,6 +29,9 @@ module Remarkable
 
       def generate_from_yaml_list(list_path:, output_dir:, final_output:, concat_script_path: nil,
                                   rmcat_command: DEFAULT_RMCAT_COMMAND, run_concat: true)
+        output_dir = File.expand_path(output_dir)
+        final_output = File.expand_path(final_output)
+        concat_script_path = concat_script_path ? File.expand_path(concat_script_path) : nil
         yaml_paths = load_yaml_list(list_path)
         generate_book_from_yaml_paths(
           yaml_paths:,
@@ -47,6 +50,9 @@ module Remarkable
         raise ArgumentError, "provide either items_yaml or image_dir" if blank?(items_yaml) && blank?(image_dir)
         raise ArgumentError, "provide only one of items_yaml or image_dir" if present?(items_yaml) && present?(image_dir)
 
+        output_dir = File.expand_path(output_dir)
+        final_output = File.expand_path(final_output)
+        concat_script_path = concat_script_path ? File.expand_path(concat_script_path) : nil
         template_path = File.expand_path(template_yaml)
         template_config = load_yaml_hash(template_path)
         items = items_yaml ? load_items(items_yaml) : load_items_from_image_dir(image_dir)
@@ -75,6 +81,9 @@ module Remarkable
                                         rmcat_command: DEFAULT_RMCAT_COMMAND, run_concat: true)
         raise ArgumentError, "yaml_paths must not be empty" if yaml_paths.nil? || yaml_paths.empty?
 
+        output_dir = File.expand_path(output_dir)
+        final_output = File.expand_path(final_output)
+        concat_script_path = concat_script_path ? File.expand_path(concat_script_path) : nil
         rmdoc_dir = File.join(output_dir, "rmdoc")
         FileUtils.mkdir_p(rmdoc_dir)
         rmdoc_paths = yaml_paths.each_with_index.map do |yaml_path, index|
@@ -83,10 +92,7 @@ module Remarkable
           render_yaml_to_rmdoc(yaml_path, target)
           target
         end
-
-        final_output = File.expand_path(final_output)
         concat_script_path ||= File.join(output_dir, "#{File.basename(final_output, ".rmdoc")}-rmcat.sh")
-        concat_script_path = File.expand_path(concat_script_path)
         write_concat_script(concat_script_path, final_output:, rmdoc_paths:, rmcat_command:)
         concat_ran = run_concat ? run_concat_script(concat_script_path, rmcat_command:) : false
 
