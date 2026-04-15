@@ -251,6 +251,69 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     expect(ys.max - ys.min).to be > 24
   end
 
+  it "keeps shadow text inside the requested box when aligned" do
+    config = {
+      "canvas" => { "width" => 500, "height" => 300, "placement" => "top-left" },
+      "objects" => [
+        {
+          "type" => "shadow_text",
+          "x" => 20,
+          "y" => 30,
+          "width" => 180,
+          "height" => 90,
+          "text" => "Shadow",
+          "size" => 24,
+          "stroke_width" => 2,
+          "align" => "center",
+          "valign" => "center",
+          "shadow_dx" => -10,
+          "shadow_dy" => -8,
+          "shadow_color" => "grey",
+          "color" => "black"
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines).not_to be_empty
+    xs = page.lines.flat_map { |line| line.points.map(&:x) }
+    ys = page.lines.flat_map { |line| line.points.map(&:y) }
+    expect(xs.min).to be >= 20
+    expect(xs.max).to be <= 200
+    expect(ys.min).to be >= 30
+    expect(ys.max).to be <= 120
+  end
+
+  it "applies shadow_color separately from the main text color" do
+    config = {
+      "canvas" => { "width" => 300, "height" => 200, "placement" => "top-left" },
+      "objects" => [
+        {
+          "type" => "shadow_text",
+          "x" => 20,
+          "y" => 30,
+          "width" => 120,
+          "height" => 60,
+          "text" => "A",
+          "size" => 24,
+          "stroke_width" => 2,
+          "shadow_dx" => 6,
+          "shadow_dy" => 4,
+          "shadow_color" => "grey",
+          "color" => "black"
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines.map(&:color).uniq).to contain_exactly(
+      Remarkable::RmPage::Colour::GREY,
+      Remarkable::RmPage::Colour::BLACK
+    )
+  end
+
   it "uses pixel_gap for image pixel spacing" do
     Dir.mktmpdir do |dir|
       png_path = File.join(dir, "tiny.png")
@@ -328,6 +391,28 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     expect(xs.max).to eq(300.0)
     expect(ys.min).to eq(0.0)
     expect(ys.max).to eq(220.0)
+  end
+
+  it "uses the margined content box as the default box for non-cell box objects" do
+    config = {
+      "canvas" => { "width" => 300, "height" => 220, "placement" => "top-left", "margin" => 20 },
+      "objects" => [
+        {
+          "type" => "rectangle_outline",
+          "stroke_width" => 4,
+          "color" => "red"
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    xs = page.lines.first.points.map(&:x)
+    ys = page.lines.first.points.map(&:y)
+    expect(xs.min).to eq(20.0)
+    expect(xs.max).to eq(280.0)
+    expect(ys.min).to eq(20.0)
+    expect(ys.max).to eq(200.0)
   end
 
   it "renders circles from center_x, center_y, and radius" do
@@ -654,6 +739,53 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     described_class.render(page, config)
 
     expect(page.lines.length).to be > 1
+  end
+
+  it "uses scale and placement to position full-cell objects inside a shared cell" do
+    Dir.mktmpdir do |dir|
+      png_path = File.join(dir, "tiny.png")
+      image = ChunkyPNG::Image.new(2, 2, ChunkyPNG::Color.rgba(255, 0, 0, 255))
+      image.save(png_path)
+
+      config = {
+        "canvas" => {
+          "width" => 300,
+          "height" => 220,
+          "placement" => "top-left",
+          "grid" => {
+            "size" => "1x1",
+            "cell_padding" => 10
+          }
+        },
+        "objects" => [
+          {
+            "type" => "image",
+            "cell" => 1,
+            "path" => png_path,
+            "scale" => 60,
+            "placement" => "top"
+          },
+          {
+            "type" => "text",
+            "cell" => 1,
+            "text" => "Label",
+            "size" => 18,
+            "stroke_width" => 2,
+            "scale" => 40,
+            "placement" => "bottom",
+            "align" => "center",
+            "valign" => "center",
+            "color" => "black"
+          }
+        ]
+      }
+
+      described_class.render(page, config)
+
+      image_ys = page.lines.first.points.map(&:y)
+      text_ys = page.lines.last.points.map(&:y)
+      expect(image_ys.max).to be < text_ys.min
+    end
   end
 
   it "rejects mixing cell placement with explicit geometry" do

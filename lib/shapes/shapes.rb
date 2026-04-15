@@ -99,6 +99,48 @@ module Remarkable
       )
     end
 
+    # Draws line-font text with a shadow pass followed by the main pass.
+    #
+    # @example Ruby lambda
+    #   Remarkable::Shapes.shadow_text(page, "remarkable-shapes", 180, 260, shadow_dx: 6, shadow_dy: 6,
+    #                                  shadow_color: Remarkable::RmPage::Colour::GREY,
+    #                                  color: Remarkable::RmPage::Colour::BLACK)
+    # @return [Float] rendered width including the horizontal shadow extent
+    def shadow_text(page, string, x, baseline_y, size: 48.0, stroke_width: 2.0, style: :plain, mono: false,
+                    shadow_dx: 0.0, shadow_dy: 0.0,
+                    shadow_rgba: DEFAULT_RGBA, shadow_color: DEFAULT_COLOR, shadow_brush: DEFAULT_BRUSH,
+                    rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
+      text(
+        page,
+        string,
+        x.to_f + shadow_dx.to_f,
+        baseline_y.to_f + shadow_dy.to_f,
+        size:,
+        stroke_width:,
+        style:,
+        mono:,
+        rgba: shadow_rgba,
+        color: shadow_color,
+        brush: shadow_brush
+      )
+
+      width = text(
+        page,
+        string,
+        x,
+        baseline_y,
+        size:,
+        stroke_width:,
+        style:,
+        mono:,
+        rgba:,
+        color:,
+        brush:
+      )
+
+      width + shadow_dx.to_f.abs
+    end
+
     # Draws a thick tapered rectangle-like stroke.
     #
     # @example Ruby lambda

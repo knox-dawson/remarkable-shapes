@@ -39,4 +39,13 @@ RSpec.describe Remarkable::Shapes do
     expect(width).to be > 0
     expect(page.lines).not_to be_empty
   end
+
+  it "draws shadow text and returns width including shadow extent" do
+    page = Remarkable::RmPage.new
+
+    width = described_class.shadow_text(page, "Hello", 100, 200, size: 32, stroke_width: 2, shadow_dx: 6, shadow_dy: 4)
+
+    expect(width).to eq(described_class.text(page, "Hello", 100, 200, size: 32, stroke_width: 2) + 6)
+    expect(page.lines).not_to be_empty
+  end
 end

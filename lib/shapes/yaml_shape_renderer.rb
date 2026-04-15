@@ -314,10 +314,10 @@ module Remarkable
       present = geometry_keys.select { |key| object.key?(key) }
 
       if present.empty?
-        x = layout[:x]
-        y = layout[:y]
-        width = layout[:width]
-        height = layout[:height]
+        x = layout[:content_x] || layout[:x]
+        y = layout[:content_y] || layout[:y]
+        width = layout[:content_width] || layout[:width]
+        height = layout[:content_height] || layout[:height]
       else
         missing = geometry_keys - present
         unless missing.empty?
@@ -396,6 +396,8 @@ module Remarkable
         draw_parallelogram_object(page, object, layout, style:, brush:)
       when "text"
         draw_text_object(page, object, layout, style:, brush:)
+      when "shadow_text"
+        draw_shadow_text_object(page, object, layout, style:, brush:)
       when "image"
         draw_image_object(page, object, layout, base_dir:, brush:)
       when "yaml"
@@ -441,16 +443,17 @@ module Remarkable
       outer_box = grid_cell_outer_box(layout[:grid], cell_index)
       inner_box = inset_box(outer_box, layout[:grid][:cell_padding])
       placement = (object["placement"] || "center").to_s
+      scale = resolve_cell_scale(object)
 
       updated = object.dup
-      updated["wrap"] = true if type == "text" && !updated.key?("wrap")
+      updated["wrap"] = true if %w[text shadow_text].include?(type) && !updated.key?("wrap")
 
       box =
         if square_fit_type?(type)
-          side = [inner_box[:width], inner_box[:height]].min
+          side = [inner_box[:width], inner_box[:height]].min * scale
           place_box_in_box(inner_box, side, side, placement)
         elsif full_cell_type?(type)
-          inner_box
+          place_box_in_box(inner_box, inner_box[:width] * scale, inner_box[:height] * scale, placement)
         else
           raise ArgumentError, "object type #{type} does not support cell placement without explicit geometry"
         end
@@ -460,6 +463,18 @@ module Remarkable
       updated["width"] = box[:width]
       updated["height"] = box[:height]
       updated
+    end
+
+    # Resolves an optional per-object cell scale.
+    #
+    # @return [Float]
+    def resolve_cell_scale(object)
+      return 1.0 unless object.key?("scale")
+
+      scale = fetch_number(object, "scale")
+      raise ArgumentError, "cell scale must be greater than 0 and less than 100" unless scale.positive? && scale < 100
+
+      scale > 1.0 ? scale / 100.0 : scale
     end
 
     # Returns whether the object type should fit a square inside a cell.
@@ -493,6 +508,7 @@ module Remarkable
         right_triangle_outline
         right_triangle_outline_fill
         text
+        shadow_text
         image
         yaml
       ].include?(type)
@@ -754,6 +770,17 @@ module Remarkable
         end
 
       Shapes.style_options(style_value)
+    end
+
+    # Returns shadow text style options using the shadow-specific keyword names.
+    #
+    # @return [Hash]
+    def shadow_style_options_for(object)
+      style = style_options_for(object, "shadow")
+      {
+        shadow_rgba: style.fetch(:rgba),
+        shadow_color: style.fetch(:color)
+      }
     end
 
     # Parses a color value into either a tablet color constant or RGBA integer.
@@ -1502,6 +1529,20 @@ module Remarkable
     #     color: black
     # @return [void]
     def draw_text_object(page, object, layout, style:, brush:)
+      draw_text_like_object(page, object, layout, style:, brush:, shadow: false)
+    end
+
+    # Draws shadowed text into a box with optional wrapping and alignment.
+    #
+    # @return [void]
+    def draw_shadow_text_object(page, object, layout, style:, brush:)
+      draw_text_like_object(page, object, layout, style:, brush:, shadow: true)
+    end
+
+    # Draws text-like objects into a box with optional wrapping and alignment.
+    #
+    # @return [void]
+    def draw_text_like_object(page, object, layout, style:, brush:, shadow:)
       box = resolve_box(layout, object)
       text = object.fetch("text") { raise ArgumentError, "text is required" }.to_s
       size = scale_length(layout, fetch_number(object, "size", LineFont::DEFAULT_SIZE))
@@ -1512,52 +1553,79 @@ module Remarkable
       wrap = object.fetch("wrap", false)
       align = object.fetch("align", "left").to_s
       valign = object.fetch("valign", "top").to_s
+      shadow_dx = shadow ? scale_length(layout, fetch_number(object, "shadow_dx", 0.0)) : 0.0
+      shadow_dy = shadow ? scale_length(layout, fetch_number(object, "shadow_dy", 0.0)) : 0.0
+      shadow_style = shadow ? shadow_style_options_for(object) : nil
+      shadow_brush = shadow && object.key?("shadow_brush") ? brush_for(object["shadow_brush"]) : brush
 
       lines = if wrap
-                wrap_text_lines(text, box[:width], size:, style: style_name, mono:)
+                wrap_text_lines(text, box[:width] - shadow_dx.abs, size:, style: style_name, mono:)
               else
                 text.split("\n", -1)
               end
 
       line_height = size * line_spacing
       block_height = line_height * [lines.length, 1].max
-      top_y = case valign
-              when "top"
-                box[:y]
-              when "center", "middle"
-                box[:y] + ((box[:height] - block_height) / 2.0)
-              when "bottom"
-                box[:y] + (box[:height] - block_height)
-              else
-                raise ArgumentError, "unsupported valign: #{valign}"
-              end
+      rendered_block_height = block_height + shadow_dy.abs
+      top_y =
+        case valign
+        when "top"
+          box[:y] - [shadow_dy, 0.0].min
+        when "center", "middle"
+          box[:y] + ((box[:height] - rendered_block_height) / 2.0) - [shadow_dy, 0.0].min
+        when "bottom"
+          box[:y] + (box[:height] - rendered_block_height) - [shadow_dy, 0.0].min
+        else
+          raise ArgumentError, "unsupported valign: #{valign}"
+        end
 
       baseline = top_y - LineFont.baseline_to_top(size)
       lines.each do |line|
         line_width = LineFont.text_width(line, size:, style: style_name, mono:)
-        x = case align
-            when "left"
-              box[:x]
-            when "center", "middle"
-              box[:x] + ((box[:width] - line_width) / 2.0)
-            when "right"
-              box[:x] + (box[:width] - line_width)
-            else
-              raise ArgumentError, "unsupported align: #{align}"
-            end
+        rendered_line_width = line_width + shadow_dx.abs
+        x =
+          case align
+          when "left"
+            box[:x] - [shadow_dx, 0.0].min
+          when "center", "middle"
+            box[:x] + ((box[:width] - rendered_line_width) / 2.0) - [shadow_dx, 0.0].min
+          when "right"
+            box[:x] + (box[:width] - rendered_line_width) - [shadow_dx, 0.0].min
+          else
+            raise ArgumentError, "unsupported align: #{align}"
+          end
 
-        Shapes.text(
-          page,
-          line,
-          x,
-          baseline,
-          size:,
-          stroke_width:,
-          style: style_name,
-          mono:,
-          brush:,
-          **style
-        )
+        if shadow
+          Shapes.shadow_text(
+            page,
+            line,
+            x,
+            baseline,
+            size:,
+            stroke_width:,
+            style: style_name,
+            mono:,
+            shadow_dx:,
+            shadow_dy:,
+            shadow_brush:,
+            **shadow_style,
+            brush:,
+            **style
+          )
+        else
+          Shapes.text(
+            page,
+            line,
+            x,
+            baseline,
+            size:,
+            stroke_width:,
+            style: style_name,
+            mono:,
+            brush:,
+            **style
+          )
+        end
         baseline += line_height
       end
     end
