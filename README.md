@@ -26,6 +26,8 @@ bundle install
 
 Note that `bundle install` should install gems (and dependencies) listed in the Gemfile, e.g., `slop`, `chunky_png`, etc.
 
+This project has not been tested with Ruby versions prior to ruby 3.4.4.
+
 ## Usage
 
 Generate a one-off image page from a PNG:
