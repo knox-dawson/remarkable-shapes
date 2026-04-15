@@ -24,6 +24,8 @@ cd remarkable-shapes
 bundle install
 ```
 
+Note that `bundle install` should install gems (and dependencies) listed in the Gemfile, e.g., `slop`, `chunky_png`, etc.
+
 ## Usage
 
 Generate a one-off image page from a PNG:
