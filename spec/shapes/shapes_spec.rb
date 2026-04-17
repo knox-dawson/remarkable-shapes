@@ -12,6 +12,8 @@ RSpec.describe Remarkable::Shapes do
     expect(line.brush_type).to eq(Remarkable::RmPage::Pen::SHADER)
     expect(line.color).to eq(Remarkable::RmPage::Colour::RGBA)
     expect(line.rgba).to eq(0xFF112233)
+    expect(line.thickness_scale).to eq(10.0)
+    expect(line.points.map(&:width)).to eq([10.0, 10.0])
   end
 
   it "stores a tablet colour code when one is provided" do

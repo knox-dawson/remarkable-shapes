@@ -613,6 +613,16 @@ module Remarkable
       }
     end
 
+    # Resolves a square fitted into a box using the object's placement.
+    #
+    # @return [Hash]
+    def resolve_square_fit_box(layout, object)
+      box = resolve_box(layout, object)
+      placement = (object["placement"] || "center").to_s
+      side = [box[:width], box[:height]].min
+      place_box_in_box(box, side, side, placement)
+    end
+
     # Draws optional grid cell borders.
     #
     # @return [void]
@@ -929,10 +939,12 @@ module Remarkable
 
       target_width = child_canvas[:width] * scale
       target_height = child_canvas[:height] * scale
+      placement = (object["placement"] || "center").to_s
+      fitted_box = place_box_in_box(box, target_width, target_height, placement)
 
       {
-        x: box[:x] + ((box[:width] - target_width) / 2.0),
-        y: box[:y] + ((box[:height] - target_height) / 2.0),
+        x: fitted_box[:x],
+        y: fitted_box[:y],
         width: child_canvas[:width],
         height: child_canvas[:height],
         placement: "nested",
@@ -955,7 +967,7 @@ module Remarkable
 
         { center_x:, center_y:, radius: }
       else
-        box = resolve_box(layout, object)
+        box = resolve_square_fit_box(layout, object)
         {
           center_x: box[:center_x],
           center_y: box[:center_y],
@@ -1415,7 +1427,7 @@ module Remarkable
     #       - cyan
     # @return [void]
     def draw_star_object(page, object, layout, style:, brush:)
-      box = resolve_box(layout, object)
+      box = resolve_square_fit_box(layout, object)
       point_count = fetch_number(object, "point_count", object["points"]).to_i
       wide_point_percent = fetch_number(object, "wide_point_percent", 31.0)
       raw_star_width = fetch_number(object, "star_width", -1.0)
@@ -1474,7 +1486,7 @@ module Remarkable
     #
     # @return [void]
     def draw_regular_polygon_outline_object(page, object, layout, style:, brush:)
-      box = resolve_box(layout, object)
+      box = resolve_square_fit_box(layout, object)
       stroke_width = fetch_number(object, "stroke_width", DEFAULT_STROKE_WIDTH)
       sides = fetch_number(object, "sides").to_i
       rotation = resolve_regular_polygon_rotation(object, sides)
@@ -1486,7 +1498,7 @@ module Remarkable
     #
     # @return [void]
     def draw_regular_polygon_fill_object(page, object, layout, style:, brush:)
-      box = resolve_box(layout, object)
+      box = resolve_square_fit_box(layout, object)
       sides = fetch_number(object, "sides").to_i
       rotation = resolve_regular_polygon_rotation(object, sides)
       radius = [box[:width], box[:height]].min / 2.0
@@ -1652,11 +1664,11 @@ module Remarkable
       pixel_size = [box[:width] / image_width.to_f, box[:height] / image_height.to_f].min
       grid_width = image_width * pixel_size
       grid_height = image_height * pixel_size
-      x = box[:x] + ((box[:width] - grid_width) / 2.0)
-      y = box[:y] + ((box[:height] - grid_height) / 2.0)
+      placement = (object["placement"] || "center").to_s
+      fitted_box = place_box_in_box(box, grid_width, grid_height, placement)
       pixel_gap = fetch_number(object, "pixel_gap", -3.0)
 
-      Shapes.draw_rgba_grid(page, rgba_grid, x, y, pixel_size, gap: pixel_gap, brush:)
+      Shapes.draw_rgba_grid(page, rgba_grid, fitted_box[:x], fitted_box[:y], pixel_size, gap: pixel_gap, brush:)
     end
 
     # Draws a nested YAML object by fitting its child canvas into the box.

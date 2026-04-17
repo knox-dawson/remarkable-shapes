@@ -130,6 +130,59 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     end
   end
 
+  it "uses placement for square-fit objects inside explicit boxes" do
+    config = {
+      "canvas" => { "width" => 300, "height" => 260, "placement" => "top-left" },
+      "objects" => [
+        {
+          "type" => "circle_fill",
+          "x" => 20,
+          "y" => 30,
+          "width" => 100,
+          "height" => 180,
+          "placement" => "top",
+          "color" => "red"
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    ys = page.lines.flat_map { |line| line.points.map(&:y) }
+    expect(ys.min).to be >= 30
+    expect(ys.max).to be <= 130
+  end
+
+  it "uses placement for fitted images inside explicit boxes" do
+    Dir.mktmpdir do |dir|
+      png_path = File.join(dir, "tiny.png")
+      image = ChunkyPNG::Image.new(2, 1, ChunkyPNG::Color.rgba(255, 0, 0, 255))
+      image.save(png_path)
+
+      config = {
+        "canvas" => { "width" => 320, "height" => 220, "placement" => "top-left" },
+        "objects" => [
+          {
+            "type" => "image",
+            "path" => png_path,
+            "x" => 20,
+            "y" => 30,
+            "width" => 220,
+            "height" => 100,
+            "placement" => "right",
+            "pixel_gap" => 0
+          }
+        ]
+      }
+
+      described_class.render(page, config)
+
+      xs = page.lines.flat_map { |line| line.points.map(&:x) }
+      expect(xs.min).to be >= 40
+      expect(xs.max).to be <= 240
+    end
+  end
+
   it "rejects unsupported object types" do
     expect do
       described_class.render(page, { "objects" => [{ "type" => "triangle" }] })
@@ -220,6 +273,50 @@ RSpec.describe Remarkable::YamlShapeRenderer do
       expect(ys.min).to be >= 60
       expect(xs.max).to be <= 170
       expect(ys.max).to be <= 180
+    end
+  end
+
+  it "uses placement for nested yaml objects inside explicit boxes" do
+    Dir.mktmpdir do |dir|
+      child_path = File.join(dir, "child.yml")
+      File.write(
+        child_path,
+        <<~YAML
+          canvas:
+            width: 200
+            height: 100
+            placement: top-left
+          objects:
+            - type: rectangle_outline
+              x: 0
+              y: 0
+              width: 200
+              height: 100
+              stroke_width: 4
+              color: black
+        YAML
+      )
+
+      config = {
+        "canvas" => { "width" => 400, "height" => 320, "placement" => "top-left" },
+        "objects" => [
+          {
+            "type" => "yaml",
+            "path" => child_path,
+            "x" => 40,
+            "y" => 60,
+            "width" => 120,
+            "height" => 220,
+            "placement" => "bottom"
+          }
+        ]
+      }
+
+      described_class.render(page, config)
+
+      ys = page.lines.flat_map { |line| line.points.map(&:y) }
+      expect(ys.min).to be >= 220
+      expect(ys.max).to be <= 280
     end
   end
 

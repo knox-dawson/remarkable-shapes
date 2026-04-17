@@ -300,10 +300,12 @@ module Remarkable
     #   Remarkable::Shapes.circle(page, 320, 320, 70, color: Remarkable::RmPage::Colour::RED)
     # @return [void]
     def circle(page, cx, cy, radius, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
+      diameter = radius.to_f * 2.0
       line = page.add_line
       apply_style(line, rgba:, color:, brush:)
-      line.add_point(cx, cy).width = radius * 2
-      line.add_point(cx + 0.001, cy + 0.001).width = radius * 2
+      line.thickness_scale = diameter
+      line.add_point(cx, cy).width = diameter
+      line.add_point(cx + 0.001, cy + 0.001).width = diameter
     end
 
     # Compatibility wrapper for older Java-style translated generators.
