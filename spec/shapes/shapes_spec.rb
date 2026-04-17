@@ -61,6 +61,28 @@ RSpec.describe Remarkable::Shapes do
     expect(page.lines).to be_empty
   end
 
+  it "builds an antialiased rgba grid for filled circles" do
+    grid = described_class.circle_rgba_grid(7, rgba: 0xFFFF0000, antialias_samples: 4)
+
+    expect(grid.length).to eq(7)
+    expect(grid.first.length).to eq(7)
+    expect(grid[3][3]).to eq(0xFFFF0000)
+    expect(grid[0][0]).to eq(0x00000000)
+  end
+
+  it "builds an rgba grid for outlined rectangles" do
+    grid = described_class.rectangle_rgba_grid(
+      6,
+      4,
+      rgba: 0xFF00FF00,
+      outline_rgba: 0xFFFF0000,
+      outline_width_pixels: 1
+    )
+
+    expect(grid[0][0]).to eq(0xFFFF0000)
+    expect(grid[2][2]).to eq(0xFF00FF00)
+  end
+
   it "draws highlighter rectangles as constant-width two-point strokes with explicit thickness" do
     described_class.rect(page, 10, 20, 110, 20, 18, brush: Remarkable::RmPage::Pen::HIGHLIGHTER_2, rgba: 0xFF334455)
 

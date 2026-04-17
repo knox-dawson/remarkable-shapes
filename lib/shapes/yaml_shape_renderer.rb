@@ -360,10 +360,14 @@ module Remarkable
         draw_semicircle_fill_object(page, object, layout, style:, brush:)
       when "circle_fill"
         draw_circle_fill_object(page, object, layout, style:, brush:)
+      when "circle_png_fill"
+        draw_circle_png_fill_object(page, object, layout, style:, brush:)
       when "circle_outline"
         draw_circle_outline_object(page, object, layout, style:, brush:)
       when "circle_outline_fill"
         draw_circle_outline_fill_object(page, object, layout, brush:)
+      when "circle_png_outline_fill"
+        draw_circle_png_outline_fill_object(page, object, layout, brush:)
       when "isosceles_triangle_fill"
         draw_isosceles_triangle_fill_object(page, object, layout, style:, brush:)
       when "isosceles_triangle_outline"
@@ -378,10 +382,14 @@ module Remarkable
         draw_right_triangle_outline_fill_object(page, object, layout, brush:)
       when "rectangle_fill"
         draw_rectangle_fill_object(page, object, layout, style:, brush:)
+      when "rectangle_png_fill"
+        draw_rectangle_png_fill_object(page, object, layout, style:, brush:)
       when "rectangle_outline"
         draw_rectangle_outline_object(page, object, layout, style:, brush:)
       when "rectangle_outline_fill"
         draw_rectangle_outline_fill_object(page, object, layout, brush:)
+      when "rectangle_png_outline_fill"
+        draw_rectangle_png_outline_fill_object(page, object, layout, brush:)
       when "star"
         draw_star_object(page, object, layout, style:, brush:)
       when "polygon_outline"
@@ -411,7 +419,7 @@ module Remarkable
     #
     # @return [Integer]
     def default_brush_for_type(type)
-      type == "image" ? DEFAULT_IMAGE_BRUSH : Shapes::DEFAULT_BRUSH
+      %w[image circle_png_fill circle_png_outline_fill rectangle_png_fill rectangle_png_outline_fill].include?(type) ? DEFAULT_IMAGE_BRUSH : Shapes::DEFAULT_BRUSH
     end
 
     # Converts nested hash keys to strings.
@@ -484,8 +492,10 @@ module Remarkable
       %w[
         semicircle_fill
         circle_fill
+        circle_png_fill
         circle_outline
         circle_outline_fill
+        circle_png_outline_fill
         star
         regular_polygon_outline
         regular_polygon_fill
@@ -499,8 +509,10 @@ module Remarkable
     def full_cell_type?(type)
       %w[
         rectangle_fill
+        rectangle_png_fill
         rectangle_outline
         rectangle_outline_fill
+        rectangle_png_outline_fill
         isosceles_triangle_fill
         isosceles_triangle_outline
         isosceles_triangle_outline_fill
@@ -1250,6 +1262,13 @@ module Remarkable
       Shapes.circle(page, circle[:center_x], circle[:center_y], circle[:radius], brush:, **style)
     end
 
+    # Draws a PNG-backed filled circle object.
+    #
+    # @return [void]
+    def draw_circle_png_fill_object(page, object, layout, style:, brush:)
+      draw_circle_png_object(page, object, layout, brush:, fill_style: style)
+    end
+
     # Draws a circle outline object.
     #
     # @return [void]
@@ -1284,6 +1303,14 @@ module Remarkable
     # @return [void]
     def draw_circle_outline_fill_object(page, object, layout, brush:)
       draw_circle_fill_object(page, object, layout, style: style_options_for(object, "fill"), brush:)
+      draw_circle_outline_object(page, object, layout, style: style_options_for(object, "outline"), brush:)
+    end
+
+    # Draws a PNG-backed circle with separate fill and outline styles.
+    #
+    # @return [void]
+    def draw_circle_png_outline_fill_object(page, object, layout, brush:)
+      draw_circle_png_fill_object(page, object, layout, style: style_options_for(object, "fill"), brush:)
       draw_circle_outline_object(page, object, layout, style: style_options_for(object, "outline"), brush:)
     end
 
@@ -1382,6 +1409,13 @@ module Remarkable
       end
     end
 
+    # Draws a PNG-backed filled rectangle object.
+    #
+    # @return [void]
+    def draw_rectangle_png_fill_object(page, object, layout, style:, brush:)
+      draw_rectangle_png_object(page, object, layout, brush:, fill_style: style)
+    end
+
     # Draws a rectangle outline object.
     #
     # @example YAML object
@@ -1410,6 +1444,100 @@ module Remarkable
     def draw_rectangle_outline_fill_object(page, object, layout, brush:)
       draw_rectangle_fill_object(page, object, layout, style: style_options_for(object, "fill"), brush:)
       draw_rectangle_outline_object(page, object, layout, style: style_options_for(object, "outline"), brush:)
+    end
+
+    # Draws a PNG-backed rectangle with separate fill and outline styles.
+    #
+    # @return [void]
+    def draw_rectangle_png_outline_fill_object(page, object, layout, brush:)
+      draw_rectangle_png_fill_object(page, object, layout, style: style_options_for(object, "fill"), brush:)
+      draw_rectangle_outline_object(page, object, layout, style: style_options_for(object, "outline"), brush:)
+    end
+
+    # Draws a PNG-backed circle using the RGBA grid image path.
+    #
+    # @return [void]
+    def draw_circle_png_object(page, object, layout, brush:, fill_style:)
+      box = resolve_square_fit_box(layout, object)
+      pixel_size = resolve_png_pixel_size(layout, object)
+      diameter_pixels = [(box[:width] / pixel_size).round, 1].max
+      antialias_samples = fetch_number(object, "antialias_samples", 4).to_i
+
+      rgba_grid = Shapes.circle_rgba_grid(
+        diameter_pixels,
+        rgba: style_rgba(fill_style),
+        antialias_samples:
+      )
+
+      draw_generated_rgba_grid(page, box, rgba_grid, pixel_size, brush:, object:)
+    end
+
+    # Draws a PNG-backed rectangle using the RGBA grid image path.
+    #
+    # @return [void]
+    def draw_rectangle_png_object(page, object, layout, brush:, fill_style:)
+      box = resolve_box(layout, object)
+      pixel_size = resolve_png_pixel_size(layout, object)
+      width_pixels = [(box[:width] / pixel_size).round, 1].max
+      height_pixels = [(box[:height] / pixel_size).round, 1].max
+      antialias_samples = fetch_number(object, "antialias_samples", 4).to_i
+
+      rgba_grid = Shapes.rectangle_rgba_grid(
+        width_pixels,
+        height_pixels,
+        rgba: style_rgba(fill_style),
+        antialias_samples:
+      )
+
+      draw_generated_rgba_grid(page, box, rgba_grid, pixel_size, brush:, object:)
+    end
+
+    # Draws a generated RGBA grid centered within a target box.
+    #
+    # @return [void]
+    def draw_generated_rgba_grid(page, box, rgba_grid, pixel_size, brush:, object:)
+      grid_width = rgba_grid.first.length * pixel_size
+      grid_height = rgba_grid.length * pixel_size
+      placement = (object["placement"] || "center").to_s
+      fitted_box = place_box_in_box(box, grid_width, grid_height, placement)
+      pixel_gap = fetch_number(object, "pixel_gap", -3.0)
+
+      Shapes.draw_rgba_grid(page, rgba_grid, fitted_box[:x], fitted_box[:y], pixel_size, gap: pixel_gap, brush:)
+    end
+
+    # Resolves the target rendered pixel size for PNG-backed generated shapes.
+    #
+    # @return [Float]
+    def resolve_png_pixel_size(layout, object)
+      pixel_size = scale_length(layout, fetch_number(object, "pixel_size", 6.0))
+      raise ArgumentError, "pixel_size must be positive" unless pixel_size.positive?
+
+      pixel_size
+    end
+
+    # Converts a normalized style hash into an RGBA integer.
+    #
+    # @return [Integer]
+    def style_rgba(style)
+      return style[:rgba] if style[:color] == RmPage::Colour::RGBA
+
+      case style[:color]
+      when RmPage::Colour::BLACK then 0xFF000000
+      when RmPage::Colour::GREY then 0xFF808080
+      when RmPage::Colour::WHITE then 0xFFFFFFFF
+      when RmPage::Colour::BLUE then 0xFF0000FF
+      when RmPage::Colour::RED then 0xFFFF0000
+      when RmPage::Colour::GREEN then 0xFF00AA00
+      when RmPage::Colour::CYAN then 0xFF00C8C8
+      when RmPage::Colour::MAGENTA then 0xFFC800C8
+      when RmPage::Colour::YELLOW then 0xFFFFD400
+      when RmPage::Colour::HIGHLIGHTER_YELLOW then 0x66F0D54A
+      when RmPage::Colour::HIGHLIGHTER_GREEN then 0x665CC45C
+      when RmPage::Colour::HIGHLIGHTER_PINK then 0x66FF66B3
+      when RmPage::Colour::HIGHLIGHTER_GREY then 0x66909090
+      else
+        Shapes::DEFAULT_RGBA
+      end
     end
 
     # Draws a star object using one or more cycled colours.

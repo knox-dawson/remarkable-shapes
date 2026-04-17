@@ -369,6 +369,91 @@ module Remarkable
       end
     end
 
+    # Builds a raster RGBA grid for a filled rectangle.
+    #
+    # @return [Array<Array<Integer>>]
+    def rectangle_rgba_grid(width_pixels, height_pixels, rgba:, outline_rgba: nil, outline_width_pixels: 0,
+                            antialias_samples: 4)
+      raster_shape_rgba_grid(
+        width_pixels,
+        height_pixels,
+        rgba:,
+        outline_rgba:,
+        outline_width_pixels:,
+        antialias_samples:
+      ) do |x, y, width, height|
+        inside = x >= 0.0 && x <= width.to_f && y >= 0.0 && y <= height.to_f
+        next [false, false] unless inside
+
+        distance = [x, width.to_f - x, y, height.to_f - y].min
+        [true, distance <= outline_width_pixels.to_f]
+      end
+    end
+
+    # Builds a raster RGBA grid for a filled circle.
+    #
+    # @return [Array<Array<Integer>>]
+    def circle_rgba_grid(diameter_pixels, rgba:, outline_rgba: nil, outline_width_pixels: 0, antialias_samples: 4)
+      size = diameter_pixels.to_i
+      raster_shape_rgba_grid(
+        size,
+        size,
+        rgba:,
+        outline_rgba:,
+        outline_width_pixels:,
+        antialias_samples:
+      ) do |x, y, width, height|
+        radius = [width, height].min / 2.0
+        cx = width / 2.0
+        cy = height / 2.0
+        distance = Math.hypot(x - cx, y - cy)
+        inside = distance <= radius
+        [inside, inside && (radius - distance) <= outline_width_pixels.to_f]
+      end
+    end
+
+    # Rasterizes one parametric shape into an RGBA grid with optional antialiasing.
+    #
+    # @return [Array<Array<Integer>>]
+    def raster_shape_rgba_grid(width_pixels, height_pixels, rgba:, outline_rgba: nil, outline_width_pixels: 0,
+                               antialias_samples: 4, &shape_fn)
+      width = width_pixels.to_i
+      height = height_pixels.to_i
+      raise ArgumentError, "width_pixels must be positive" unless width.positive?
+      raise ArgumentError, "height_pixels must be positive" unless height.positive?
+
+      fill_value = normalize_rgba(rgba)
+      outline_value = outline_rgba.nil? ? nil : normalize_rgba(outline_rgba)
+      samples = [antialias_samples.to_i, 1].max
+      total_samples = samples * samples
+
+      Array.new(height) do |row|
+        Array.new(width) do |col|
+          fill_hits = 0
+          outline_hits = 0
+          samples.times do |sy|
+            samples.times do |sx|
+              sample_x = col + ((sx + 0.5) / samples.to_f)
+              sample_y = row + ((sy + 0.5) / samples.to_f)
+              inside, outline = shape_fn.call(sample_x, sample_y, width, height)
+              next unless inside
+
+              fill_hits += 1
+              outline_hits += 1 if outline
+            end
+          end
+
+          next 0x00000000 if fill_hits.zero?
+
+          if outline_value && outline_width_pixels.to_f.positive? && outline_hits.positive?
+            scale_rgba_alpha(outline_value, outline_hits.to_f / total_samples)
+          else
+            scale_rgba_alpha(fill_value, fill_hits.to_f / total_samples)
+          end
+        end
+      end
+    end
+
     # Draws a 2D array of RGBA values as a grid of tiny rectangles.
     #
     # @param page [Remarkable::RmPage]
@@ -399,6 +484,15 @@ module Remarkable
           rect(page, cx - half, cy, cx + half, cy, draw_size, rgba: value, brush:)
         end
       end
+    end
+
+    # Scales only the alpha channel of one RGBA value.
+    #
+    # @return [Integer]
+    def scale_rgba_alpha(rgba, factor)
+      value = normalize_rgba(rgba)
+      alpha = [[((alpha_channel(value) * factor.to_f).round), 0].max, 255].min
+      (value & 0x00FFFFFF) | (alpha << 24)
     end
 
     # Draws a semicircle-like wide stroke in a given direction.
@@ -853,6 +947,7 @@ module Remarkable
     #
     # @return [void]
     def draw_constant_segment(line, x1, y1, x2, y2, width)
+      line.thickness_scale = width.to_f
       line.add_point(x1, y1).width = width
       line.add_point(x2, y2).width = width
     end

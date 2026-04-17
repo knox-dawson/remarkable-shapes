@@ -532,6 +532,41 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     expect(page.lines.length).to eq(2)
   end
 
+  it "renders png-backed circle and rectangle fills" do
+    config = {
+      "canvas" => { "width" => 400, "height" => 300, "placement" => "top-left" },
+      "objects" => [
+        {
+          "type" => "circle_png_outline_fill",
+          "x" => 20,
+          "y" => 20,
+          "width" => 120,
+          "height" => 120,
+          "pixel_size" => 8,
+          "stroke_width" => 8,
+          "fill_color" => "yellow",
+          "outline_color" => "black"
+        },
+        {
+          "type" => "rectangle_png_outline_fill",
+          "x" => 180,
+          "y" => 20,
+          "width" => 140,
+          "height" => 100,
+          "pixel_size" => 10,
+          "stroke_width" => 10,
+          "fill_rgba" => "0xFF3366CC",
+          "outline_rgba" => "0xFF000000"
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines.length).to be > 10
+    expect(page.lines.map(&:brush_type).uniq).to eq([Remarkable::RmPage::Pen::HIGHLIGHTER_2])
+  end
+
   it "renders semicircles from rotation as an alternative to direction" do
     config = {
       "objects" => [
