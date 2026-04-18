@@ -6,6 +6,8 @@ GEM
     diff-lcs (1.6.2)
     docile (1.4.1)
     erb (6.0.2)
+    kramdown (2.5.2)
+      rexml (>= 3.4.4)
     psych (5.3.1)
       date
       stringio
@@ -13,6 +15,7 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
+    rexml (3.4.4)
     rspec (3.13.2)
       rspec-core (~> 3.13.0)
       rspec-expectations (~> 3.13.0)
@@ -43,6 +46,7 @@ PLATFORMS
 
 DEPENDENCIES
   chunky_png
+  kramdown
   rdoc
   rspec
   simplecov

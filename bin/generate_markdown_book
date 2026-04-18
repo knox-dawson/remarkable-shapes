@@ -1,0 +1,85 @@
+#!/usr/bin/env ruby
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+
+require "version"
+require "slop"
+require "shapes/markdown_book_generator"
+
+def build_options(argv)
+  Slop.parse(argv) do |o|
+    o.banner = <<~BANNER
+      Usage:
+        bin/generate_markdown_book --input INPUT.md --output out/book.rmdoc [options]
+        bin/generate_markdown_book --dump-default-config config/markdown.yml
+
+      Examples:
+        bin/generate_markdown_book --input examples/notes.md --output out/notes.rmdoc
+        bin/generate_markdown_book --input examples/notes.md --config my-markdown.yml --output out/notes.rmdoc
+        bin/generate_markdown_book --dump-default-config markdown-config.yml
+    BANNER
+
+    o.string "-i", "--input", "Markdown input file"
+    o.string "-c", "--config", "Optional markdown rendering config YAML"
+    o.string "-o", "--output", "Final multipage .rmdoc path"
+    o.string "--output-dir", "Working directory for generated YAML, page .rmdoc files, and concat script"
+    o.string "-p", "--prefix", "Prefix for generated page YAML and .rmdoc files"
+    o.string "--concat-script", "Path for the generated rmcat script"
+    o.string "--rmcat-command", "rmcat executable or path"
+    o.string "--dump-default-config", "Write the built-in markdown config template to a file"
+    o.bool "--skip-rmcat", "Only write the page outputs and concat script"
+    o.bool "-v", "--version", "Print version"
+    o.bool "-h", "--help", "Show help"
+  end
+end
+
+options = build_options(ARGV)
+
+if options[:help]
+  puts options
+  exit 0
+end
+
+if options[:version]
+  puts Remarkable::VERSION
+  exit 0
+end
+
+if options[:dump_default_config]
+  puts Remarkable::MarkdownBookGenerator.write_default_config(options[:dump_default_config])
+  exit 0
+end
+
+input = options[:input]
+if input.nil? || input.strip.empty?
+  warn "Missing required option: --input"
+  warn options
+  exit 2
+end
+
+final_output = options[:output]
+if final_output.nil? || final_output.strip.empty?
+  warn "Missing required option: --output"
+  warn options
+  exit 2
+end
+
+output_dir = options[:output_dir] || File.join("out", File.basename(final_output, ".rmdoc"))
+prefix = options[:prefix]
+concat_script_path = options[:concat_script]
+rmcat_command = options[:rmcat_command] || Remarkable::YamlBookGenerator::DEFAULT_RMCAT_COMMAND
+run_concat = !options[:skip_rmcat]
+
+result = Remarkable::MarkdownBookGenerator.generate_from_markdown(
+  markdown_path: input,
+  config_path: options[:config],
+  output_dir:,
+  final_output:,
+  prefix:,
+  concat_script_path:,
+  rmcat_command:,
+  run_concat:
+)
+
+result.fetch(:rmdoc_paths).each { |path| puts path }
+puts result.fetch(:concat_script_path)
+puts result.fetch(:final_output) if result[:concat_ran]

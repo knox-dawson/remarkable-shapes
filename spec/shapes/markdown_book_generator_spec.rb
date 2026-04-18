@@ -1,0 +1,130 @@
+# frozen_string_literal: true
+
+require "tmpdir"
+require "yaml"
+
+require_relative "../spec_helper"
+require "shapes/markdown_book_generator"
+
+RSpec.describe Remarkable::MarkdownBookGenerator do
+  def write_fake_rmcat(path)
+    File.write(
+      path,
+      <<~BASH
+        #!/usr/bin/env bash
+        set -euo pipefail
+        output="$2"
+        shift 2
+        cat "$@" > "$output"
+      BASH
+    )
+    FileUtils.chmod(0o755, path)
+  end
+
+  it "builds paginated yaml and rmdoc output from markdown" do
+    Dir.mktmpdir do |dir|
+      markdown_path = File.join(dir, "notes.md")
+      output_dir = File.join(dir, "build")
+      final_output = File.join(dir, "notes.rmdoc")
+      fake_rmcat = File.join(dir, "rmcat")
+
+      File.write(
+        markdown_path,
+        <<~MARKDOWN
+          # Title
+
+          This is a paragraph that should wrap into multiple lines inside the markdown book generator.
+
+          - first bullet
+          - second bullet
+
+          > quoted text
+
+          ---
+
+          ```
+          code sample
+          ```
+        MARKDOWN
+      )
+      write_fake_rmcat(fake_rmcat)
+
+      result = described_class.generate_from_markdown(
+        markdown_path:,
+        output_dir:,
+        final_output:,
+        rmcat_command: fake_rmcat,
+        run_concat: true
+      )
+
+      expect(result[:generated_yaml_paths]).not_to be_empty
+      expect(result[:rmdoc_paths]).not_to be_empty
+      expect(File.file?(final_output)).to be(true)
+
+      generated_pages = result[:generated_yaml_paths].map { |path| YAML.safe_load(File.read(path)) }
+      objects = generated_pages.flat_map { |page| page.fetch("objects") }
+      text_values = objects.select { |object| object["type"] == "text" }.map { |object| object["text"] }
+
+      expect(text_values).to include("Title")
+      expect(text_values).to include("- first bullet")
+      expect(text_values).to include("> quoted text")
+      expect(objects.any? { |object| object["type"] == "line" }).to be(true)
+      expect(objects.any? { |object| object["font"] == "line_font_mono" }).to be(true)
+    end
+  end
+
+  it "merges a partial config override and paginates long markdown across multiple pages" do
+    Dir.mktmpdir do |dir|
+      markdown_path = File.join(dir, "long.md")
+      config_path = File.join(dir, "markdown.yml")
+      output_dir = File.join(dir, "build")
+      final_output = File.join(dir, "long.rmdoc")
+      fake_rmcat = File.join(dir, "rmcat")
+
+      File.write(markdown_path, ([("Long paragraph " * 12).strip] * 40).join("\n\n"))
+      File.write(
+        config_path,
+        {
+          "page" => {
+            "bottom" => 520
+          },
+          "styles" => {
+            "body" => {
+              "font" => "relief_singleline",
+              "size" => 22
+            }
+          }
+        }.to_yaml
+      )
+      write_fake_rmcat(fake_rmcat)
+
+      result = described_class.generate_from_markdown(
+        markdown_path:,
+        config_path:,
+        output_dir:,
+        final_output:,
+        rmcat_command: fake_rmcat,
+        run_concat: true
+      )
+
+      expect(result[:generated_yaml_paths].length).to be > 1
+      generated_yaml = YAML.safe_load(File.read(result[:generated_yaml_paths].first))
+      first_text = generated_yaml.fetch("objects").find { |object| object["type"] == "text" }
+      expect(first_text.fetch("font")).to eq("relief_singleline")
+      expect(first_text.fetch("size")).to eq(22)
+    end
+  end
+
+  it "writes the default markdown config template" do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "markdown-defaults.yml")
+
+      described_class.write_default_config(path)
+
+      expect(File.file?(path)).to be(true)
+      yaml = YAML.safe_load(File.read(path))
+      expect(yaml.fetch("styles").fetch("body").fetch("font")).to eq("line_font")
+      expect(yaml.fetch("elements").fetch("paragraph").fetch("style")).to eq("body")
+    end
+  end
+end

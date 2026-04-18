@@ -24,6 +24,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added `bin/ufo_to_line_font` to convert a simple UFO source into the line-font JSON stroke format used by the renderer.
 - Added `examples/font-family-sampler.yml`, `examples/font-comparison-sampler.yml`, and `examples/relief-line-font-sampler.yml` plus their generated `out/` samples.
 - Added `bin/generate_font_samples` to build one full-coverage sample page per font family and render the matching `.rmdoc` outputs.
+- Added `bin/generate_markdown_book` to parse markdown through `kramdown`, generate intermediate YAML pages, and build a multipage `.rmdoc` book through the existing YAML book pipeline.
+- Added a default markdown rendering config at `config/markdown_defaults.yml` plus support for partial user config overrides and `--dump-default-config`.
 - Added temporary compatibility so older `style` and `mono` text options still map onto the new flattened font families during the beta.5 transition, with `style: italic` now pointing at the synthetic `line_font_italic` family and `style: cursive` pointing at the true cursive family.
 
 ### Changed
@@ -37,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Changed line-font family discovery so `data/line_font` now contains only the plain built-in family, while additional families such as `line_font_italic`, `line_font_cursive`, `line_font_mono`, `relief_singleline`, and `relief_singleline_italic` are loaded directly from sibling directories under `data/`.
 - Changed the generated synthetic italic line-fonts to use tighter advance widths and pair-specific spacing adjustments for improved visual spacing.
 - Changed the generated per-font sample pages to render larger, darker sample text while filtering out invisible escaped codepoint keys from the displayed character set.
+- Changed the multipage book tooling so markdown can now be converted into paginated YAML `text` and `line` objects before final `.rmdoc` concatenation, including a first-pass fenced-code-block normalization step.
 
 ## [0.9.0-beta.4] - 2026-04-07
 

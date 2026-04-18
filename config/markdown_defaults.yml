@@ -1,0 +1,142 @@
+page:
+  tablet: rm2
+  left: 130
+  top: 130
+  right: 1270
+  bottom: 1740
+  padding: 40
+  show_box: false
+  box:
+    stroke_width: 4
+    color: black
+
+styles:
+  body:
+    font: line_font
+    size: 28
+    stroke_width: 2
+    line_spacing: 1.25
+    color: black
+  heading_1:
+    font: line_font
+    size: 56
+    stroke_width: 3
+    line_spacing: 1.1
+    color: black
+  heading_2:
+    font: line_font
+    size: 46
+    stroke_width: 3
+    line_spacing: 1.15
+    color: black
+  heading_3:
+    font: line_font
+    size: 40
+    stroke_width: 3
+    line_spacing: 1.15
+    color: black
+  heading_4:
+    font: line_font
+    size: 34
+    stroke_width: 2.5
+    line_spacing: 1.2
+    color: black
+  heading_5:
+    font: line_font
+    size: 30
+    stroke_width: 2.5
+    line_spacing: 1.2
+    color: black
+  heading_6:
+    font: line_font
+    size: 28
+    stroke_width: 2
+    line_spacing: 1.2
+    color: black
+  blockquote:
+    font: line_font_italic
+    size: 28
+    stroke_width: 2
+    line_spacing: 1.25
+    color: grey
+  code:
+    font: line_font_mono
+    size: 24
+    stroke_width: 2
+    line_spacing: 1.2
+    color: black
+
+elements:
+  paragraph:
+    style: body
+    space_before: 0
+    space_after: 28
+    indent: 0
+    wrap: true
+  heading_1:
+    style: heading_1
+    space_before: 0
+    space_after: 34
+    indent: 0
+    wrap: true
+  heading_2:
+    style: heading_2
+    space_before: 12
+    space_after: 28
+    indent: 0
+    wrap: true
+  heading_3:
+    style: heading_3
+    space_before: 10
+    space_after: 24
+    indent: 0
+    wrap: true
+  heading_4:
+    style: heading_4
+    space_before: 8
+    space_after: 20
+    indent: 0
+    wrap: true
+  heading_5:
+    style: heading_5
+    space_before: 8
+    space_after: 18
+    indent: 0
+    wrap: true
+  heading_6:
+    style: heading_6
+    space_before: 8
+    space_after: 16
+    indent: 0
+    wrap: true
+  unordered_list_item:
+    style: body
+    space_before: 0
+    space_after: 10
+    indent: 28
+    wrap: true
+    bullet: "- "
+  ordered_list_item:
+    style: body
+    space_before: 0
+    space_after: 10
+    indent: 28
+    wrap: true
+  blockquote:
+    style: blockquote
+    space_before: 0
+    space_after: 22
+    indent: 36
+    wrap: true
+    prefix: "> "
+  code_block:
+    style: code
+    space_before: 10
+    space_after: 24
+    indent: 24
+    wrap: true
+  thematic_break:
+    space_before: 14
+    space_after: 18
+    stroke_width: 3
+    color: black

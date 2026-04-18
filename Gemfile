@@ -1,6 +1,7 @@
 source "https://rubygems.org"
 
 gem "chunky_png"
+gem "kramdown"
 gem "slop"
 
 group :development do
