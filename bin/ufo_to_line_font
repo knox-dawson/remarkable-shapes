@@ -1,0 +1,318 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "optparse"
+require "rexml/document"
+
+class UfoToLineFont
+  DEFAULT_CURVE_STEPS = 8
+
+  def initialize(ufo_path, output_path, curve_steps: DEFAULT_CURVE_STEPS)
+    @ufo_path = File.expand_path(ufo_path)
+    @output_path = File.expand_path(output_path)
+    @curve_steps = [curve_steps.to_i, 1].max
+    @glyph_map = load_glyph_map
+    @glyph_cache = {}
+    @geometry_cache = {}
+    @units_per_em = load_units_per_em
+  end
+
+  def convert
+    result = {}
+
+    @glyph_map.each_key do |glyph_name|
+      glyph = load_glyph(glyph_name)
+      char = glyph[:unicode]
+      next if char.nil?
+
+      result[char] = {
+        "width" => round_float(glyph[:width].to_f / @units_per_em),
+        "strokes" => glyph[:strokes]
+      }
+    end
+
+    File.write(@output_path, JSON.pretty_generate(result))
+  end
+
+  private
+
+  def load_glyph_map
+    plist_dict(File.join(@ufo_path, "glyphs", "contents.plist"))
+  end
+
+  def load_units_per_em
+    plist_dict(File.join(@ufo_path, "fontinfo.plist")).fetch("unitsPerEm", 1000).to_f
+  end
+
+  def load_glyph(glyph_name)
+    @glyph_cache[glyph_name] ||= begin
+      glyph_file = @glyph_map.fetch(glyph_name)
+      doc = REXML::Document.new(File.read(File.join(@ufo_path, "glyphs", glyph_file)))
+      root = doc.elements["glyph"]
+      outline = root.elements["outline"]
+
+      {
+        width: root.elements["advance"]&.attributes&.fetch("width", 0).to_s.to_f,
+        unicode: load_unicode_char(root),
+        strokes: normalize_strokes(outline_strokes(outline))
+      }
+    end
+  end
+
+  def load_unicode_char(root)
+    hex = root.elements["unicode"]&.attributes&.fetch("hex", nil)&.to_s
+    return nil if hex.nil?
+
+    [hex.to_i(16)].pack("U")
+  rescue RangeError
+    nil
+  end
+
+  def outline_strokes(outline, transform = identity_transform)
+    return [] if outline.nil?
+
+    strokes = []
+
+    outline.elements.each do |child|
+      case child.name
+      when "contour"
+        contour_to_strokes(child, transform).each { |stroke| strokes << stroke }
+      when "component"
+        component_name = child.attributes.fetch("base").to_s
+        component_transform = compose_transform(transform, component_transform(child))
+        component_geometry(component_name).each do |stroke|
+          strokes << apply_transform_to_stroke(stroke, component_transform)
+        end
+      end
+    end
+
+    strokes
+  end
+
+  def component_geometry(glyph_name)
+    @geometry_cache[glyph_name] ||= begin
+      glyph_file = @glyph_map.fetch(glyph_name)
+      doc = REXML::Document.new(File.read(File.join(@ufo_path, "glyphs", glyph_file)))
+      root = doc.elements["glyph"]
+      outline_strokes(root.elements["outline"])
+    end
+  end
+
+  def contour_to_strokes(contour, transform)
+    points = contour.elements.to_a("point").map do |point|
+      {
+        x: point.attributes.fetch("x").to_s.to_f,
+        y: point.attributes.fetch("y").to_s.to_f,
+        type: point.attributes["type"]&.to_s
+      }
+    end
+    return [] if points.empty?
+
+    current = nil
+    current_anchor = nil
+    offcurve = []
+    strokes = []
+
+    points.each do |point|
+      case point[:type]
+      when "move"
+        strokes << current if valid_stroke?(current)
+        current = [normalize_point(apply_transform(point[:x], point[:y], transform))]
+        current_anchor = [point[:x], point[:y]]
+        offcurve = []
+      when "line"
+        next if current.nil?
+
+        current << normalize_point(apply_transform(point[:x], point[:y], transform))
+        current_anchor = [point[:x], point[:y]]
+        offcurve = []
+      when "curve"
+        next if current.nil?
+
+        curve_points = sample_curve(current_anchor, offcurve, [point[:x], point[:y]])
+        curve_points.each do |cx, cy|
+          current << normalize_point(apply_transform(cx, cy, transform))
+        end
+        current_anchor = [point[:x], point[:y]]
+        offcurve = []
+      else
+        offcurve << [point[:x], point[:y]]
+      end
+    end
+
+    strokes << current if valid_stroke?(current)
+    strokes
+  end
+
+  def sample_curve(start_point, controls, end_point)
+    return [end_point] if start_point.nil?
+
+    c1, c2 = normalized_curve_controls(start_point, controls, end_point)
+    samples = []
+
+    1.upto(@curve_steps) do |step|
+      t = step.to_f / @curve_steps
+      samples << cubic_point(start_point, c1, c2, end_point, t)
+    end
+
+    samples
+  end
+
+  def normalized_curve_controls(start_point, controls, end_point)
+    case controls.length
+    when 0
+      [start_point, end_point]
+    when 1
+      [controls.first, controls.first]
+    else
+      [controls[-2], controls[-1]]
+    end
+  end
+
+  def cubic_point(p0, p1, p2, p3, t)
+    mt = 1.0 - t
+    x = (mt**3 * p0[0]) + (3 * mt * mt * t * p1[0]) + (3 * mt * t * t * p2[0]) + (t**3 * p3[0])
+    y = (mt**3 * p0[1]) + (3 * mt * mt * t * p1[1]) + (3 * mt * t * t * p2[1]) + (t**3 * p3[1])
+    [x, y]
+  end
+
+  def normalize_strokes(strokes)
+    strokes.filter_map do |stroke|
+      compact = dedupe_points(stroke)
+      compact if valid_stroke?(compact)
+    end
+  end
+
+  def dedupe_points(stroke)
+    stroke.each_with_object([]) do |point, points|
+      points << point if points.empty? || points.last != point
+    end
+  end
+
+  def valid_stroke?(stroke)
+    stroke && stroke.length >= 2
+  end
+
+  def normalize_point(point)
+    x, y = point
+    [round_float(x / @units_per_em), round_float(-y / @units_per_em)]
+  end
+
+  def round_float(value)
+    value.round(6)
+  end
+
+  def identity_transform
+    [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+  end
+
+  def component_transform(component)
+    [
+      component.attributes.fetch("xScale", 1).to_s.to_f,
+      component.attributes.fetch("xyScale", 0).to_s.to_f,
+      component.attributes.fetch("yxScale", 0).to_s.to_f,
+      component.attributes.fetch("yScale", 1).to_s.to_f,
+      component.attributes.fetch("xOffset", 0).to_s.to_f,
+      component.attributes.fetch("yOffset", 0).to_s.to_f
+    ]
+  end
+
+  def compose_transform(a, b)
+    [
+      (a[0] * b[0]) + (a[2] * b[1]),
+      (a[1] * b[0]) + (a[3] * b[1]),
+      (a[0] * b[2]) + (a[2] * b[3]),
+      (a[1] * b[2]) + (a[3] * b[3]),
+      (a[0] * b[4]) + (a[2] * b[5]) + a[4],
+      (a[1] * b[4]) + (a[3] * b[5]) + a[5]
+    ]
+  end
+
+  def apply_transform(x, y, transform)
+    [
+      (transform[0] * x) + (transform[2] * y) + transform[4],
+      (transform[1] * x) + (transform[3] * y) + transform[5]
+    ]
+  end
+
+  def apply_transform_to_stroke(stroke, transform)
+    stroke.map do |x, y|
+      tx, ty = apply_transform(x * @units_per_em, -y * @units_per_em, transform)
+      normalize_point([tx, ty])
+    end
+  end
+
+  def plist_dict(path)
+    doc = REXML::Document.new(File.read(path))
+    parse_plist_node(doc.elements["plist/*"])
+  end
+
+  def parse_plist_node(node)
+    case node.name
+    when "dict"
+      result = {}
+      key = nil
+
+      node.elements.each do |child|
+        if child.name == "key"
+          key = child.text.to_s
+        else
+          result[key] = parse_plist_node(child)
+          key = nil
+        end
+      end
+
+      result
+    when "array"
+      node.elements.map { |child| parse_plist_node(child) }
+    when "integer"
+      node.text.to_i
+    when "real"
+      node.text.to_f
+    when "true"
+      true
+    when "false"
+      false
+    else
+      node.text.to_s
+    end
+  end
+end
+
+options = {
+  curve_steps: UfoToLineFont::DEFAULT_CURVE_STEPS
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = <<~BANNER
+    Usage: bin/ufo_to_line_font --ufo PATH --output FILE [options]
+
+    Converts a simple UFO source into remarkable-shapes `data/line_font` JSON.
+    Curves are flattened coarsely on purpose for a simple import path.
+  BANNER
+
+  opts.on("--ufo PATH", "Path to the .ufo directory") { |value| options[:ufo] = value }
+  opts.on("-o", "--output FILE", "Output JSON path") { |value| options[:output] = value }
+  opts.on("--curve-steps N", Integer, "Samples per cubic curve segment (default: #{options[:curve_steps]})") do |value|
+    options[:curve_steps] = value
+  end
+  opts.on("-h", "--help", "Show help") do
+    puts opts
+    exit 0
+  end
+end
+
+parser.parse!(ARGV)
+
+if options[:ufo].nil? || options[:output].nil?
+  warn "Missing required options."
+  warn parser
+  exit 2
+end
+
+UfoToLineFont.new(
+  options.fetch(:ufo),
+  options.fetch(:output),
+  curve_steps: options.fetch(:curve_steps)
+).convert

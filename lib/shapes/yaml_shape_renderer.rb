@@ -879,7 +879,7 @@ module Remarkable
     # Returns wrapped text lines for the given width.
     #
     # @return [Array<String>]
-    def wrap_text_lines(text, max_width, size:, style:, mono:)
+    def wrap_text_lines(text, max_width, size:, style:, font:, mono:)
       return text.to_s.split("\n") if max_width.nil? || max_width <= 0
 
       wrapped = []
@@ -892,7 +892,7 @@ module Remarkable
         current = +""
         paragraph.split(/\s+/).each do |word|
           candidate = current.empty? ? word : "#{current} #{word}"
-          if LineFont.text_width(candidate, size:, style:, mono:) <= max_width || current.empty?
+          if LineFont.text_width(candidate, size:, style:, font:, mono:) <= max_width || current.empty?
             current = candidate
           else
             wrapped << current
@@ -1689,6 +1689,7 @@ module Remarkable
       stroke_width = scale_length(layout, fetch_number(object, "stroke_width", LineFont::DEFAULT_STROKE_WIDTH))
       line_spacing = fetch_number(object, "line_spacing", 1.25)
       style_name = object.fetch("style", LineFont::DEFAULT_STYLE).to_sym
+      font_name = object.fetch("font", LineFont::DEFAULT_FONT).to_sym
       mono = object.fetch("mono", false)
       wrap = object.fetch("wrap", false)
       align = object.fetch("align", "left").to_s
@@ -1699,7 +1700,7 @@ module Remarkable
       shadow_brush = shadow && object.key?("shadow_brush") ? brush_for(object["shadow_brush"]) : brush
 
       lines = if wrap
-                wrap_text_lines(text, box[:width] - shadow_dx.abs, size:, style: style_name, mono:)
+                wrap_text_lines(text, box[:width] - shadow_dx.abs, size:, style: style_name, font: font_name, mono:)
               else
                 text.split("\n", -1)
               end
@@ -1721,7 +1722,7 @@ module Remarkable
 
       baseline = top_y - LineFont.baseline_to_top(size)
       lines.each do |line|
-        line_width = LineFont.text_width(line, size:, style: style_name, mono:)
+        line_width = LineFont.text_width(line, size:, style: style_name, font: font_name, mono:)
         rendered_line_width = line_width + shadow_dx.abs
         x =
           case align
@@ -1744,6 +1745,7 @@ module Remarkable
             size:,
             stroke_width:,
             style: style_name,
+            font: font_name,
             mono:,
             shadow_dx:,
             shadow_dy:,
@@ -1761,6 +1763,7 @@ module Remarkable
             size:,
             stroke_width:,
             style: style_name,
+            font: font_name,
             mono:,
             brush:,
             **style

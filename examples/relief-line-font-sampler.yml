@@ -12,109 +12,109 @@ objects:
 
   - type: text
     x: 165
-    y: 226.5625
+    y: 190
+    width: 1070
+    height: 44
+    text: "Relief SingleLine Sampler"
+    size: 30
+    stroke_width: 2
+    font: relief_singleline
+    color: black
+
+  - type: text
+    x: 165
+    y: 286.5625
     width: 1070
     height: 60
     text: " !\"#$%&'()*+,-./0123456789:;<=>?@"
     size: 30
     stroke_width: 2
-    style: plain
+    font: relief_singleline
     color: black
 
   - type: text
     x: 165
-    y: 396.5625
+    y: 456.5625
     width: 1070
     height: 60
     text: "ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_`"
     size: 30
     stroke_width: 2
-    style: plain
+    font: relief_singleline
     color: black
 
   - type: text
     x: 165
-    y: 566.5625
+    y: 626.5625
     width: 1070
     height: 60
     text: "abcdefghijklmnopqrstuvwxyz{|}~ °"
     size: 30
     stroke_width: 2
-    style: plain
+    font: relief_singleline
     color: black
 
   - type: text
     x: 165
-    y: 736.5625
+    y: 796.5625
     width: 1070
     height: 60
     text: "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"
     size: 30
     stroke_width: 2
-    style: plain
+    font: relief_singleline
     color: black
 
   - type: text
     x: 165
-    y: 906.5625
+    y: 966.5625
     width: 1070
     height: 60
     text: "αβγδεζηθικλμνξοπρςστυφχψω"
     size: 30
     stroke_width: 2
-    style: plain
+    font: relief_singleline
     color: black
 
   - type: text
     x: 165
-    y: 1076.5625
+    y: 1136.5625
     width: 1070
     height: 60
     text: "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
     size: 30
     stroke_width: 2
-    style: plain
+    font: relief_singleline
     color: black
 
   - type: text
     x: 165
-    y: 1246.5625
+    y: 1306.5625
     width: 1070
     height: 60
     text: "абвгдежзийклмнопрстуфхцчшщъыьэюя"
     size: 30
     stroke_width: 2
-    style: plain
+    font: relief_singleline
     color: black
 
   - type: text
     x: 165
-    y: 1416.5625
+    y: 1476.5625
     width: 1070
     height: 60
     text: "←↑→↓∂∃∇∈∏∑−∓∕∖∗∙√∝∞∠∥∩∪∫∴∼≠≡"
     size: 30
     stroke_width: 2
-    style: plain
+    font: relief_singleline
     color: black
 
   - type: text
     x: 165
-    y: 1588.125
+    y: 1648.125
     width: 1070
     height: 56
-    text: "Italic sample: ABCDEFG abcdefg 012345"
-    size: 28
-    stroke_width: 2
-    style: italic
-    color: black
-
-  - type: text
-    x: 165
-    y: 1728.125
-    width: 1070
-    height: 56
-    text: "Relief SingleLine: ABCDEFG abcdefg 012345 eacute é"
+    text: "Accents sample: Café naïve fiancé Ångström"
     size: 28
     stroke_width: 2
     font: relief_singleline

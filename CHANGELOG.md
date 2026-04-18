@@ -15,6 +15,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added saved `rmcat` script generation plus optional automatic concatenation when `rmcat` (https://github.com/kg4zow/rm2-scripts/tree/main/rmcat/) is available.
 - Added PNG-backed YAML shape objects for circles and rectangles, including `circle_png_fill`, `circle_png_outline_fill`, `rectangle_png_fill`, and `rectangle_png_outline_fill`.
 - Added generated RGBA-grid helpers for rasterizing filled circles and rectangles with antialiasing for the new PNG-backed shape workflow.
+- Added selectable line-font families through `font:` for both the Ruby text helpers and YAML `text` / `shadow_text` objects.
+- Added explicit `line_font` as an alias for the built-in default line-font family.
+- Added a converted `relief_singleline` stroke-font family under `data/relief_singleline`.
+- Added `bin/ufo_to_line_font` to convert a simple UFO source into the line-font JSON stroke format used by the renderer.
+- Added `examples/font-family-sampler.yml`, `examples/font-comparison-sampler.yml`, and `examples/relief-line-font-sampler.yml` plus their generated `out/` samples.
 
 ### Changed
 
@@ -24,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Changed circle rendering and constant-width segment helpers to write explicit `thickness_scale` values derived from the requested width, improving downstream export behavior for wide strokes.
 - Changed PNG outline-fill objects so the fill is rasterized through the image path while outlines continue to use the normal vector line rendering.
 - Changed aspect-ratio-preserving box placement so square-fit shapes, fitted images, and nested YAML honor `placement` when there is extra space inside an explicit box.
+- Changed line-font family discovery so the built-in family continues to use `data/line_font`, while additional families are loaded directly from sibling directories under `data/`.
 
 ## [0.9.0-beta.4] - 2026-04-07
 

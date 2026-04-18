@@ -28,6 +28,16 @@ RSpec.describe Remarkable::LineFont do
     expect(italic_width).to be > 0
     expect(mono_width).to eq(described_class.mono_advance(20) * 2)
   end
+
+  it "supports selectable font families with fallback normalization" do
+    relief_width = described_class.text_width("Relief", size: 20, font: "Relief-SingleLine")
+    alias_width = described_class.text_width("Hello", size: 20, font: :line_font)
+
+    expect(described_class.available_fonts).to include(:default, :line_font, :relief_singleline)
+    expect(relief_width).to be > 0
+    expect(alias_width).to eq(described_class.text_width("Hello", size: 20))
+    expect(described_class.glyph_for("é", font: :relief_singleline)).not_to be_nil
+  end
 end
 
 RSpec.describe Remarkable::Shapes do
@@ -46,6 +56,15 @@ RSpec.describe Remarkable::Shapes do
     width = described_class.shadow_text(page, "Hello", 100, 200, size: 32, stroke_width: 2, shadow_dx: 6, shadow_dy: 4)
 
     expect(width).to eq(described_class.text(page, "Hello", 100, 200, size: 32, stroke_width: 2) + 6)
+    expect(page.lines).not_to be_empty
+  end
+
+  it "draws text through the shared helper with a selected font family" do
+    page = Remarkable::RmPage.new
+
+    width = described_class.text(page, "Relief", 100, 200, size: 32, stroke_width: 2, font: :relief_singleline)
+
+    expect(width).to be > 0
     expect(page.lines).not_to be_empty
   end
 end

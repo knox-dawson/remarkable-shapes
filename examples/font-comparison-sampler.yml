@@ -1,0 +1,347 @@
+canvas:
+  tablet: rm2
+
+objects:
+  - type: rectangle_outline
+    x: 90
+    y: 90
+    width: 1220
+    height: 1700
+    stroke_width: 4
+    color: black
+
+  - type: text
+    x: 130
+    y: 155
+    width: 1140
+    height: 70
+    text: "Font Comparison Sampler"
+    size: 42
+    stroke_width: 3
+    color: black
+
+  - type: line
+    x1: 130
+    y1: 240
+    x2: 1270
+    y2: 240
+    stroke_width: 2
+    color: black
+
+  - type: line
+    x1: 700
+    y1: 275
+    x2: 700
+    y2: 1750
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 140
+    y: 285
+    width: 520
+    height: 40
+    text: "default"
+    size: 28
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 720
+    y: 285
+    width: 520
+    height: 40
+    text: "relief_singleline"
+    size: 28
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 140
+    y: 340
+    width: 520
+    height: 42
+    text: "Uppercase"
+    size: 22
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 720
+    y: 340
+    width: 520
+    height: 42
+    text: "Uppercase"
+    size: 22
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 140
+    y: 382
+    width: 520
+    height: 72
+    text: "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    size: 28
+    stroke_width: 2
+    wrap: true
+    font: default
+    color: black
+
+  - type: text
+    x: 720
+    y: 382
+    width: 520
+    height: 72
+    text: "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    size: 28
+    stroke_width: 2
+    wrap: true
+    font: relief_singleline
+    color: black
+
+  - type: text
+    x: 140
+    y: 495
+    width: 520
+    height: 42
+    text: "Lowercase"
+    size: 22
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 720
+    y: 495
+    width: 520
+    height: 42
+    text: "Lowercase"
+    size: 22
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 140
+    y: 537
+    width: 520
+    height: 72
+    text: "abcdefghijklmnopqrstuvwxyz"
+    size: 28
+    stroke_width: 2
+    wrap: true
+    font: default
+    color: black
+
+  - type: text
+    x: 720
+    y: 537
+    width: 520
+    height: 72
+    text: "abcdefghijklmnopqrstuvwxyz"
+    size: 28
+    stroke_width: 2
+    wrap: true
+    font: relief_singleline
+    color: black
+
+  - type: text
+    x: 140
+    y: 650
+    width: 520
+    height: 42
+    text: "Digits + punctuation"
+    size: 22
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 720
+    y: 650
+    width: 520
+    height: 42
+    text: "Digits + punctuation"
+    size: 22
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 140
+    y: 692
+    width: 520
+    height: 120
+    text: "0123456789\n.,;:!?@#$%&*()[]{}"
+    size: 28
+    stroke_width: 2
+    wrap: true
+    font: default
+    color: black
+
+  - type: text
+    x: 720
+    y: 692
+    width: 520
+    height: 120
+    text: "0123456789\n.,;:!?@#$%&*()[]{}"
+    size: 28
+    stroke_width: 2
+    wrap: true
+    font: relief_singleline
+    color: black
+
+  - type: text
+    x: 140
+    y: 865
+    width: 520
+    height: 42
+    text: "Sentence"
+    size: 22
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 720
+    y: 865
+    width: 520
+    height: 42
+    text: "Sentence"
+    size: 22
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 140
+    y: 907
+    width: 520
+    height: 150
+    text: "Sphinx of black quartz, judge my vow."
+    size: 30
+    stroke_width: 2
+    wrap: true
+    font: default
+    color: black
+
+  - type: text
+    x: 720
+    y: 907
+    width: 520
+    height: 150
+    text: "Sphinx of black quartz, judge my vow."
+    size: 30
+    stroke_width: 2
+    wrap: true
+    font: relief_singleline
+    color: black
+
+  - type: text
+    x: 140
+    y: 1110
+    width: 520
+    height: 42
+    text: "Accents + arrows + math"
+    size: 22
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 720
+    y: 1110
+    width: 520
+    height: 42
+    text: "Accents + arrows + math"
+    size: 22
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 140
+    y: 1152
+    width: 520
+    height: 170
+    text: "Caf\u00E9 na\u00EFve fianc\u00E9\n\u2190 \u2191 \u2192 \u2193\n\u2211 \u221A \u221E"
+    size: 30
+    stroke_width: 2
+    wrap: true
+    font: default
+    color: black
+
+  - type: text
+    x: 720
+    y: 1152
+    width: 520
+    height: 170
+    text: "Caf\u00E9 na\u00EFve fianc\u00E9\n\u2190 \u2191 \u2192 \u2193\n\u2211 \u221A \u221E"
+    size: 30
+    stroke_width: 2
+    wrap: true
+    font: relief_singleline
+    color: black
+
+  - type: text
+    x: 140
+    y: 1395
+    width: 520
+    height: 42
+    text: "Built-in variants"
+    size: 22
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 140
+    y: 1437
+    width: 520
+    height: 150
+    text: "plain\nitalic\nmono"
+    size: 24
+    stroke_width: 2
+    wrap: true
+    font: default
+    color: black
+
+  - type: text
+    x: 260
+    y: 1437
+    width: 390
+    height: 150
+    text: "Vector note\nVector note\nVector note"
+    size: 24
+    stroke_width: 2
+    style: plain
+    font: default
+    color: black
+
+  - type: text
+    x: 260
+    y: 1475
+    width: 390
+    height: 110
+    text: "Vector note"
+    size: 24
+    stroke_width: 2
+    style: italic
+    font: default
+    color: black
+
+  - type: text
+    x: 260
+    y: 1513
+    width: 390
+    height: 110
+    text: "Vector note"
+    size: 24
+    stroke_width: 2
+    mono: true
+    font: default
+    color: black
+
+  - type: text
+    x: 720
+    y: 1395
+    width: 520
+    height: 180
+    text: "Relief currently renders from a converted plain stroke JSON family. It does not yet expose separate italic or mono variants."
+    size: 24
+    stroke_width: 2
+    wrap: true
+    font: relief_singleline
+    color: black
