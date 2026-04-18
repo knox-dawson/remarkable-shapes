@@ -21,21 +21,25 @@ RSpec.describe Remarkable::LineFont do
     expect(page.lines.all? { |line| line.points.length >= 2 }).to be(true)
   end
 
-  it "supports italic and mono lookup paths" do
-    italic_width = described_class.text_width("Hello", size: 20, style: :italic)
-    mono_width = described_class.text_width("mm", size: 20, mono: true)
+  it "supports flattened cursive and mono font families" do
+    cursive_width = described_class.text_width("Hello", size: 20, font: :line_font_cursive)
+    mono_width = described_class.text_width("mm", size: 20, font: :line_font_mono)
 
-    expect(italic_width).to be > 0
+    expect(cursive_width).to be > 0
     expect(mono_width).to eq(described_class.mono_advance(20) * 2)
   end
 
-  it "supports selectable font families with fallback normalization" do
+  it "keeps temporary style/mono compatibility for beta.5 while supporting flattened font families" do
     relief_width = described_class.text_width("Relief", size: 20, font: "Relief-SingleLine")
     alias_width = described_class.text_width("Hello", size: 20, font: :line_font)
+    compatibility_cursive_width = described_class.text_width("Hello", size: 20, style: :italic)
+    compatibility_mono_width = described_class.text_width("mm", size: 20, mono: true)
 
-    expect(described_class.available_fonts).to include(:default, :line_font, :relief_singleline)
+    expect(described_class.available_fonts).to include(:default, :line_font, :line_font_cursive, :line_font_mono, :relief_singleline)
     expect(relief_width).to be > 0
     expect(alias_width).to eq(described_class.text_width("Hello", size: 20))
+    expect(compatibility_cursive_width).to eq(described_class.text_width("Hello", size: 20, font: :line_font_cursive))
+    expect(compatibility_mono_width).to eq(described_class.text_width("mm", size: 20, font: :line_font_mono))
     expect(described_class.glyph_for("é", font: :relief_singleline)).not_to be_nil
   end
 end

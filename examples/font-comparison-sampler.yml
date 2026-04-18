@@ -41,7 +41,7 @@ objects:
     y: 285
     width: 520
     height: 40
-    text: "default"
+    text: "line_font"
     size: 28
     stroke_width: 2
     color: black
@@ -85,7 +85,7 @@ objects:
     size: 28
     stroke_width: 2
     wrap: true
-    font: default
+    font: line_font
     color: black
 
   - type: text
@@ -129,7 +129,7 @@ objects:
     size: 28
     stroke_width: 2
     wrap: true
-    font: default
+    font: line_font
     color: black
 
   - type: text
@@ -173,7 +173,7 @@ objects:
     size: 28
     stroke_width: 2
     wrap: true
-    font: default
+    font: line_font
     color: black
 
   - type: text
@@ -217,7 +217,7 @@ objects:
     size: 30
     stroke_width: 2
     wrap: true
-    font: default
+    font: line_font
     color: black
 
   - type: text
@@ -261,7 +261,7 @@ objects:
     size: 30
     stroke_width: 2
     wrap: true
-    font: default
+    font: line_font
     color: black
 
   - type: text
@@ -281,7 +281,7 @@ objects:
     y: 1395
     width: 520
     height: 42
-    text: "Built-in variants"
+    text: "Flattened built-in families"
     size: 22
     stroke_width: 2
     color: black
@@ -291,11 +291,11 @@ objects:
     y: 1437
     width: 520
     height: 150
-    text: "plain\nitalic\nmono"
+    text: "line_font\nline_font_cursive\nline_font_mono"
     size: 24
     stroke_width: 2
     wrap: true
-    font: default
+    font: line_font
     color: black
 
   - type: text
@@ -306,8 +306,7 @@ objects:
     text: "Vector note\nVector note\nVector note"
     size: 24
     stroke_width: 2
-    style: plain
-    font: default
+    font: line_font
     color: black
 
   - type: text
@@ -318,8 +317,7 @@ objects:
     text: "Vector note"
     size: 24
     stroke_width: 2
-    style: italic
-    font: default
+    font: line_font_cursive
     color: black
 
   - type: text
@@ -330,8 +328,7 @@ objects:
     text: "Vector note"
     size: 24
     stroke_width: 2
-    mono: true
-    font: default
+    font: line_font_mono
     color: black
 
   - type: text
@@ -339,7 +336,7 @@ objects:
     y: 1395
     width: 520
     height: 180
-    text: "Relief currently renders from a converted plain stroke JSON family. It does not yet expose separate italic or mono variants."
+    text: "Relief currently renders from a converted plain stroke JSON family. It does not yet expose separate cursive or mono variants."
     size: 24
     stroke_width: 2
     wrap: true

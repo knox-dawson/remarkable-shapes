@@ -46,8 +46,7 @@ objects:
     text: "Sphinx of black quartz, judge my vow. 0123456789"
     size: 34
     stroke_width: 2
-    font: default
-    style: plain
+    font: line_font
     color: black
 
   - type: text
@@ -55,7 +54,7 @@ objects:
     y: 455
     width: 1100
     height: 40
-    text: "default / italic"
+    text: "line_font_cursive"
     size: 24
     stroke_width: 2
     color: black
@@ -68,8 +67,7 @@ objects:
     text: "Sphinx of black quartz, judge my vow. 0123456789"
     size: 34
     stroke_width: 2
-    font: default
-    style: italic
+    font: line_font_cursive
     color: black
 
   - type: text
@@ -77,7 +75,7 @@ objects:
     y: 610
     width: 1100
     height: 40
-    text: "default / mono"
+    text: "line_font_mono"
     size: 24
     stroke_width: 2
     color: black
@@ -90,8 +88,7 @@ objects:
     text: "Sphinx of black quartz, judge my vow. 0123456789"
     size: 34
     stroke_width: 2
-    font: default
-    mono: true
+    font: line_font_mono
     color: black
 
   - type: line
@@ -157,7 +154,7 @@ objects:
     y: 1210
     width: 1100
     height: 40
-    text: "Available families: default, relief_singleline"
+    text: "Available families: line_font, line_font_cursive, line_font_mono, relief_singleline"
     size: 24
     stroke_width: 2
     color: black
@@ -171,5 +168,5 @@ objects:
     size: 26
     stroke_width: 2
     wrap: true
-    font: default
+    font: line_font
     color: black

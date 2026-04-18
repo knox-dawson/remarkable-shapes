@@ -1688,6 +1688,7 @@ module Remarkable
       size = scale_length(layout, fetch_number(object, "size", LineFont::DEFAULT_SIZE))
       stroke_width = scale_length(layout, fetch_number(object, "stroke_width", LineFont::DEFAULT_STROKE_WIDTH))
       line_spacing = fetch_number(object, "line_spacing", 1.25)
+      # TODO: Remove style/mono compatibility after the next beta release.
       style_name = object.fetch("style", LineFont::DEFAULT_STYLE).to_sym
       font_name = object.fetch("font", LineFont::DEFAULT_FONT).to_sym
       mono = object.fetch("mono", false)
