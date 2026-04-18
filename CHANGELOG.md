@@ -17,11 +17,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added generated RGBA-grid helpers for rasterizing filled circles and rectangles with antialiasing for the new PNG-backed shape workflow.
 - Added selectable line-font families through `font:` for both the Ruby text helpers and YAML `text` / `shadow_text` objects.
 - Added explicit `line_font` as an alias for the built-in default line-font family.
+- Added a generated `line_font_italic` family by slanting the built-in plain glyphs into a synthetic italic stroke font.
 - Added flattened built-in `line_font_cursive` and `line_font_mono` families so cursive and monospaced variants can be selected directly through `font:`.
 - Added a converted `relief_singleline` stroke-font family under `data/relief_singleline`.
+- Added a generated `relief_singleline_italic` family by slanting the imported Relief SingleLine plain glyphs into a synthetic italic stroke font.
 - Added `bin/ufo_to_line_font` to convert a simple UFO source into the line-font JSON stroke format used by the renderer.
 - Added `examples/font-family-sampler.yml`, `examples/font-comparison-sampler.yml`, and `examples/relief-line-font-sampler.yml` plus their generated `out/` samples.
-- Added temporary compatibility so older `style` and `mono` text options still map onto the new flattened font families during the beta.5 transition.
+- Added `bin/generate_font_samples` to build one full-coverage sample page per font family and render the matching `.rmdoc` outputs.
+- Added temporary compatibility so older `style` and `mono` text options still map onto the new flattened font families during the beta.5 transition, with `style: italic` now pointing at the synthetic `line_font_italic` family and `style: cursive` pointing at the true cursive family.
 
 ### Changed
 
@@ -31,7 +34,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Changed circle rendering and constant-width segment helpers to write explicit `thickness_scale` values derived from the requested width, improving downstream export behavior for wide strokes.
 - Changed PNG outline-fill objects so the fill is rasterized through the image path while outlines continue to use the normal vector line rendering.
 - Changed aspect-ratio-preserving box placement so square-fit shapes, fitted images, and nested YAML honor `placement` when there is extra space inside an explicit box.
-- Changed line-font family discovery so `data/line_font` now contains only the plain built-in family, while additional families such as `line_font_cursive`, `line_font_mono`, and `relief_singleline` are loaded directly from sibling directories under `data/`.
+- Changed line-font family discovery so `data/line_font` now contains only the plain built-in family, while additional families such as `line_font_italic`, `line_font_cursive`, `line_font_mono`, `relief_singleline`, and `relief_singleline_italic` are loaded directly from sibling directories under `data/`.
+- Changed the generated synthetic italic line-fonts to use tighter advance widths and pair-specific spacing adjustments for improved visual spacing.
+- Changed the generated per-font sample pages to render larger, darker sample text while filtering out invisible escaped codepoint keys from the displayed character set.
 
 ## [0.9.0-beta.4] - 2026-04-07
 

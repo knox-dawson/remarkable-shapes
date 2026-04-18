@@ -1,0 +1,255 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+
+require "fileutils"
+require "json"
+require "io/rm_page"
+require "io/rmdoc_writer"
+require "shapes/line_font"
+require "shapes/yaml_shape_renderer"
+require "yaml"
+
+EXAMPLES_DIR = File.expand_path("../examples", __dir__)
+OUTPUT_DIR = File.expand_path("../out", __dir__)
+PAGE_WIDTH = 1404
+PAGE_HEIGHT = 1872
+BOX_X = 140
+BOX_Y = 180
+BOX_WIDTH = 1124
+BOX_HEIGHT = 1552
+TEXT_X = 170
+TITLE_Y = 190
+SUBTITLE_Y = 232
+BODY_Y = 300
+TEXT_WIDTH = 1064
+TEXT_HEIGHT = 50
+LINE_STEP = 50
+TITLE_SIZE = 28
+SUBTITLE_SIZE = 18
+TEXT_SIZE = 42
+BOTTOM_PADDING = 24
+BODY_STROKE_WIDTH = 3
+INVISIBLE_ESCAPE_KEYS = %w[
+  \u00A0
+  \u2000
+  \u2001
+  \u2002
+  \u2003
+  \u2004
+  \u2005
+  \u2006
+  \u2007
+  \u2008
+  \u2009
+  \u200A
+  \u200B
+  \u200C
+  \u200D
+  \u202F
+  \u205F
+  \u2060
+  \uFEFF
+].freeze
+
+FONTS = [
+  :line_font,
+  :line_font_cursive,
+  :line_font_italic,
+  :line_font_mono,
+  :relief_singleline,
+  :relief_singleline_italic
+].freeze
+
+def glyph_data_path(font)
+  case font
+  when :line_font
+    File.expand_path("../data/line_font/plain.json", __dir__)
+  when :line_font_cursive
+    File.expand_path("../data/line_font_cursive/cursive.json", __dir__)
+  when :line_font_italic
+    File.expand_path("../data/line_font_italic/italic.json", __dir__)
+  when :line_font_mono
+    File.expand_path("../data/line_font_mono/mono.json", __dir__)
+  when :relief_singleline
+    File.expand_path("../data/relief_singleline/plain.json", __dir__)
+  when :relief_singleline_italic
+    File.expand_path("../data/relief_singleline_italic/plain.json", __dir__)
+  else
+    raise ArgumentError, "unknown font: #{font}"
+  end
+end
+
+def source_font_for_characters(font)
+  font == :line_font_mono ? :line_font : font
+end
+
+def sorted_characters(path)
+  JSON.parse(File.read(path)).keys
+      .select { |char| printable_character?(char) }
+      .sort_by(&:ord)
+end
+
+def printable_character?(char)
+  return false if char.nil? || char.empty?
+  return false if INVISIBLE_ESCAPE_KEYS.include?(char)
+  return false if char.match?(/\A\\u[0-9A-Fa-f]{4,6}\z/)
+  return false if char.match?(/\A\\x[0-9A-Fa-f]{2}\z/)
+
+  # Skip control/format codepoints and whitespace separators that render as
+  # invisible escape-like entries in the sample pages.
+  return false if char.match?(/\A[\p{Cc}\p{Cf}\p{Cs}\p{Co}\p{Cn}\p{Zl}\p{Zp}\p{Zs}]\z/)
+
+  true
+end
+
+def pack_lines(font, characters, max_width, size)
+  lines = []
+  current = +""
+
+  characters.each do |char|
+    candidate = current.empty? ? char : "#{current}#{char}"
+    if current.empty? || Remarkable::LineFont.text_width(candidate, size:, font:) <= max_width
+      current = candidate
+    else
+      lines << current
+      current = char
+    end
+  end
+
+  lines << current unless current.empty?
+  lines
+end
+
+def sample_yaml_name(font)
+  "font-page-#{font}.yml"
+end
+
+def sample_rmdoc_name(font)
+  "font-page-#{font}.rmdoc"
+end
+
+def paged_yaml_name(font, page_index)
+  format("font-page-%s-%02d.yml", font, page_index + 1)
+end
+
+def paged_rmdoc_name(font, page_index)
+  format("font-page-%s-%02d.rmdoc", font, page_index + 1)
+end
+
+def lines_per_page
+  usable_height = (BOX_Y + BOX_HEIGHT) - BODY_Y - BOTTOM_PADDING
+  (usable_height / LINE_STEP).floor
+end
+
+def yaml_config_for(font, lines, glyph_count, page_index, page_count, character_source_font)
+  subtitle =
+    if font == :line_font_mono
+      "Rendered with #{font} using glyph coverage from #{character_source_font}"
+    else
+      "All glyphs currently present in #{font}"
+    end
+
+  objects = [
+    {
+      "type" => "rectangle_outline",
+      "x" => BOX_X,
+      "y" => BOX_Y,
+      "width" => BOX_WIDTH,
+      "height" => BOX_HEIGHT,
+      "stroke_width" => 4,
+      "color" => "black"
+    },
+    {
+      "type" => "text",
+      "x" => TEXT_X,
+      "y" => TITLE_Y,
+      "width" => TEXT_WIDTH,
+      "height" => 34,
+      "text" => "Font page: #{font} (#{glyph_count} glyphs, page #{page_index + 1}/#{page_count})",
+      "size" => TITLE_SIZE,
+      "stroke_width" => 2,
+      "font" => source_font_for_characters(font).to_s,
+      "color" => "black"
+    },
+    {
+      "type" => "text",
+      "x" => TEXT_X,
+      "y" => SUBTITLE_Y,
+      "width" => TEXT_WIDTH,
+      "height" => 24,
+      "text" => subtitle,
+      "size" => SUBTITLE_SIZE,
+      "stroke_width" => 2,
+      "font" => source_font_for_characters(font).to_s,
+      "color" => "black"
+    }
+  ]
+
+  y = BODY_Y
+  lines.each do |line|
+    objects << {
+      "type" => "text",
+      "x" => TEXT_X,
+      "y" => y,
+      "width" => TEXT_WIDTH,
+      "height" => TEXT_HEIGHT,
+      "text" => line,
+      "size" => TEXT_SIZE,
+      "stroke_width" => BODY_STROKE_WIDTH,
+      "font" => font.to_s,
+      "color" => "black"
+    }
+    y += LINE_STEP
+  end
+
+  {
+    "canvas" => { "tablet" => "rm2" },
+    "objects" => objects
+  }
+end
+
+def write_yaml(path, config)
+  File.write(path, config.to_yaml(line_width: -1))
+end
+
+def render_yaml_to_rmdoc(yaml_path, output_path)
+  config = Remarkable::YamlShapeRenderer.load_file_config(yaml_path)
+  layout = Remarkable::YamlShapeRenderer.resolve_canvas_layout(config.fetch("canvas", {}))
+  page = Remarkable::RmPage.new(page_width: layout[:physical_width], page_height: layout[:physical_height])
+  Remarkable::YamlShapeRenderer.render(page, config, base_dir: File.dirname(yaml_path))
+  Remarkable::RmdocWriter.write(
+    output_path,
+    page.to_rm_bytes,
+    page_width: page.page_width,
+    page_height: page.page_height
+  )
+end
+
+FileUtils.mkdir_p(EXAMPLES_DIR)
+FileUtils.mkdir_p(OUTPUT_DIR)
+
+Dir[File.join(EXAMPLES_DIR, "font-page-*.yml")].each { |path| File.delete(path) }
+Dir[File.join(OUTPUT_DIR, "font-page-*.rmdoc")].each { |path| File.delete(path) }
+
+FONTS.each do |font|
+  character_source_font = source_font_for_characters(font)
+  characters = sorted_characters(glyph_data_path(character_source_font))
+  lines = pack_lines(font, characters, TEXT_WIDTH, TEXT_SIZE)
+  paged_lines = lines.each_slice(lines_per_page).to_a
+  if paged_lines.length == 1
+    yaml_path = File.join(EXAMPLES_DIR, sample_yaml_name(font))
+    output_path = File.join(OUTPUT_DIR, sample_rmdoc_name(font))
+    write_yaml(yaml_path, yaml_config_for(font, paged_lines.first, characters.length, 0, 1, character_source_font))
+    render_yaml_to_rmdoc(yaml_path, output_path)
+    next
+  end
+
+  paged_lines.each_with_index do |page_lines, index|
+    yaml_path = File.join(EXAMPLES_DIR, paged_yaml_name(font, index))
+    output_path = File.join(OUTPUT_DIR, paged_rmdoc_name(font, index))
+    write_yaml(yaml_path, yaml_config_for(font, page_lines, characters.length, index, paged_lines.length, character_source_font))
+    render_yaml_to_rmdoc(yaml_path, output_path)
+  end
+end

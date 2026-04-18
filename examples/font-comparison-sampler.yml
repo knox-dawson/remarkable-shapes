@@ -291,7 +291,7 @@ objects:
     y: 1437
     width: 520
     height: 150
-    text: "line_font\nline_font_cursive\nline_font_mono"
+    text: "line_font\nline_font_italic\nline_font_cursive\nline_font_mono"
     size: 24
     stroke_width: 2
     wrap: true
@@ -302,8 +302,8 @@ objects:
     x: 260
     y: 1437
     width: 390
-    height: 150
-    text: "Vector note\nVector note\nVector note"
+    height: 190
+    text: "Vector note\nVector note\nVector note\nVector note"
     size: 24
     stroke_width: 2
     font: line_font
@@ -317,12 +317,23 @@ objects:
     text: "Vector note"
     size: 24
     stroke_width: 2
-    font: line_font_cursive
+    font: line_font_italic
     color: black
 
   - type: text
     x: 260
     y: 1513
+    width: 390
+    height: 110
+    text: "Vector note"
+    size: 24
+    stroke_width: 2
+    font: line_font_cursive
+    color: black
+
+  - type: text
+    x: 260
+    y: 1551
     width: 390
     height: 110
     text: "Vector note"
@@ -336,7 +347,7 @@ objects:
     y: 1395
     width: 520
     height: 180
-    text: "Relief currently renders from a converted plain stroke JSON family. It does not yet expose separate cursive or mono variants."
+    text: "Relief currently renders from a converted plain stroke JSON family. The built-in set now separates synthetic italic, true cursive, and mono into distinct font families."
     size: 24
     stroke_width: 2
     wrap: true

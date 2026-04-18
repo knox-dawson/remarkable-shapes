@@ -17,6 +17,8 @@ module Remarkable
     LINE_FONT_ALIAS = :line_font
     # Flattened built-in cursive family.
     LINE_FONT_CURSIVE = :line_font_cursive
+    # Flattened built-in synthetic italic family.
+    LINE_FONT_ITALIC = :line_font_italic
     # Flattened built-in mono family.
     LINE_FONT_MONO = :line_font_mono
     # Default glyph style.
@@ -30,6 +32,22 @@ module Remarkable
     DEFAULT_DATA_ROOT = File.join(DATA_ROOT, "line_font")
     ROOT_DATA_FILES = {
       plain: File.join(DEFAULT_DATA_ROOT, "plain.json")
+    }.freeze
+    # Pair-specific spacing tweaks for the generated synthetic italic family.
+    ITALIC_PAIR_ADJUSTMENTS = {
+      "ST" => 0.018,
+      "UV" => 0.028,
+      "VW" => 0.022,
+      "XY" => 0.016,
+      "ef" => 0.014,
+      "st" => 0.022,
+      "TU" => -0.018,
+      "WX" => -0.018,
+      "YZ" => -0.018,
+      "12" => -0.024,
+      "78" => -0.014,
+      "ij" => -0.03,
+      "wx" => -0.024
     }.freeze
 
     module_function
@@ -53,11 +71,14 @@ module Remarkable
                   style: DEFAULT_STYLE, font: DEFAULT_FONT, mono: false,
                   rgba: Shapes::DEFAULT_RGBA, color: Shapes::DEFAULT_COLOR, brush: Shapes::DEFAULT_BRUSH)
       cursor_x = x.to_f
-      text.each_char do |char|
+      chars = text.each_char.to_a
+      chars.each_with_index do |char, index|
         cursor_x += draw_character(
           page, char, cursor_x, baseline_y,
           size:, stroke_width:, style:, font:, mono:, rgba:, color:, brush:
         )
+        next_char = chars[index + 1]
+        cursor_x += pair_spacing_adjustment(char, next_char, size:, style:, font:, mono:) unless next_char.nil?
       end
       cursor_x - x.to_f
     end
@@ -66,7 +87,12 @@ module Remarkable
     #
     # @return [Float]
     def text_width(text, size: DEFAULT_SIZE, style: DEFAULT_STYLE, font: DEFAULT_FONT, mono: false)
-      text.each_char.sum { |char| character_advance(char, size:, style:, font:, mono:) }
+      chars = text.each_char.to_a
+      chars.each_with_index.sum do |char, index|
+        advance = character_advance(char, size:, style:, font:, mono:)
+        next_char = chars[index + 1]
+        advance + (next_char.nil? ? 0.0 : pair_spacing_adjustment(char, next_char, size:, style:, font:, mono:))
+      end
     end
 
     # Returns true when the glyph exists in the imported font data.
@@ -162,6 +188,8 @@ module Remarkable
         ROOT_DATA_FILES[:plain]
       elsif normalize_font(font) == LINE_FONT_CURSIVE
         File.join(DATA_ROOT, LINE_FONT_CURSIVE.to_s, "cursive.json")
+      elsif normalize_font(font) == LINE_FONT_ITALIC
+        File.join(DATA_ROOT, LINE_FONT_ITALIC.to_s, "italic.json")
       elsif normalize_font(font) == LINE_FONT_MONO
         File.join(DATA_ROOT, LINE_FONT_MONO.to_s, "mono.json")
       else
@@ -177,6 +205,7 @@ module Remarkable
       return DEFAULT_FONT if normalized.empty?
       return LINE_FONT_ALIAS if normalized == "line_font"
       return LINE_FONT_CURSIVE if normalized == "line_font_cursive"
+      return LINE_FONT_ITALIC if normalized == "line_font_italic"
       return LINE_FONT_MONO if normalized == "line_font_mono"
 
       normalized.to_sym
@@ -188,7 +217,8 @@ module Remarkable
       return LINE_FONT_MONO if mono && [DEFAULT_FONT, LINE_FONT_ALIAS].include?(family)
 
       if [DEFAULT_FONT, LINE_FONT_ALIAS].include?(family)
-        return LINE_FONT_CURSIVE if %i[cursive italic].include?(style.to_sym)
+        return LINE_FONT_CURSIVE if style.to_sym == :cursive
+        return LINE_FONT_ITALIC if style.to_sym == :italic
         return LINE_FONT_ALIAS
       end
 
@@ -197,6 +227,13 @@ module Remarkable
 
     def effective_mono?(font, style:, mono:)
       effective_font(font, style:, mono:) == LINE_FONT_MONO
+    end
+
+    def pair_spacing_adjustment(left_char, right_char, size:, style:, font:, mono:)
+      return 0.0 if left_char.nil? || right_char.nil?
+      return 0.0 unless effective_font(font, style:, mono:) == LINE_FONT_ITALIC
+
+      size.to_f * ITALIC_PAIR_ADJUSTMENTS.fetch("#{left_char}#{right_char}", 0.0)
     end
 
     # Returns the fallback advance for unsupported characters.

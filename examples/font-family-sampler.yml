@@ -54,7 +54,7 @@ objects:
     y: 455
     width: 1100
     height: 40
-    text: "line_font_cursive"
+    text: "line_font_italic"
     size: 24
     stroke_width: 2
     color: black
@@ -67,7 +67,7 @@ objects:
     text: "Sphinx of black quartz, judge my vow. 0123456789"
     size: 34
     stroke_width: 2
-    font: line_font_cursive
+    font: line_font_italic
     color: black
 
   - type: text
@@ -75,7 +75,7 @@ objects:
     y: 610
     width: 1100
     height: 40
-    text: "line_font_mono"
+    text: "line_font_cursive"
     size: 24
     stroke_width: 2
     color: black
@@ -88,20 +88,41 @@ objects:
     text: "Sphinx of black quartz, judge my vow. 0123456789"
     size: 34
     stroke_width: 2
-    font: line_font_mono
+    font: line_font_cursive
     color: black
 
-  - type: line
-    x1: 150
-    y1: 770
-    x2: 1250
-    y2: 770
+  - type: text
+    x: 150
+    y: 765
+    width: 1100
+    height: 40
+    text: "line_font_mono"
+    size: 24
     stroke_width: 2
     color: black
 
   - type: text
     x: 150
-    y: 815
+    y: 810
+    width: 1100
+    height: 80
+    text: "Sphinx of black quartz, judge my vow. 0123456789"
+    size: 34
+    stroke_width: 2
+    font: line_font_mono
+    color: black
+
+  - type: line
+    x1: 150
+    y1: 925
+    x2: 1250
+    y2: 925
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 150
+    y: 970
     width: 1100
     height: 40
     text: "relief_singleline / plain"
@@ -111,7 +132,7 @@ objects:
 
   - type: text
     x: 150
-    y: 860
+    y: 1015
     width: 1100
     height: 80
     text: "Sphinx of black quartz, judge my vow. 0123456789"
@@ -122,7 +143,7 @@ objects:
 
   - type: text
     x: 150
-    y: 970
+    y: 1125
     width: 1100
     height: 40
     text: "relief_singleline / accents + symbols"
@@ -132,7 +153,7 @@ objects:
 
   - type: text
     x: 150
-    y: 1015
+    y: 1170
     width: 1100
     height: 120
     text: "Caf\u00E9 na\u00EFve fianc\u00E9 \u2190\u2191\u2192\u2193 \u2211\u221A\u221E"
@@ -143,29 +164,58 @@ objects:
 
   - type: line
     x1: 150
-    y1: 1165
+    y1: 1320
     x2: 1250
-    y2: 1165
+    y2: 1320
     stroke_width: 2
     color: black
 
   - type: text
     x: 150
-    y: 1210
+    y: 1365
     width: 1100
     height: 40
-    text: "Available families: line_font, line_font_cursive, line_font_mono, relief_singleline"
+    text: "relief_singleline_italic / plain"
     size: 24
     stroke_width: 2
     color: black
 
   - type: text
     x: 150
-    y: 1260
+    y: 1410
     width: 1100
-    height: 420
-    text: "This page exercises every currently selectable line font family. The built-in family exposes plain, italic, and mono rendering. Relief SingleLine is currently imported as a plain stroke family."
-    size: 26
+    height: 80
+    text: "Sphinx of black quartz, judge my vow. 0123456789"
+    size: 34
+    stroke_width: 2
+    font: relief_singleline_italic
+    color: black
+
+  - type: line
+    x1: 150
+    y1: 1525
+    x2: 1250
+    y2: 1525
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 150
+    y: 1570
+    width: 1100
+    height: 40
+    text: "Available families: line_font, line_font_italic, line_font_cursive, line_font_mono, relief_singleline, relief_singleline_italic"
+    size: 24
+    stroke_width: 2
+    color: black
+
+  - type: text
+    x: 150
+    y: 1610
+    width: 1100
+    height: 70
+    text: "This page exercises every currently selectable line font family. The built-in set now has separate plain, synthetic italic, cursive, and mono families. Relief SingleLine is available in both plain and synthetic italic forms."
+    size: 18
     stroke_width: 2
     wrap: true
     font: line_font

@@ -2,6 +2,61 @@ canvas:
   tablet: rm2
 
 objects:
+  - type: text
+    x: 165
+    y: 180
+    width: 1070
+    height: 30
+    text: "Relief plain / italic inspection"
+    size: 20
+    stroke_width: 2
+    font: relief_singleline
+    color: black
+
+  - type: text
+    x: 165
+    y: 214
+    width: 1070
+    height: 28
+    text: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    size: 18
+    stroke_width: 2
+    font: relief_singleline
+    color: black
+
+  - type: text
+    x: 165
+    y: 238
+    width: 1070
+    height: 28
+    text: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    size: 18
+    stroke_width: 2
+    font: relief_singleline_italic
+    color: black
+
+  - type: text
+    x: 165
+    y: 262
+    width: 1070
+    height: 28
+    text: "abcdefghijklmnopqrstuvwxyz0123456789"
+    size: 18
+    stroke_width: 2
+    font: relief_singleline
+    color: black
+
+  - type: text
+    x: 165
+    y: 286
+    width: 1070
+    height: 28
+    text: "abcdefghijklmnopqrstuvwxyz0123456789"
+    size: 18
+    stroke_width: 2
+    font: relief_singleline_italic
+    color: black
+
   - type: rectangle_outline
     x: 130
     y: 130
@@ -12,7 +67,7 @@ objects:
 
   - type: text
     x: 165
-    y: 190
+    y: 330
     width: 1070
     height: 44
     text: "Relief SingleLine Sampler"
@@ -23,7 +78,7 @@ objects:
 
   - type: text
     x: 165
-    y: 286.5625
+    y: 426.5625
     width: 1070
     height: 60
     text: " !\"#$%&'()*+,-./0123456789:;<=>?@"
@@ -34,7 +89,7 @@ objects:
 
   - type: text
     x: 165
-    y: 456.5625
+    y: 596.5625
     width: 1070
     height: 60
     text: "ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_`"
@@ -45,7 +100,7 @@ objects:
 
   - type: text
     x: 165
-    y: 626.5625
+    y: 766.5625
     width: 1070
     height: 60
     text: "abcdefghijklmnopqrstuvwxyz{|}~ °"
@@ -56,7 +111,7 @@ objects:
 
   - type: text
     x: 165
-    y: 796.5625
+    y: 936.5625
     width: 1070
     height: 60
     text: "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"
@@ -67,7 +122,7 @@ objects:
 
   - type: text
     x: 165
-    y: 966.5625
+    y: 1106.5625
     width: 1070
     height: 60
     text: "αβγδεζηθικλμνξοπρςστυφχψω"
@@ -78,7 +133,7 @@ objects:
 
   - type: text
     x: 165
-    y: 1136.5625
+    y: 1276.5625
     width: 1070
     height: 60
     text: "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
@@ -89,7 +144,7 @@ objects:
 
   - type: text
     x: 165
-    y: 1306.5625
+    y: 1446.5625
     width: 1070
     height: 60
     text: "абвгдежзийклмнопрстуфхцчшщъыьэюя"
@@ -100,7 +155,7 @@ objects:
 
   - type: text
     x: 165
-    y: 1476.5625
+    y: 1616.5625
     width: 1070
     height: 60
     text: "←↑→↓∂∃∇∈∏∑−∓∕∖∗∙√∝∞∠∥∩∪∫∴∼≠≡"
@@ -111,11 +166,11 @@ objects:
 
   - type: text
     x: 165
-    y: 1648.125
+    y: 1688.125
     width: 1070
-    height: 56
-    text: "Accents sample: Café naïve fiancé Ångström"
-    size: 28
+    height: 30
+    text: "Relief italic: Café naïve fiancé Ångström"
+    size: 18
     stroke_width: 2
-    font: relief_singleline
+    font: relief_singleline_italic
     color: black

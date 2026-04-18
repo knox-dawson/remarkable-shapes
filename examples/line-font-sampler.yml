@@ -2,6 +2,105 @@ canvas:
   tablet: rm2
 
 objects:
+  - type: text
+    x: 165
+    y: 180
+    width: 1070
+    height: 32
+    text: "Plain / italic alphanumeric inspection"
+    size: 20
+    stroke_width: 2
+    font: line_font
+    color: black
+
+  - type: text
+    x: 165
+    y: 214
+    width: 1070
+    height: 30
+    text: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    size: 20
+    stroke_width: 2
+    font: line_font
+    color: black
+
+  - type: text
+    x: 165
+    y: 240
+    width: 1070
+    height: 30
+    text: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    size: 20
+    stroke_width: 2
+    font: line_font_italic
+    color: black
+
+  - type: text
+    x: 165
+    y: 262
+    width: 1070
+    height: 30
+    text: "abcdefghijklmnopqrstuvwxyz0123456789"
+    size: 20
+    stroke_width: 2
+    font: line_font
+    color: black
+
+  - type: text
+    x: 165
+    y: 288
+    width: 1070
+    height: 30
+    text: "abcdefghijklmnopqrstuvwxyz0123456789"
+    size: 20
+    stroke_width: 2
+    font: line_font_italic
+    color: black
+
+  - type: text
+    x: 165
+    y: 312
+    width: 1070
+    height: 28
+    text: "ST TU UV VW WX XY YZ 12 78"
+    size: 18
+    stroke_width: 2
+    font: line_font
+    color: black
+
+  - type: text
+    x: 165
+    y: 336
+    width: 1070
+    height: 28
+    text: "ST TU UV VW WX XY YZ 12 78"
+    size: 18
+    stroke_width: 2
+    font: line_font_italic
+    color: black
+
+  - type: text
+    x: 165
+    y: 360
+    width: 1070
+    height: 28
+    text: "ef st ij wx"
+    size: 18
+    stroke_width: 2
+    font: line_font
+    color: black
+
+  - type: text
+    x: 165
+    y: 384
+    width: 1070
+    height: 28
+    text: "ef st ij wx"
+    size: 18
+    stroke_width: 2
+    font: line_font_italic
+    color: black
+
   - type: rectangle_outline
     x: 130
     y: 130
@@ -12,7 +111,7 @@ objects:
 
   - type: text
     x: 165
-    y: 226.5625
+    y: 436.5625
     width: 1070
     height: 60
     text: " !\"#$%&'()*+,-./0123456789:;<=>?@"
@@ -23,7 +122,7 @@ objects:
 
   - type: text
     x: 165
-    y: 396.5625
+    y: 606.5625
     width: 1070
     height: 60
     text: "ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_`"
@@ -34,7 +133,7 @@ objects:
 
   - type: text
     x: 165
-    y: 566.5625
+    y: 776.5625
     width: 1070
     height: 60
     text: "abcdefghijklmnopqrstuvwxyz{|}~ °"
@@ -45,7 +144,7 @@ objects:
 
   - type: text
     x: 165
-    y: 736.5625
+    y: 946.5625
     width: 1070
     height: 60
     text: "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"
@@ -56,7 +155,7 @@ objects:
 
   - type: text
     x: 165
-    y: 906.5625
+    y: 1116.5625
     width: 1070
     height: 60
     text: "αβγδεζηθικλμνξοπρςστυφχψω"
@@ -67,7 +166,7 @@ objects:
 
   - type: text
     x: 165
-    y: 1076.5625
+    y: 1286.5625
     width: 1070
     height: 60
     text: "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
@@ -78,7 +177,7 @@ objects:
 
   - type: text
     x: 165
-    y: 1246.5625
+    y: 1456.5625
     width: 1070
     height: 60
     text: "абвгдежзийклмнопрстуфхцчшщъыьэюя"
@@ -89,7 +188,7 @@ objects:
 
   - type: text
     x: 165
-    y: 1416.5625
+    y: 1626.5625
     width: 1070
     height: 60
     text: "←↑→↓∂∃∇∈∏∑−∓∕∖∗∙√∝∞∠∥∩∪∫∴∼≠≡"
@@ -100,22 +199,11 @@ objects:
 
   - type: text
     x: 165
-    y: 1588.125
+    y: 1688.125
     width: 1070
-    height: 56
-    text: "Italic sample: ABCDEFG abcdefg 012345"
-    size: 28
+    height: 34
+    text: "Synthetic italic: FGHIJKLMN 012345"
+    size: 20
     stroke_width: 2
-    font: line_font_cursive
-    color: black
-
-  - type: text
-    x: 165
-    y: 1728.125
-    width: 1070
-    height: 56
-    text: "Relief SingleLine: ABCDEFG abcdefg 012345 eacute é"
-    size: 28
-    stroke_width: 2
-    font: relief_singleline
+    font: line_font_italic
     color: black
