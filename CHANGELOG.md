@@ -13,12 +13,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added a cover/template/items workflow for multipage generation, including support for `--cover-yaml`, `--template-yaml`, `--items-yaml`, and `--image-dir`.
 - Added template-driven page generation with `template` blocks and grid-driven `cell: auto` placement so multiple objects for one item can share the same assigned cell.
 - Added saved `rmcat` script generation plus optional automatic concatenation when `rmcat` (https://github.com/kg4zow/rm2-scripts/tree/main/rmcat/) is available.
+- Added PNG-backed YAML shape objects for circles and rectangles, including `circle_png_fill`, `circle_png_outline_fill`, `rectangle_png_fill`, and `rectangle_png_outline_fill`.
+- Added generated RGBA-grid helpers for rasterizing filled circles and rectangles with antialiasing for the new PNG-backed shape workflow.
 
 ### Changed
 
 - Changed the template workflow so page capacity comes from the template canvas grid instead of separate `slots` definitions.
 - Changed box-capable YAML objects so when neither `cell` nor `x`, `y`, `width`, and `height` are given, the object box defaults to the full canvas.
 - Changed grid cell placement to allow multiple objects to share the same cell, which supports item templates like an image and label in one cell with different placement values.
+- Changed circle rendering and constant-width segment helpers to write explicit `thickness_scale` values derived from the requested width, improving downstream export behavior for wide strokes.
+- Changed PNG outline-fill objects so the fill is rasterized through the image path while outlines continue to use the normal vector line rendering.
+- Changed aspect-ratio-preserving box placement so square-fit shapes, fitted images, and nested YAML honor `placement` when there is extra space inside an explicit box.
 
 ## [0.9.0-beta.4] - 2026-04-07
 
