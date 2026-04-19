@@ -1,0 +1,11 @@
+page:
+  tablet: rmpro
+  left: 130
+  top: 130
+  right: 1490
+  bottom: 2030
+  padding: 40
+  show_box: false
+  box:
+    stroke_width: 4
+    color: black

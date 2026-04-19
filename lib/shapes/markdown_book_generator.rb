@@ -30,67 +30,68 @@ module Remarkable
       },
       "styles" => {
         "body" => {
-          "font" => "line_font",
+          "font" => "relief_singleline",
           "size" => 28,
-          "stroke_width" => 2,
+          "stroke_width" => 4,
           "line_spacing" => 1.25,
           "color" => "black"
         },
         "heading_1" => {
-          "font" => "line_font",
+          "font" => "relief_singleline",
           "size" => 56,
-          "stroke_width" => 3,
+          "stroke_width" => 5,
           "line_spacing" => 1.1,
           "color" => "black"
         },
         "heading_2" => {
-          "font" => "line_font",
+          "font" => "relief_singleline",
           "size" => 46,
-          "stroke_width" => 3,
+          "stroke_width" => 5,
           "line_spacing" => 1.15,
           "color" => "black"
         },
         "heading_3" => {
-          "font" => "line_font",
+          "font" => "relief_singleline",
           "size" => 40,
-          "stroke_width" => 3,
+          "stroke_width" => 5,
           "line_spacing" => 1.15,
           "color" => "black"
         },
         "heading_4" => {
-          "font" => "line_font",
+          "font" => "relief_singleline",
           "size" => 34,
-          "stroke_width" => 2.5,
+          "stroke_width" => 4.5,
           "line_spacing" => 1.2,
           "color" => "black"
         },
         "heading_5" => {
-          "font" => "line_font",
+          "font" => "relief_singleline",
           "size" => 30,
-          "stroke_width" => 2.5,
+          "stroke_width" => 4.5,
           "line_spacing" => 1.2,
           "color" => "black"
         },
         "heading_6" => {
-          "font" => "line_font",
+          "font" => "relief_singleline",
           "size" => 28,
-          "stroke_width" => 2,
+          "stroke_width" => 4,
           "line_spacing" => 1.2,
           "color" => "black"
         },
         "blockquote" => {
-          "font" => "line_font_italic",
+          "font" => "relief_singleline_italic",
           "size" => 28,
-          "stroke_width" => 2,
+          "stroke_width" => 4,
           "line_spacing" => 1.25,
-          "color" => "grey"
+          "rgba" => 0xFF742454,
+          "prefix" => ""
         },
         "code" => {
-          "font" => "line_font_mono",
-          "size" => 24,
-          "stroke_width" => 2,
+          "font" => "line_font",
+          "size" => 30,
+          "stroke_width" => 4,
           "line_spacing" => 1.2,
-          "color" => "black"
+          "rgba" => 0xFF187A47
         }
       },
       "elements" => {
@@ -163,12 +164,11 @@ module Remarkable
           "space_before" => 0,
           "space_after" => 22,
           "indent" => 36,
-          "wrap" => true,
-          "prefix" => "> "
+          "wrap" => true
         },
         "code_block" => {
           "style" => "code",
-          "space_before" => 10,
+          "space_before" => 0,
           "space_after" => 24,
           "indent" => 24,
           "wrap" => true
@@ -176,7 +176,7 @@ module Remarkable
         "thematic_break" => {
           "space_before" => 14,
           "space_after" => 18,
-          "stroke_width" => 3,
+          "stroke_width" => 5,
           "color" => "black"
         }
       }
@@ -199,7 +199,7 @@ module Remarkable
         final_output = File.expand_path(final_output)
         concat_script_path = concat_script_path ? File.expand_path(concat_script_path) : nil
         prefix ||= File.basename(final_output, ".rmdoc")
-        prefix = DEFAULT_PREFIX if blank?(prefix)
+        prefix = DEFAULT_PREFIX if prefix.nil? 
 
         config = load_config(config_path)
         yaml_dir = File.join(output_dir, "yaml")
@@ -238,7 +238,7 @@ module Remarkable
       end
 
       def build_markdown_pages(markdown, markdown_path:, output_dir:, prefix:, config:)
-        blocks = markdown_blocks(markdown)
+        blocks = markdown_blocks(markdown, config:)
         page_spec = resolved_page_spec(config.fetch("page", {}))
         pages = paginate_blocks(blocks, config:, page_spec:)
         base_dir = File.dirname(File.expand_path(markdown_path))
@@ -254,10 +254,10 @@ module Remarkable
         end
       end
 
-      def markdown_blocks(markdown)
+      def markdown_blocks(markdown, config:)
         document = Kramdown::Document.new(normalize_markdown(markdown.to_s))
         blocks = []
-        append_blocks(document.root.children, blocks)
+        append_blocks(document.root.children, blocks, config:)
         blocks
       end
 
@@ -284,27 +284,42 @@ module Remarkable
         normalized.join
       end
 
-      def append_blocks(nodes, blocks, list_depth: 0, quote_depth: 0)
+      def append_blocks(nodes, blocks, config:, list_depth: 0, quote_depth: 0)
         nodes.each do |node|
           case node.type
           when :header
-            text = plain_text(node).strip
-            next if text.empty?
+            key = "heading_#{node.options[:level]}"
+            if contains_codespan?(node)
+              tokens = inline_tokens_for(node, style_name: key)
+              next if tokens.empty?
 
-            blocks << text_block("heading_#{node.options[:level]}", text, extra_indent: quote_depth * 24)
+              blocks << text_block(key, tokens:, extra_indent: quote_depth * 24)
+            else
+              text = plain_text(node)
+              next if text.empty?
+
+              blocks << text_block(key, text, extra_indent: quote_depth * 24)
+            end
           when :p
-            text = plain_text(node).strip
-            next if text.empty?
-
             key = quote_depth.positive? ? "blockquote" : "paragraph"
-            prefix = quote_depth.positive? ? ("> " * quote_depth) : nil
-            blocks << text_block(key, text, prefix:, extra_indent: quote_depth * 24)
+            prefix = quote_depth.positive? ? style_config(config, "blockquote").fetch("prefix", "> ") : nil
+            if contains_codespan?(node)
+              tokens = inline_tokens_for(node, style_name: key)
+              next if tokens.empty?
+
+              blocks << text_block(key, tokens:, prefix:, extra_indent: quote_depth * 24)
+            else
+              text = plain_text(node)
+              next if text.empty?
+
+              blocks << text_block(key, text, prefix:, extra_indent: quote_depth * 24)
+            end
           when :blockquote
-            append_blocks(node.children, blocks, list_depth:, quote_depth: quote_depth + 1)
+            append_blocks(node.children, blocks, config:, list_depth:, quote_depth: quote_depth + 1)
           when :ul
-            append_list_blocks(node.children, blocks, ordered: false, list_depth:, quote_depth:)
+            append_list_blocks(node.children, blocks, config:, ordered: false, list_depth:, quote_depth:)
           when :ol
-            append_list_blocks(node.children, blocks, ordered: true, list_depth:, quote_depth:)
+            append_list_blocks(node.children, blocks, config:, ordered: true, list_depth:, quote_depth:)
           when :codeblock
             text = node.value.to_s.rstrip
             next if text.empty?
@@ -313,49 +328,45 @@ module Remarkable
           when :hr
             blocks << { "kind" => "line", "element" => "thematic_break" }
           else
-            append_blocks(node.children, blocks, list_depth:, quote_depth:) unless node.children.empty?
+            append_blocks(node.children, blocks, config:, list_depth:, quote_depth:) unless node.children.empty?
           end
         end
       end
 
-      def append_list_blocks(items, blocks, ordered:, list_depth:, quote_depth:)
+      def append_list_blocks(items, blocks, config:, ordered:, list_depth:, quote_depth:)
         items.each_with_index do |item, index|
-          text_chunks = []
           nested_lists = []
+          parts = []
 
           item.children.each do |child|
             if %i[ul ol].include?(child.type)
               nested_lists << child
             else
-              chunk = plain_text(child).strip
-              text_chunks << chunk unless chunk.empty?
+              parts << plain_text(child)
             end
           end
 
-          unless text_chunks.empty?
+          text = parts.join("\n").rstrip
+          unless text.empty?
             key = ordered ? "ordered_list_item" : "unordered_list_item"
             prefix = ordered ? "#{index + 1}. " : nil
-            blocks << text_block(
-              key,
-              text_chunks.join("\n\n"),
-              prefix:,
-              extra_indent: (list_depth * 32) + (quote_depth * 24)
-            )
+            blocks << text_block(key, text, prefix:, extra_indent: (list_depth * 32) + (quote_depth * 24))
           end
 
           nested_lists.each do |child_list|
-            append_blocks([child_list], blocks, list_depth: list_depth + 1, quote_depth:)
+            append_blocks([child_list], blocks, config:, list_depth: list_depth + 1, quote_depth:)
           end
         end
       end
 
-      def text_block(element, text, prefix: nil, extra_indent: 0)
+      def text_block(element, text = nil, prefix: nil, extra_indent: 0, tokens: nil)
         {
           "kind" => "text",
           "element" => element,
           "text" => text,
           "prefix" => prefix,
-          "extra_indent" => extra_indent
+          "extra_indent" => extra_indent,
+          "tokens" => tokens
         }
       end
 
@@ -392,19 +403,72 @@ module Remarkable
         prefix = block.fetch("prefix", nil)
         prefix = element["prefix"] if prefix.nil? && element.key?("prefix")
         prefix = element["bullet"] if prefix.nil? && element.key?("bullet")
-        raw_text = prefix.to_s + block.fetch("text")
-        wrap = truthy?(element.fetch("wrap", true))
-        lines = wrap ? wrap_text(raw_text, width, style) : raw_text.split("\n", -1)
-        lines = [""] if lines.empty?
-        line_height = style.fetch("line_spacing", 1.25).to_f * style.fetch("size", 28).to_f
+        tokens = block.fetch("tokens", nil)
+        if tokens.nil?
+          raw_text = prefix.to_s + block.fetch("text").to_s
+          lines = wrap_text(raw_text, width, style)
+          lines = [""] if lines.empty?
+          line_height = style.fetch("line_spacing", 1.25).to_f * style.fetch("size", 28).to_f
+          space_before = element.fetch("space_before", 0).to_f
+          space_after = element.fetch("space_after", 0).to_f
+          first_chunk = true
+
+          until lines.empty?
+            needed_before = first_chunk ? space_before : 0.0
+            available_height = page_spec.fetch("content_bottom") - (cursor_y + needed_before)
+            lines_fit = [(available_height / line_height).floor, 0].max
+
+            if lines_fit.zero?
+              pages << current_objects unless current_objects.empty?
+              current_objects = new_page_objects(config, page_spec)
+              cursor_y = page_spec.fetch("content_top")
+              first_chunk = false
+              next
+            end
+
+            chunk_size = [lines_fit, lines.length].min
+            chunk = lines.shift(chunk_size)
+            cursor_y += needed_before
+            current_objects << build_text_object(
+              text: chunk.join("\n"),
+              x: page_spec.fetch("content_left") + indent,
+              y: cursor_y,
+              width: width,
+              height: chunk.length * line_height,
+              style:
+            )
+            cursor_y += chunk.length * line_height
+
+            if lines.empty?
+              cursor_y += space_after
+            else
+              pages << current_objects unless current_objects.empty?
+              current_objects = new_page_objects(config, page_spec)
+              cursor_y = page_spec.fetch("content_top")
+            end
+
+            first_chunk = false
+          end
+
+          return [current_objects, cursor_y, pages]
+        end
+
+        tokens = prefix.to_s.empty? ? tokens : [*inline_tokens_for_text(prefix.to_s, block.fetch("element")), *tokens]
+
+        base_size = style.fetch("size", 28).to_f
+        code_style = style_config(config, "code")
+        base_line_height = style.fetch("line_spacing", 1.25).to_f * base_size
         space_before = element.fetch("space_before", 0).to_f
         space_after = element.fetch("space_after", 0).to_f
+        wraps = truthy?(element.fetch("wrap", true))
+        lines = wraps ? wrap_inline_tokens(tokens, width, base_style: style, code_style:) : tokens_to_lines(tokens)
+        lines = [""] if lines.empty?
         first_chunk = true
 
         until lines.empty?
           needed_before = first_chunk ? space_before : 0.0
           available_height = page_spec.fetch("content_bottom") - (cursor_y + needed_before)
-          lines_fit = [(available_height / line_height).floor, 0].max
+          lines_fit = [(available_height / base_line_height).floor, 0].max
 
           if lines_fit.zero?
             pages << current_objects unless current_objects.empty?
@@ -417,15 +481,18 @@ module Remarkable
           chunk_size = [lines_fit, lines.length].min
           chunk = lines.shift(chunk_size)
           cursor_y += needed_before
-          current_objects << build_text_object(
-            text: chunk.join("\n"),
-            x: page_spec.fetch("content_left") + indent,
-            y: cursor_y,
-            width: width,
-            height: chunk.length * line_height,
-            style:
-          )
-          cursor_y += chunk.length * line_height
+          chunk.each do |line_tokens|
+            current_objects.concat(
+              render_inline_line(
+                line_tokens,
+                x: page_spec.fetch("content_left") + indent,
+                top_y: cursor_y,
+                base_style: style,
+                code_style:
+              )
+            )
+            cursor_y += base_line_height
+          end
 
           if lines.empty?
             cursor_y += space_after
@@ -529,20 +596,225 @@ module Remarkable
         lines
       end
 
+      def inline_tokens_for(node, style_name:, prefix: nil, code_style_name: "code")
+        tokens = []
+        tokenize_inline_node(node, tokens, style_name:, code_style_name:)
+        tokens = trim_inline_tokens(tokens)
+        return tokens if prefix.to_s.empty?
+
+        prefix_tokens = inline_tokens_for_text(prefix.to_s, style_name)
+        trim_inline_tokens(prefix_tokens + tokens)
+      end
+
+      def contains_codespan?(node)
+        case node.type
+        when :codespan
+          true
+        else
+          node.children.any? { |child| contains_codespan?(child) }
+        end
+      end
+
+      def inline_tokens_for_text(text, style_name)
+        tokens = []
+        tokenize_inline_text(text.to_s, style_name, tokens)
+        tokens
+      end
+
+      def tokenize_inline_node(node, tokens, style_name:, code_style_name:)
+        case node.type
+        when :text
+          tokenize_inline_text(node.value.to_s, style_name, tokens)
+        when :codespan
+          tokens << { "text" => node.value.to_s, "style" => code_style_name }
+        when :entity
+          tokenize_inline_text(entity_to_char(node.value), style_name, tokens)
+        when :smart_quote
+          tokenize_inline_text(smart_quote_to_char(node.value), style_name, tokens)
+        when :typographic_sym
+          tokenize_inline_text(node.value.to_s, style_name, tokens)
+        when :line_break
+          tokens << { "text" => "\n", "style" => style_name, "break" => true }
+        else
+          if node.children.empty?
+            tokenize_inline_text(plain_text(node), style_name, tokens)
+          else
+            node.children.each { |child| tokenize_inline_node(child, tokens, style_name:, code_style_name:) }
+          end
+        end
+        tokens
+      end
+
+      def tokenize_inline_text(text, style_name, tokens = [])
+        text.to_s.split(/(\s+)/).each do |part|
+          next if part.empty?
+
+          if part.match?(/\A\n+\z/)
+            part.each_char { tokens << { "text" => "\n", "style" => style_name, "break" => true } }
+          else
+            tokens << { "text" => part, "style" => style_name }
+          end
+        end
+        tokens
+      end
+
+      def trim_inline_tokens(tokens)
+        start_index = tokens.index { |token| !token["break"] && !token.fetch("text", "").match?(/\A\s*\z/) }
+        return [] if start_index.nil?
+
+        end_index = tokens.rindex { |token| !token["break"] && !token.fetch("text", "").match?(/\A\s*\z/) }
+        tokens[start_index..end_index]
+      end
+
+      def wrap_inline_tokens(tokens, max_width, base_style:, code_style:)
+        lines = []
+        current = []
+        current_width = 0.0
+        base_style_name = base_style.fetch("style", "plain").to_sym
+        code_style_name = code_style.fetch("style", "plain").to_sym
+
+        trim_inline_tokens(tokens).each do |token|
+          if token["break"]
+            lines << current unless current.empty?
+            current = []
+            current_width = 0.0
+            next
+          end
+
+          token_width = inline_token_width(token, base_style:, code_style:)
+          whitespace = token.fetch("text", "").match?(/\A\s+\z/)
+
+          if whitespace
+            next if current.empty?
+
+            if current_width + token_width > max_width
+              lines << current unless current.empty?
+              current = []
+              current_width = 0.0
+              next
+            end
+          elsif !current.empty? && current_width + token_width > max_width
+            lines << current unless current.empty?
+            current = []
+            current_width = 0.0
+          end
+
+          current << token
+          current_width += token_width
+        end
+
+        lines << current unless current.empty?
+        lines = [[]] if lines.empty?
+        lines
+      end
+
+      def tokens_to_lines(tokens)
+        lines = [[]]
+
+        trim_inline_tokens(tokens).each do |token|
+          if token["break"]
+            lines << []
+          else
+            lines.last << token
+          end
+        end
+
+        lines = [[]] if lines.empty? || lines.all?(&:empty?)
+        lines
+      end
+
+      def inline_token_width(token, base_style:, code_style:)
+        style = token.fetch("style")
+        style_config = style == "code" ? code_style : base_style
+        size = style_config.fetch("size", 28).to_f
+        font = style_config.fetch("font", "line_font")
+        style_name = style_config.fetch("style", "plain").to_sym
+        mono = truthy?(style_config.fetch("mono", false))
+        LineFont.text_width(token.fetch("text", ""), size:, style: style_name, font:, mono:)
+      end
+
+      def merge_inline_tokens(tokens)
+        runs = []
+        current = nil
+
+        tokens.each do |token|
+          next if token["break"]
+
+          if current.nil? || current.fetch("style") != token.fetch("style")
+            current = { "style" => token.fetch("style"), "text" => +"#{token.fetch("text")}" }
+            runs << current
+          else
+            current["text"] << token.fetch("text")
+          end
+        end
+
+        runs
+      end
+
+      def render_inline_line(line_tokens, x:, top_y:, base_style:, code_style:)
+        base_size = base_style.fetch("size", 28).to_f
+        base_baseline = top_y - LineFont.baseline_to_top(base_size)
+        base_height = base_style.fetch("line_spacing", 1.25).to_f * base_size
+        current_x = x.to_f
+
+        merge_inline_tokens(line_tokens).map do |run|
+          run_style = run.fetch("style") == "code" ? code_style : base_style
+          run_size = run_style.fetch("size", 28).to_f
+          run_font = run_style.fetch("font", "line_font")
+          run_style_name = run_style.fetch("style", "plain").to_sym
+          run_mono = truthy?(run_style.fetch("mono", false))
+          run_text = run.fetch("text")
+          run_width = LineFont.text_width(run_text, size: run_size, style: run_style_name, font: run_font, mono: run_mono)
+          run_y = base_baseline + LineFont.baseline_to_top(run_size)
+
+          object = build_text_object(
+            text: run_text,
+            x: current_x,
+            y: run_y,
+            width: run_width,
+            height: base_height,
+            style: run_style
+          )
+          current_x += run_width
+          object
+        end
+      end
+
       def plain_text(node)
         case node.type
         when :text, :codespan, :codeblock
           node.value.to_s
         when :entity
-          node.value.to_s
+          entity_to_char(node.value)
         when :smart_quote
-          node.value.to_s
+          smart_quote_to_char(node.value)
         when :typographic_sym
           node.value.to_s
         when :line_break
           "\n"
         else
           node.children.map { |child| plain_text(child) }.join
+        end
+      end
+
+      def entity_to_char(entity)
+        return entity.to_s unless entity.respond_to?(:code_point)
+
+        [entity.code_point].pack("U")
+      rescue RangeError, TypeError
+        entity.to_s
+      end
+
+      def smart_quote_to_char(value)
+        case value.to_sym
+        when :ldquo then "“"
+        when :rdquo then "”"
+        when :lsquo then "‘"
+        when :rsquo then "’"
+        when :laquo then "«"
+        when :raquo then "»"
+        else
+          value.to_s
         end
       end
 

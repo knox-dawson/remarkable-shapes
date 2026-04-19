@@ -12,59 +12,60 @@ page:
 
 styles:
   body:
-    font: line_font
+    font: relief_singleline
     size: 28
-    stroke_width: 2
+    stroke_width: 4
     line_spacing: 1.25
     color: black
   heading_1:
-    font: line_font
+    font: relief_singleline
     size: 56
-    stroke_width: 3
+    stroke_width: 5
     line_spacing: 1.1
     color: black
   heading_2:
-    font: line_font
+    font: relief_singleline
     size: 46
-    stroke_width: 3
+    stroke_width: 5
     line_spacing: 1.15
     color: black
   heading_3:
-    font: line_font
+    font: relief_singleline
     size: 40
-    stroke_width: 3
+    stroke_width: 5
     line_spacing: 1.15
     color: black
   heading_4:
-    font: line_font
+    font: relief_singleline
     size: 34
-    stroke_width: 2.5
+    stroke_width: 4.5
     line_spacing: 1.2
     color: black
   heading_5:
-    font: line_font
+    font: relief_singleline
     size: 30
-    stroke_width: 2.5
+    stroke_width: 4.5
     line_spacing: 1.2
     color: black
   heading_6:
-    font: line_font
+    font: relief_singleline
     size: 28
-    stroke_width: 2
+    stroke_width: 4
     line_spacing: 1.2
     color: black
   blockquote:
-    font: line_font_italic
+    font: relief_singleline_italic
     size: 28
-    stroke_width: 2
+    stroke_width: 4
     line_spacing: 1.25
-    color: grey
+    rgba: 0xFF742454
+    prefix: ""
   code:
-    font: line_font_mono
-    size: 24
-    stroke_width: 2
+    font: line_font
+    size: 30
+    stroke_width: 4
     line_spacing: 1.2
-    color: black
+    rgba: 0xFF187A47
 
 elements:
   paragraph:
@@ -128,15 +129,14 @@ elements:
     space_after: 22
     indent: 36
     wrap: true
-    prefix: "> "
   code_block:
     style: code
-    space_before: 10
+    space_before: 0
     space_after: 24
     indent: 24
     wrap: true
   thematic_break:
     space_before: 14
     space_after: 18
-    stroke_width: 3
+    stroke_width: 5
     color: black

@@ -204,7 +204,7 @@ objects:
     y: 1570
     width: 1100
     height: 40
-    text: "Available families: line_font, line_font_italic, line_font_cursive, line_font_mono, intel_one_mono, intel_one_mono_italic, relief_singleline, relief_singleline_italic"
+    text: "Available families: line_font, line_font_italic, line_font_cursive, line_font_mono, relief_singleline, relief_singleline_italic"
     size: 24
     stroke_width: 2
     color: black
@@ -214,7 +214,7 @@ objects:
     y: 1610
     width: 1100
     height: 70
-    text: "This page exercises the built-in line font families and the Relief family. Intel One Mono is showcased separately because it was imported as an external UFO family."
+    text: "This page exercises the built-in line font families and the Relief family."
     size: 18
     stroke_width: 2
     wrap: true

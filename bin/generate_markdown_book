@@ -10,12 +10,12 @@ def build_options(argv)
     o.banner = <<~BANNER
       Usage:
         bin/generate_markdown_book --input INPUT.md --output out/book.rmdoc [options]
-        bin/generate_markdown_book --dump-default-config config/markdown.yml
+        bin/generate_markdown_book --dump-default-config config/markdown_defaults.yml
 
       Examples:
-        bin/generate_markdown_book --input examples/notes.md --output out/notes.rmdoc
-        bin/generate_markdown_book --input examples/notes.md --config my-markdown.yml --output out/notes.rmdoc
-        bin/generate_markdown_book --dump-default-config markdown-config.yml
+        bin/generate_markdown_book --input examples/markdown-demo.md --output out/markdown-demo.rmdoc
+        bin/generate_markdown_book --input examples/markdown-demo.md --config my-markdown.yml --output out/markdown-demo.rmdoc
+        bin/generate_markdown_book --dump-default-config markdown-defaults.yml
     BANNER
 
     o.string "-i", "--input", "Markdown input file"

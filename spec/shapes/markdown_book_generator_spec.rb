@@ -24,6 +24,7 @@ RSpec.describe Remarkable::MarkdownBookGenerator do
   it "builds paginated yaml and rmdoc output from markdown" do
     Dir.mktmpdir do |dir|
       markdown_path = File.join(dir, "notes.md")
+      config_path = File.join(dir, "markdown.yml")
       output_dir = File.join(dir, "build")
       final_output = File.join(dir, "notes.rmdoc")
       fake_rmcat = File.join(dir, "rmcat")
@@ -35,10 +36,13 @@ RSpec.describe Remarkable::MarkdownBookGenerator do
 
           This is a paragraph that should wrap into multiple lines inside the markdown book generator.
 
+          This paragraph includes inline `code span` to prove the monospace style is used for backtick text.
+
           - first bullet
           - second bullet
 
           > quoted text
+          > It's quoted text
 
           ---
 
@@ -47,10 +51,21 @@ RSpec.describe Remarkable::MarkdownBookGenerator do
           ```
         MARKDOWN
       )
+      File.write(
+        config_path,
+        {
+          "styles" => {
+            "blockquote" => {
+              "prefix" => "<< "
+            }
+          }
+        }.to_yaml
+      )
       write_fake_rmcat(fake_rmcat)
 
       result = described_class.generate_from_markdown(
         markdown_path:,
+        config_path:,
         output_dir:,
         final_output:,
         rmcat_command: fake_rmcat,
@@ -67,9 +82,10 @@ RSpec.describe Remarkable::MarkdownBookGenerator do
 
       expect(text_values).to include("Title")
       expect(text_values).to include("- first bullet")
-      expect(text_values).to include("> quoted text")
+      expect(text_values).to include("<< quoted text\nIt’s quoted text")
+      expect(objects.any? { |object| object["type"] == "text" && object["text"] == "code span" && object["font"] == "line_font" }).to be(true)
+      expect(objects.any? { |object| object["type"] == "text" && object["text"] == "code sample" && object["font"] == "line_font" }).to be(true)
       expect(objects.any? { |object| object["type"] == "line" }).to be(true)
-      expect(objects.any? { |object| object["font"] == "line_font_mono" }).to be(true)
     end
   end
 
@@ -123,7 +139,7 @@ RSpec.describe Remarkable::MarkdownBookGenerator do
 
       expect(File.file?(path)).to be(true)
       yaml = YAML.safe_load(File.read(path))
-      expect(yaml.fetch("styles").fetch("body").fetch("font")).to eq("line_font")
+      expect(yaml.fetch("styles").fetch("body").fetch("font")).to eq("relief_singleline")
       expect(yaml.fetch("elements").fetch("paragraph").fetch("style")).to eq("body")
     end
   end
