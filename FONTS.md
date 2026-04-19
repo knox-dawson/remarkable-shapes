@@ -2,6 +2,10 @@
 
 This project uses vector stroke fonts rendered through `Remarkable::LineFont`.
 
+This project is licensed under MIT.
+
+Included fonts are licensed separately under SIL Open Font License 1.1 and GNU GPLv2.
+
 ## Font Families
 
 Current selectable font families:
@@ -141,3 +145,37 @@ Generated full-coverage font pages:
 - [examples/font-page-line_font_mono.yml](examples/font-page-line_font_mono.yml)
 - [examples/font-page-relief_singleline.yml](examples/font-page-relief_singleline.yml)
 - [examples/font-page-relief_singleline_italic.yml](examples/font-page-relief_singleline_italic.yml)
+
+## Relief SingleLine (Modified)
+
+Original font:
+https://github.com/isdat-type/Relief-SingleLine
+
+License:
+SIL Open Font License, Version 1.1
+
+This font has been modified from the original version.
+
+Modifications:
+- added italics version
+
+The font software is licensed under the SIL Open Font License, Version 1.1.
+
+## Lines Font (modified)
+
+Original author:
+qwert2003
+
+Original project:
+https://sourceforge.net/projects/drawj2d/
+
+License:
+GNU General Public License, version 2.0 (GPLv2)
+
+This font has been modified from the original version.
+
+Modifications:
+- added italics version
+- shortened the hyphen
+
+The font is distributed under the GPLv2.
