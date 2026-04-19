@@ -113,6 +113,7 @@ class UfoToLineFont
     current_anchor = nil
     offcurve = []
     strokes = []
+    started_without_move = false
 
     points.each do |point|
       case point[:type]
@@ -121,14 +122,27 @@ class UfoToLineFont
         current = [normalize_point(apply_transform(point[:x], point[:y], transform))]
         current_anchor = [point[:x], point[:y]]
         offcurve = []
+        started_without_move = false
       when "line"
-        next if current.nil?
+        if current.nil?
+          current = [normalize_point(apply_transform(point[:x], point[:y], transform))]
+          current_anchor = [point[:x], point[:y]]
+          offcurve = []
+          started_without_move = true
+          next
+        end
 
         current << normalize_point(apply_transform(point[:x], point[:y], transform))
         current_anchor = [point[:x], point[:y]]
         offcurve = []
       when "curve"
-        next if current.nil?
+        if current.nil?
+          current = [normalize_point(apply_transform(point[:x], point[:y], transform))]
+          current_anchor = [point[:x], point[:y]]
+          offcurve = []
+          started_without_move = true
+          next
+        end
 
         curve_points = sample_curve(current_anchor, offcurve, [point[:x], point[:y]])
         curve_points.each do |cx, cy|
@@ -139,6 +153,10 @@ class UfoToLineFont
       else
         offcurve << [point[:x], point[:y]]
       end
+    end
+
+    if started_without_move && valid_stroke?(current) && current.length > 2 && current.first != current.last
+      current << current.first
     end
 
     strokes << current if valid_stroke?(current)

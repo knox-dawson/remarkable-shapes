@@ -21,6 +21,10 @@ module Remarkable
     LINE_FONT_ITALIC = :line_font_italic
     # Flattened built-in mono family.
     LINE_FONT_MONO = :line_font_mono
+    # Imported Intel One Mono plain family.
+    INTEL_ONE_MONO = :intel_one_mono
+    # Imported Intel One Mono italic family.
+    INTEL_ONE_MONO_ITALIC = :intel_one_mono_italic
     # Default glyph style.
     DEFAULT_STYLE = :plain
     # Monospaced advance as a fraction of glyph size.
@@ -31,7 +35,9 @@ module Remarkable
     DATA_ROOT = File.expand_path("../../data", __dir__)
     DEFAULT_DATA_ROOT = File.join(DATA_ROOT, "line_font")
     ROOT_DATA_FILES = {
-      plain: File.join(DEFAULT_DATA_ROOT, "plain.json")
+      plain: File.join(DEFAULT_DATA_ROOT, "plain.json"),
+      intel_one_mono: File.join(DATA_ROOT, INTEL_ONE_MONO.to_s, "plain.json"),
+      intel_one_mono_italic: File.join(DATA_ROOT, INTEL_ONE_MONO_ITALIC.to_s, "italic.json")
     }.freeze
     # Pair-specific spacing tweaks for the generated synthetic italic family.
     ITALIC_PAIR_ADJUSTMENTS = {
@@ -186,6 +192,10 @@ module Remarkable
     def data_file_for(font)
       if [DEFAULT_FONT, LINE_FONT_ALIAS].include?(normalize_font(font))
         ROOT_DATA_FILES[:plain]
+      elsif normalize_font(font) == INTEL_ONE_MONO
+        ROOT_DATA_FILES[:intel_one_mono]
+      elsif normalize_font(font) == INTEL_ONE_MONO_ITALIC
+        ROOT_DATA_FILES[:intel_one_mono_italic]
       elsif normalize_font(font) == LINE_FONT_CURSIVE
         File.join(DATA_ROOT, LINE_FONT_CURSIVE.to_s, "cursive.json")
       elsif normalize_font(font) == LINE_FONT_ITALIC
@@ -207,7 +217,8 @@ module Remarkable
       return LINE_FONT_CURSIVE if normalized == "line_font_cursive"
       return LINE_FONT_ITALIC if normalized == "line_font_italic"
       return LINE_FONT_MONO if normalized == "line_font_mono"
-
+      return INTEL_ONE_MONO if normalized == "intel_one_mono"
+      return INTEL_ONE_MONO_ITALIC if normalized == "intel_one_mono_italic"
       normalized.to_sym
     end
 

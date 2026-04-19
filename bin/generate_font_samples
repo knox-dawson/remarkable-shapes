@@ -58,6 +58,8 @@ FONTS = [
   :line_font_cursive,
   :line_font_italic,
   :line_font_mono,
+  :intel_one_mono,
+  :intel_one_mono_italic,
   :relief_singleline,
   :relief_singleline_italic
 ].freeze
@@ -72,6 +74,10 @@ def glyph_data_path(font)
     File.expand_path("../data/line_font_italic/italic.json", __dir__)
   when :line_font_mono
     File.expand_path("../data/line_font_mono/mono.json", __dir__)
+  when :intel_one_mono
+    File.expand_path("../data/intel_one_mono/plain.json", __dir__)
+  when :intel_one_mono_italic
+    File.expand_path("../data/intel_one_mono_italic/italic.json", __dir__)
   when :relief_singleline
     File.expand_path("../data/relief_singleline/plain.json", __dir__)
   when :relief_singleline_italic

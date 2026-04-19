@@ -347,7 +347,7 @@ objects:
     y: 1395
     width: 520
     height: 180
-    text: "Relief currently renders from a converted plain stroke JSON family. The built-in set now separates synthetic italic, true cursive, and mono into distinct font families."
+    text: "Relief currently renders from a converted plain stroke JSON family. Intel One Mono is available on dedicated sample pages, while the built-in set keeps synthetic italic, true cursive, and mono as separate families."
     size: 24
     stroke_width: 2
     wrap: true

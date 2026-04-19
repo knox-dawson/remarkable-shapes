@@ -10,6 +10,8 @@ Current selectable font families:
 - `line_font_italic`
 - `line_font_cursive`
 - `line_font_mono`
+- `intel_one_mono`
+- `intel_one_mono_italic`
 - `relief_singleline`
 - `relief_singleline_italic`
 
@@ -19,6 +21,11 @@ The built-in families are stored under:
 - [data/line_font_italic/italic.json](/home/bmb/rmlines_research/remarkable-shapes/data/line_font_italic/italic.json:1)
 - [data/line_font_cursive/cursive.json](/home/bmb/rmlines_research/remarkable-shapes/data/line_font_cursive/cursive.json:1)
 - [data/line_font_mono/mono.json](/home/bmb/rmlines_research/remarkable-shapes/data/line_font_mono/mono.json:1)
+
+The imported Intel One Mono families are stored under:
+
+- [data/intel_one_mono/plain.json](/home/bmb/rmlines_research/remarkable-shapes/data/intel_one_mono/plain.json:1)
+- [data/intel_one_mono_italic/italic.json](/home/bmb/rmlines_research/remarkable-shapes/data/intel_one_mono_italic/italic.json:1)
 
 The imported Relief families are stored under:
 
@@ -130,6 +137,7 @@ Hand-made sampler pages:
 
 - [examples/line-font-sampler.yml](/home/bmb/rmlines_research/remarkable-shapes/examples/line-font-sampler.yml:1)
 - [examples/relief-line-font-sampler.yml](/home/bmb/rmlines_research/remarkable-shapes/examples/relief-line-font-sampler.yml:1)
+- [examples/intel-one-mono-sampler.yml](/home/bmb/rmlines_research/remarkable-shapes/examples/intel-one-mono-sampler.yml:1)
 - [examples/font-family-sampler.yml](/home/bmb/rmlines_research/remarkable-shapes/examples/font-family-sampler.yml:1)
 - [examples/font-comparison-sampler.yml](/home/bmb/rmlines_research/remarkable-shapes/examples/font-comparison-sampler.yml:1)
 
@@ -139,5 +147,7 @@ Generated full-coverage font pages:
 - [examples/font-page-line_font_italic.yml](/home/bmb/rmlines_research/remarkable-shapes/examples/font-page-line_font_italic.yml:1)
 - [examples/font-page-line_font_cursive.yml](/home/bmb/rmlines_research/remarkable-shapes/examples/font-page-line_font_cursive.yml:1)
 - [examples/font-page-line_font_mono.yml](/home/bmb/rmlines_research/remarkable-shapes/examples/font-page-line_font_mono.yml:1)
+- [examples/font-page-intel_one_mono.yml](/home/bmb/rmlines_research/remarkable-shapes/examples/font-page-intel_one_mono.yml:1)
+- [examples/font-page-intel_one_mono_italic.yml](/home/bmb/rmlines_research/remarkable-shapes/examples/font-page-intel_one_mono_italic.yml:1)
 - [examples/font-page-relief_singleline.yml](/home/bmb/rmlines_research/remarkable-shapes/examples/font-page-relief_singleline.yml:1)
 - [examples/font-page-relief_singleline_italic.yml](/home/bmb/rmlines_research/remarkable-shapes/examples/font-page-relief_singleline_italic.yml:1)
