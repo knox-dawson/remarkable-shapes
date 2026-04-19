@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module Remarkable
-  VERSION = "0.9.0-beta.5"
+  VERSION = "0.9.0-beta.6"
 end

@@ -2,7 +2,7 @@
 
 Tools for generating uploadable `.rmdoc` files for reMarkable tablets.
 
-Current version: `0.9.0-beta.5`
+Current version: `0.9.0-beta.6`
 
 ## Installation
 
