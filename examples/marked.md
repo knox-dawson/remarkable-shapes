@@ -6,8 +6,8 @@ Marked - Markdown Parser
 How To Use The Demo
 -------------------
 
-1. <i>Type</i> in stuff on the left.
-2. _See_ the live updates on the right.
+1. *Type* in stuff on the left.
+2. ***See*** the live updates on the right.
 
 That's it.  Pretty simple.  There's also a drop-down option above to switch between various views:
 

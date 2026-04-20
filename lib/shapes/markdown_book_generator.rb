@@ -289,31 +289,17 @@ module Remarkable
           case node.type
           when :header
             key = "heading_#{node.options[:level]}"
-            if contains_codespan?(node)
-              tokens = inline_tokens_for(node, style_name: key)
-              next if tokens.empty?
+            tokens = inline_tokens_for(node, style_name: key)
+            next if tokens.empty?
 
-              blocks << text_block(key, tokens:, extra_indent: quote_depth * 24)
-            else
-              text = plain_text(node)
-              next if text.empty?
-
-              blocks << text_block(key, text, extra_indent: quote_depth * 24)
-            end
+            blocks << text_block(key, tokens:, extra_indent: quote_depth * 24)
           when :p
             key = quote_depth.positive? ? "blockquote" : "paragraph"
             prefix = quote_depth.positive? ? style_config(config, "blockquote").fetch("prefix", "> ") : nil
-            if contains_codespan?(node)
-              tokens = inline_tokens_for(node, style_name: key)
-              next if tokens.empty?
+            tokens = inline_tokens_for(node, style_name: key)
+            next if tokens.empty?
 
-              blocks << text_block(key, tokens:, prefix:, extra_indent: quote_depth * 24)
-            else
-              text = plain_text(node)
-              next if text.empty?
-
-              blocks << text_block(key, text, prefix:, extra_indent: quote_depth * 24)
-            end
+            blocks << text_block(key, tokens:, prefix:, extra_indent: quote_depth * 24)
           when :blockquote
             append_blocks(node.children, blocks, config:, list_depth:, quote_depth: quote_depth + 1)
           when :ul
@@ -335,22 +321,14 @@ module Remarkable
 
       def append_list_blocks(items, blocks, config:, ordered:, list_depth:, quote_depth:)
         items.each_with_index do |item, index|
-          nested_lists = []
-          parts = []
+          nested_lists = item.children.select { |child| %i[ul ol].include?(child.type) }
+          inline_children = item.children.reject { |child| %i[ul ol].include?(child.type) }
+          key = ordered ? "ordered_list_item" : "unordered_list_item"
+          prefix = ordered ? "#{index + 1}. " : nil
+          tokens = inline_tokens_for_children(inline_children, style_name: key)
 
-          item.children.each do |child|
-            if %i[ul ol].include?(child.type)
-              nested_lists << child
-            else
-              parts << plain_text(child)
-            end
-          end
-
-          text = parts.join("\n").rstrip
-          unless text.empty?
-            key = ordered ? "ordered_list_item" : "unordered_list_item"
-            prefix = ordered ? "#{index + 1}. " : nil
-            blocks << text_block(key, text, prefix:, extra_indent: (list_depth * 32) + (quote_depth * 24))
+          unless tokens.empty?
+            blocks << text_block(key, tokens:, prefix:, extra_indent: (list_depth * 32) + (quote_depth * 24))
           end
 
           nested_lists.each do |child_list|
@@ -621,38 +599,60 @@ module Remarkable
         tokens
       end
 
-      def tokenize_inline_node(node, tokens, style_name:, code_style_name:)
+      def inline_tokens_for_children(nodes, style_name:, code_style_name: "code")
+        tokens = []
+
+        nodes.each_with_index do |node, index|
+          child_tokens = inline_tokens_for(node, style_name:, code_style_name:)
+          tokens.concat(child_tokens)
+          next if index == nodes.length - 1 || child_tokens.empty?
+
+          tokens << { "text" => "\n", "style" => style_name, "bold" => false, "italic" => false, "break" => true }
+        end
+
+        trim_inline_tokens(tokens)
+      end
+
+      def tokenize_inline_node(node, tokens, style_name:, code_style_name:, bold: false, italic: false)
         case node.type
         when :text
-          tokenize_inline_text(node.value.to_s, style_name, tokens)
+          tokenize_inline_text(node.value.to_s, style_name, tokens, bold:, italic:)
+        when :em
+          node.children.each do |child|
+            tokenize_inline_node(child, tokens, style_name:, code_style_name:, bold:, italic: true)
+          end
+        when :strong
+          node.children.each do |child|
+            tokenize_inline_node(child, tokens, style_name:, code_style_name:, bold: true, italic:)
+          end
         when :codespan
-          tokens << { "text" => node.value.to_s, "style" => code_style_name }
+          tokens << { "text" => node.value.to_s, "style" => code_style_name, "bold" => false, "italic" => false }
         when :entity
-          tokenize_inline_text(entity_to_char(node.value), style_name, tokens)
+          tokenize_inline_text(entity_to_char(node.value), style_name, tokens, bold:, italic:)
         when :smart_quote
-          tokenize_inline_text(smart_quote_to_char(node.value), style_name, tokens)
+          tokenize_inline_text(smart_quote_to_char(node.value), style_name, tokens, bold:, italic:)
         when :typographic_sym
-          tokenize_inline_text(node.value.to_s, style_name, tokens)
+          tokenize_inline_text(node.value.to_s, style_name, tokens, bold:, italic:)
         when :line_break
-          tokens << { "text" => "\n", "style" => style_name, "break" => true }
+          tokens << { "text" => "\n", "style" => style_name, "bold" => bold, "italic" => italic, "break" => true }
         else
           if node.children.empty?
-            tokenize_inline_text(plain_text(node), style_name, tokens)
+            tokenize_inline_text(plain_text(node), style_name, tokens, bold:, italic:)
           else
-            node.children.each { |child| tokenize_inline_node(child, tokens, style_name:, code_style_name:) }
+            node.children.each { |child| tokenize_inline_node(child, tokens, style_name:, code_style_name:, bold:, italic:) }
           end
         end
         tokens
       end
 
-      def tokenize_inline_text(text, style_name, tokens = [])
+      def tokenize_inline_text(text, style_name, tokens = [], bold: false, italic: false)
         text.to_s.split(/(\s+)/).each do |part|
           next if part.empty?
 
           if part.match?(/\A\n+\z/)
-            part.each_char { tokens << { "text" => "\n", "style" => style_name, "break" => true } }
+            part.each_char { tokens << { "text" => "\n", "style" => style_name, "bold" => bold, "italic" => italic, "break" => true } }
           else
-            tokens << { "text" => part, "style" => style_name }
+            tokens << { "text" => part, "style" => style_name, "bold" => bold, "italic" => italic }
           end
         end
         tokens
@@ -740,8 +740,16 @@ module Remarkable
         tokens.each do |token|
           next if token["break"]
 
-          if current.nil? || current.fetch("style") != token.fetch("style")
-            current = { "style" => token.fetch("style"), "text" => +"#{token.fetch("text")}" }
+          if current.nil? ||
+             current.fetch("style") != token.fetch("style") ||
+             current.fetch("bold", false) != token.fetch("bold", false) ||
+             current.fetch("italic", false) != token.fetch("italic", false)
+            current = {
+              "style" => token.fetch("style"),
+              "bold" => token.fetch("bold", false),
+              "italic" => token.fetch("italic", false),
+              "text" => +"#{token.fetch("text")}"
+            }
             runs << current
           else
             current["text"] << token.fetch("text")
@@ -758,7 +766,7 @@ module Remarkable
         current_x = x.to_f
 
         merge_inline_tokens(line_tokens).map do |run|
-          run_style = run.fetch("style") == "code" ? code_style : base_style
+          run_style = run.fetch("style") == "code" ? code_style : inline_run_style(base_style, run)
           run_size = run_style.fetch("size", 28).to_f
           run_font = run_style.fetch("font", "line_font")
           run_style_name = run_style.fetch("style", "plain").to_sym
@@ -777,6 +785,31 @@ module Remarkable
           )
           current_x += run_width
           object
+        end
+      end
+
+      def inline_run_style(base_style, run)
+        style = stringify_keys(base_style.dup)
+
+        if run.fetch("italic", false)
+          style["font"] = italic_font_for(style.fetch("font", "line_font"))
+        end
+
+        if run.fetch("bold", false)
+          style["stroke_width"] = style.fetch("stroke_width", 4).to_f * 1.25
+        end
+
+        style
+      end
+
+      def italic_font_for(font)
+        case font.to_s
+        when "line_font", "default"
+          "line_font_italic"
+        when "relief_singleline"
+          "relief_singleline_italic"
+        else
+          font
         end
       end
 

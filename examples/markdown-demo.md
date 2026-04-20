@@ -10,6 +10,8 @@ Another body paragraph shows the spacing between paragraphs.
 
 This paragraph includes inline code like `code span` so you can see the monospace style inside normal text.
 
+This paragraph shows *italic*, **bold**, and ***bold italic*** inline emphasis.
+
 ## Heading levels
 
 ### Heading level 3

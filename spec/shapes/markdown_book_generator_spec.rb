@@ -82,10 +82,59 @@ RSpec.describe Remarkable::MarkdownBookGenerator do
 
       expect(text_values).to include("Title")
       expect(text_values).to include("- first bullet")
-      expect(text_values).to include("<< quoted text\nIt’s quoted text")
+      expect(text_values).to include("<< quoted text")
+      expect(text_values).to include("It’s quoted text")
       expect(objects.any? { |object| object["type"] == "text" && object["text"] == "code span" && object["font"] == "line_font" }).to be(true)
       expect(objects.any? { |object| object["type"] == "text" && object["text"] == "code sample" && object["font"] == "line_font" }).to be(true)
       expect(objects.any? { |object| object["type"] == "line" }).to be(true)
+    end
+  end
+
+  it "renders italic, bold, and bold italic inline markdown" do
+    Dir.mktmpdir do |dir|
+      markdown_path = File.join(dir, "emphasis.md")
+      output_dir = File.join(dir, "build")
+      final_output = File.join(dir, "emphasis.rmdoc")
+      fake_rmcat = File.join(dir, "rmcat")
+
+      File.write(
+        markdown_path,
+        <<~MARKDOWN
+          Normal paragraph.
+
+          *italic*
+
+          **bold**
+
+          ***bold italic***
+        MARKDOWN
+      )
+      write_fake_rmcat(fake_rmcat)
+
+      result = described_class.generate_from_markdown(
+        markdown_path:,
+        output_dir:,
+        final_output:,
+        rmcat_command: fake_rmcat,
+        run_concat: true
+      )
+
+      generated_pages = result[:generated_yaml_paths].map { |path| YAML.safe_load(File.read(path)) }
+      objects = generated_pages.flat_map { |page| page.fetch("objects") }
+      text_objects = objects.select { |object| object["type"] == "text" }
+      body_style = text_objects.find { |object| object["text"] == "Normal paragraph." }
+      italic = text_objects.find { |object| object["text"] == "italic" }
+      bold = text_objects.find { |object| object["text"] == "bold" }
+      bold_italic = text_objects.find { |object| object["text"] == "bold italic" }
+
+      expect(body_style).not_to be_nil
+      expect(italic).not_to be_nil
+      expect(bold).not_to be_nil
+      expect(bold_italic).not_to be_nil
+      expect(italic.fetch("font")).to eq("relief_singleline_italic")
+      expect(bold.fetch("stroke_width")).to be > body_style.fetch("stroke_width")
+      expect(bold_italic.fetch("font")).to eq("relief_singleline_italic")
+      expect(bold_italic.fetch("stroke_width")).to be > body_style.fetch("stroke_width")
     end
   end
 
