@@ -18,6 +18,7 @@ def build_options(argv)
 
     o.string "-i", "--input", "PNG file to render"
     o.string "-o", "--output", "Output .rmdoc path"
+    o.integer "-d", "--downsample", "Average each NxN block before rendering"
     o.bool "-v", "--version", "Print version"
     o.bool "-h", "--help", "Show help"
   end
@@ -56,5 +57,5 @@ default_name = File.basename(png_path, ".png")
 output_path = options[:output] || "out/#{default_name}.rmdoc"
 
 page = Remarkable::RmPage.new
-Remarkable::ImageGenerator.draw_png(page, png_path)
+Remarkable::ImageGenerator.draw_png(page, png_path, downsample: options[:downsample] || 1)
 Remarkable::RmdocWriter.write(output_path, page.to_rm_bytes)

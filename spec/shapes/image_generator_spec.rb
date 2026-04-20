@@ -38,6 +38,25 @@ RSpec.describe Remarkable::ImageGenerator do
     end
   end
 
+  it "downsamples png input when requested" do
+    Dir.mktmpdir do |dir|
+      png_path = File.join(dir, "tiny.png")
+      image = ChunkyPNG::Image.new(2, 2, ChunkyPNG::Color::TRANSPARENT)
+      image[0, 0] = ChunkyPNG::Color.rgba(255, 0, 0, 255)
+      image[1, 0] = ChunkyPNG::Color.rgba(0, 255, 0, 255)
+      image[0, 1] = ChunkyPNG::Color.rgba(0, 0, 255, 255)
+      image[1, 1] = ChunkyPNG::Color.rgba(255, 255, 255, 255)
+      image.save(png_path)
+
+      page = Remarkable::RmPage.new
+      layout = described_class.draw_png(page, png_path, downsample: 2)
+
+      expect(layout[:width]).to be > 0
+      expect(page.lines.length).to eq(1)
+      expect(page.lines.first.rgba).to eq(0xFF808080)
+    end
+  end
+
   it "uses -3.0 as the default pixel gap for png rendering" do
     Dir.mktmpdir do |dir|
       png_path = File.join(dir, "tiny.png")

@@ -440,6 +440,38 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     end
   end
 
+  it "downsamples image objects when requested" do
+    Dir.mktmpdir do |dir|
+      png_path = File.join(dir, "tiny.png")
+      image = ChunkyPNG::Image.new(2, 2, ChunkyPNG::Color::TRANSPARENT)
+      image[0, 0] = ChunkyPNG::Color.rgba(255, 0, 0, 255)
+      image[1, 0] = ChunkyPNG::Color.rgba(0, 255, 0, 255)
+      image[0, 1] = ChunkyPNG::Color.rgba(0, 0, 255, 255)
+      image[1, 1] = ChunkyPNG::Color.rgba(255, 255, 255, 255)
+      image.save(png_path)
+
+      config = {
+        "canvas" => { "width" => 300, "height" => 200, "placement" => "top-left" },
+        "objects" => [
+          {
+            "type" => "image",
+            "path" => png_path,
+            "x" => 20,
+            "y" => 20,
+            "width" => 100,
+            "height" => 100,
+            "downsample" => 2
+          }
+        ]
+      }
+
+      described_class.render(page, config)
+
+      expect(page.lines.length).to eq(1)
+      expect(page.lines.first.rgba).to eq(0xFF808080)
+    end
+  end
+
   it "uses -3.0 as the default pixel_gap for image objects" do
     Dir.mktmpdir do |dir|
       png_path = File.join(dir, "tiny.png")

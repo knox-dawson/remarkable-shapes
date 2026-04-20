@@ -68,8 +68,9 @@ module Remarkable
                  side_padding: DEFAULT_SIDE_PADDING,
                  bottom_padding: DEFAULT_BOTTOM_PADDING,
                  brush: DEFAULT_BRUSH,
-                 pixel_gap: DEFAULT_PIXEL_GAP)
-      rgba_grid = Shapes.png_to_rgba_grid(png_path)
+                 pixel_gap: DEFAULT_PIXEL_GAP,
+                 downsample: 1)
+      rgba_grid = Shapes.png_to_rgba_grid(png_path, downsample:)
       image_height = rgba_grid.length
       image_width = rgba_grid.first&.length.to_i
       raise ArgumentError, "PNG grid must not be empty" if image_width <= 0

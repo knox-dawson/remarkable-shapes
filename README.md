@@ -33,7 +33,7 @@ This project has not been tested with Ruby versions prior to ruby 3.4.4.
 Generate a one-off image page from a PNG:
 
 ```bash
-bin/generate_image --input examples/cat.png --output out/cat-image.rmdoc
+bin/generate_image --input examples/cat.png --downsample 2 --output out/cat-image.rmdoc
 ```
 
 Generate a page from a YAML description:

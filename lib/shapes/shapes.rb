@@ -351,15 +351,16 @@ module Remarkable
       draw_box_corners(page, x1, y1, x2, y2, width, corner, color:)
     end
 
-    # Converts a PNG file into a 2D array of ARGB integers.
+    # Converts a PNG file into a 2D array of RGBA integers.
     #
     # @param path [String]
+    # @param downsample [Integer] block size used to average pixels before returning the grid
     # @return [Array<Array<Integer>>]
-    def png_to_rgba_grid(path)
+    def png_to_rgba_grid(path, downsample: 1)
       require "chunky_png"
 
       image = ChunkyPNG::Image.from_file(path)
-      Array.new(image.height) do |y|
+      rgba_grid = Array.new(image.height) do |y|
         Array.new(image.width) do |x|
           pixel = image[x, y]
           rgba_int(
@@ -370,6 +371,62 @@ module Remarkable
           )
         end
       end
+
+      downsample_rgba_grid(rgba_grid, downsample)
+    end
+
+    # Downsamples an RGBA grid by averaging each square block.
+    #
+    # @param rgba_grid [Array<Array<Integer>>]
+    # @param downsample [Integer]
+    # @return [Array<Array<Integer>>]
+    def downsample_rgba_grid(rgba_grid, downsample)
+      factor = Integer(downsample)
+      raise ArgumentError, "downsample must be positive" unless factor.positive?
+      return rgba_grid if factor == 1
+      return [] if rgba_grid.empty?
+
+      height = rgba_grid.length
+      width = rgba_grid.first.length
+      out_height = (height + factor - 1) / factor
+      out_width = (width + factor - 1) / factor
+
+      Array.new(out_height) do |out_y|
+        y_start = out_y * factor
+        y_end = [y_start + factor, height].min
+
+        Array.new(out_width) do |out_x|
+          x_start = out_x * factor
+          x_end = [x_start + factor, width].min
+          average_rgba_block(rgba_grid, x_start, x_end, y_start, y_end)
+        end
+      end
+    end
+
+    # Averages one block of RGBA pixels into a single packed integer.
+    #
+    # @return [Integer]
+    def average_rgba_block(rgba_grid, x_start, x_end, y_start, y_end)
+      red = green = blue = alpha = count = 0
+
+      (y_start...y_end).each do |y|
+        row = rgba_grid[y]
+        (x_start...x_end).each do |x|
+          pixel = row[x]
+          alpha += (pixel >> 24) & 0xFF
+          red += (pixel >> 16) & 0xFF
+          green += (pixel >> 8) & 0xFF
+          blue += pixel & 0xFF
+          count += 1
+        end
+      end
+
+      rgba_int(
+        (red / count.to_f).round,
+        (green / count.to_f).round,
+        (blue / count.to_f).round,
+        (alpha / count.to_f).round
+      )
     end
 
     # Builds a raster RGBA grid for a filled rectangle.

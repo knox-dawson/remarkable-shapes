@@ -869,6 +869,18 @@ module Remarkable
       raise ArgumentError, "#{key} must be numeric"
     end
 
+    # Fetches an integer field from an object hash.
+    #
+    # @return [Integer]
+    def fetch_integer(object, key, default = nil)
+      value = object.fetch(key, default)
+      raise ArgumentError, "#{key} is required" if value.nil?
+
+      Integer(value)
+    rescue ArgumentError, TypeError
+      raise ArgumentError, "#{key} must be an integer"
+    end
+
     # Returns a key with an optional prefix.
     #
     # @return [String]
@@ -1788,7 +1800,8 @@ module Remarkable
     def draw_image_object(page, object, layout, base_dir:, brush:)
       box = resolve_box(layout, object)
       image_path = File.expand_path(object.fetch("path") { raise ArgumentError, "image path is required" }, base_dir)
-      rgba_grid = Shapes.png_to_rgba_grid(image_path)
+      downsample = fetch_integer(object, "downsample", 1)
+      rgba_grid = Shapes.png_to_rgba_grid(image_path, downsample:)
       image_height = rgba_grid.length
       image_width = rgba_grid.first&.length.to_i
       raise ArgumentError, "image PNG must not be empty" if image_width <= 0

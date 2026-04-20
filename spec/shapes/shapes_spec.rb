@@ -43,6 +43,22 @@ RSpec.describe Remarkable::Shapes do
     expect(page.lines.first.points.map(&:width)).to eq([13.0, 13.0])
   end
 
+  it "downsamples png grids by averaging square blocks" do
+    Dir.mktmpdir do |dir|
+      png_path = File.join(dir, "tiny.png")
+      image = ChunkyPNG::Image.new(2, 2, ChunkyPNG::Color::TRANSPARENT)
+      image[0, 0] = ChunkyPNG::Color.rgba(255, 0, 0, 255)
+      image[1, 0] = ChunkyPNG::Color.rgba(0, 255, 0, 255)
+      image[0, 1] = ChunkyPNG::Color.rgba(0, 0, 255, 255)
+      image[1, 1] = ChunkyPNG::Color.rgba(255, 255, 255, 255)
+      image.save(png_path)
+
+      grid = described_class.png_to_rgba_grid(png_path, downsample: 2)
+
+      expect(grid).to eq([[0xFF808080]])
+    end
+  end
+
   it "raises for an empty rgba grid" do
     expect do
       described_class.draw_rgba_grid(page, [], 100, 200, 10)
