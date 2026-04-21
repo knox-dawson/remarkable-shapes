@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Added inline markdown emphasis support for `*italic*`, `**bold**`, and nested bold-italic runs in `bin/generate_markdown_book`.
 - Added PNG downsampling support for image rendering, with `downsample: 2` averaging each 2x2 block, `downsample: 3` averaging each 3x3 block, and so on.
+- Added new font: relief_singleline_mono
+
+### Changed
+
+- Rendered new version of font: line_font_mono
 
 ## [0.9.0-beta.5] - 2026-04-07
 
