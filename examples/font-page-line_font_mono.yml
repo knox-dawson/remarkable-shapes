@@ -34,7 +34,7 @@ objects:
   "y": 300
   width: 1064
   height: 50
-  text: '!"#$%&''()*+,-./0123456789:;<=>?@ABCDEF'
+  text: '!"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJ'
   size: 42
   stroke_width: 3
   font: line_font_mono
@@ -44,7 +44,7 @@ objects:
   "y": 350
   width: 1064
   height: 50
-  text: GHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijkl
+  text: KLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrst
   size: 42
   stroke_width: 3
   font: line_font_mono
@@ -54,7 +54,7 @@ objects:
   "y": 400
   width: 1064
   height: 50
-  text: mnopqrstuvwxyz{|}~¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ
+  text: uvwxyz{|}~¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁ
   size: 42
   stroke_width: 3
   font: line_font_mono
@@ -64,7 +64,7 @@ objects:
   "y": 450
   width: 1064
   height: 50
-  text: "¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛ"
+  text: ÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêë
   size: 42
   stroke_width: 3
   font: line_font_mono
@@ -74,7 +74,7 @@ objects:
   "y": 500
   width: 1064
   height: 50
-  text: ÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿĀā
+  text: ìíîïðñòóôõö÷øùúûüýþÿĀāĄąĆćČčĒēĘęĢģĪīĶķĻļŁł
   size: 42
   stroke_width: 3
   font: line_font_mono
@@ -84,7 +84,7 @@ objects:
   "y": 550
   width: 1064
   height: 50
-  text: ĄąĆćČčĒēĘęĢģĪīĶķĻļŁłŃńŅņŒœŚśŠšŪūŹźŻżŽž
+  text: ŃńŅņŒœŚśŠšŪūŹźŻżŽžΆΈΉΊΌΎΏΐΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠ
   size: 42
   stroke_width: 3
   font: line_font_mono
@@ -94,7 +94,7 @@ objects:
   "y": 600
   width: 1064
   height: 50
-  text: ΆΈΉΊΌΎΏΐΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίΰα
+  text: ΡΣΤΥΦΧΨΩάέήίΰαβγδεζηθικλμνξοπρςστυφχψωϊϋόύ
   size: 42
   stroke_width: 3
   font: line_font_mono
@@ -104,7 +104,7 @@ objects:
   "y": 650
   width: 1064
   height: 50
-  text: βγδεζηθικλμνξοπρςστυφχψωϊϋόύώАБВГДЕЖЗИ
+  text: ώАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзи
   size: 42
   stroke_width: 3
   font: line_font_mono
@@ -114,7 +114,7 @@ objects:
   "y": 700
   width: 1064
   height: 50
-  text: ЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмно
+  text: йклмнопрстуфхцчшщъыьэюяẞ‐‘’“”†‡•€℄ℓ←↑→↓∂∃∇
   size: 42
   stroke_width: 3
   font: line_font_mono
@@ -124,17 +124,7 @@ objects:
   "y": 750
   width: 1064
   height: 50
-  text: прстуфхцчшщъыьэюяẞ‐‘’“”†‡•€℄ℓ←↑→↓∂∃∇∈∏
-  size: 42
-  stroke_width: 3
-  font: line_font_mono
-  color: black
-- type: text
-  x: 170
-  "y": 800
-  width: 1064
-  height: 50
-  text: "∑−∓∕∖∗∙√∝∞∠∥∩∪∫∴∼≈≠≡≤≥≦≧⊂⊃⊗⊙⊥⋅♭♮♯ﬀﬁﬂﬃﬄ"
+  text: "∈∏∑−∓∕∖∗∙√∝∞∠∥∩∪∫∴∼≈≠≡≤≥≦≧⊂⊃⊗⊙⊥⋅♭♮♯ﬀﬁﬂﬃﬄ"
   size: 42
   stroke_width: 3
   font: line_font_mono

@@ -45,4 +45,43 @@ RSpec.describe Remarkable::MonoFontConverter do
       expect(output[" "]["strokes"]).to eq([])
     end
   end
+
+  it "supports per-glyph width caps and optical centering offsets" do
+    Dir.mktmpdir do |dir|
+      input_path = File.join(dir, "plain.json")
+      output_path = File.join(dir, "mono.json")
+
+      File.write(
+        input_path,
+        JSON.pretty_generate(
+          "W" => {
+            "width" => 1.0,
+            "strokes" => [
+              [[0.0, 0.0], [1.0, 0.0]]
+            ]
+          },
+          "1" => {
+            "width" => 1.0,
+            "strokes" => [
+              [[0.4, 0.0], [0.4, 1.0]]
+            ]
+          }
+        )
+      )
+
+      described_class.new(
+        input_path,
+        output_path,
+        target_width: 0.85,
+        adjustments: {
+          "W" => { max_width: 0.6 },
+          "1" => { x_offset: -0.1 }
+        }
+      ).convert
+      output = JSON.parse(File.read(output_path))
+
+      expect(output["W"]["strokes"].flatten(1).map(&:first)).to eq([0.125, 0.725])
+      expect(output["1"]["strokes"].flatten(1).map(&:first).uniq).to eq([0.325])
+    end
+  end
 end

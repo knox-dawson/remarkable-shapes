@@ -17,7 +17,7 @@ def build_options(argv)
 
     o.string "-i", "--input", "Source stroke-font JSON path"
     o.string "-o", "--output", "Destination mono JSON path"
-    o.float "--target-width", "Target monospace glyph width, default: 0.85"
+    o.float "--target-width", "Target monospace glyph width, default: 0.60"
     o.bool "-h", "--help", "Show help"
   end
 end
