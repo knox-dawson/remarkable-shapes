@@ -29,6 +29,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added a converted `relief_singleline` stroke-font family under `data/relief_singleline`.
 - Added a generated `relief_singleline_italic` family by slanting the imported Relief SingleLine plain glyphs into a synthetic italic stroke font.
 - Added `bin/ufo_to_line_font` to convert a simple UFO source into the line-font JSON stroke format used by the renderer.
+- Added `bin/line_font_to_mono` to generate monospaced stroke-font JSON from any imported Hershey-style font data.
+- Added a converted `relief_singleline_mono` stroke-font family under `data/relief_singleline_mono`.
 - Added `examples/font-family-sampler.yml`, `examples/font-comparison-sampler.yml`, and `examples/relief-line-font-sampler.yml` plus their generated `out/` samples.
 - Added `bin/generate_font_samples` to build one full-coverage sample page per font family and render the matching `.rmdoc` outputs.
 - Added `bin/generate_markdown_book` to parse markdown through `kramdown`, generate intermediate YAML pages, and build a multipage `.rmdoc` book through the existing YAML book pipeline.

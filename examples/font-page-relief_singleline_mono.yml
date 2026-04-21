@@ -14,20 +14,20 @@ objects:
   "y": 190
   width: 1064
   height: 34
-  text: 'Font page: line_font_mono (418 glyphs, page 1/1)'
+  text: 'Font page: relief_singleline_mono (436 glyphs, page 1/1)'
   size: 28
   stroke_width: 2
-  font: line_font
+  font: relief_singleline
   color: black
 - type: text
   x: 170
   "y": 232
   width: 1064
   height: 24
-  text: Rendered with line_font_mono using glyph coverage from line_font
+  text: Rendered with relief_singleline_mono using glyph coverage from relief_singleline
   size: 18
   stroke_width: 2
-  font: line_font
+  font: relief_singleline
   color: black
 - type: text
   x: 170
@@ -37,7 +37,7 @@ objects:
   text: '!"#$%&''()*+,-./0123456789:;<=>?@ABCDEF'
   size: 42
   stroke_width: 3
-  font: line_font_mono
+  font: relief_singleline_mono
   color: black
 - type: text
   x: 170
@@ -47,7 +47,7 @@ objects:
   text: GHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijkl
   size: 42
   stroke_width: 3
-  font: line_font_mono
+  font: relief_singleline_mono
   color: black
 - type: text
   x: 170
@@ -57,7 +57,7 @@ objects:
   text: mnopqrstuvwxyz{|}~¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ
   size: 42
   stroke_width: 3
-  font: line_font_mono
+  font: relief_singleline_mono
   color: black
 - type: text
   x: 170
@@ -67,7 +67,7 @@ objects:
   text: "¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛ"
   size: 42
   stroke_width: 3
-  font: line_font_mono
+  font: relief_singleline_mono
   color: black
 - type: text
   x: 170
@@ -77,65 +77,75 @@ objects:
   text: ÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿĀā
   size: 42
   stroke_width: 3
-  font: line_font_mono
+  font: relief_singleline_mono
   color: black
 - type: text
   x: 170
   "y": 550
   width: 1064
   height: 50
-  text: ĄąĆćČčĒēĘęĢģĪīĶķĻļŁłŃńŅņŒœŚśŠšŪūŹźŻżŽž
+  text: ĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĦħ
   size: 42
   stroke_width: 3
-  font: line_font_mono
+  font: relief_singleline_mono
   color: black
 - type: text
   x: 170
   "y": 600
   width: 1064
   height: 50
-  text: ΆΈΉΊΌΎΏΐΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίΰα
+  text: ĨĩĪīĬĭĮįİıĲĳĴĵĶķĹĺĻļĽľĿŀŁłŃńŅņŇňŊŋŌōŎŏ
   size: 42
   stroke_width: 3
-  font: line_font_mono
+  font: relief_singleline_mono
   color: black
 - type: text
   x: 170
   "y": 650
   width: 1064
   height: 50
-  text: βγδεζηθικλμνξοπρςστυφχψωϊϋόύώАБВГДЕЖЗИ
+  text: ŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŦŧŨũŪūŬŭŮůŰűŲųŴŵ
   size: 42
   stroke_width: 3
-  font: line_font_mono
+  font: relief_singleline_mono
   color: black
 - type: text
   x: 170
   "y": 700
   width: 1064
   height: 50
-  text: ЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмно
+  text: ŶŷŸŹźŻżŽžƏƒȘșȚțȷəˆˇ˘˙˚˛˜˝̦̀́̂̃̄̆̇̈̊̋̌̒
   size: 42
   stroke_width: 3
-  font: line_font_mono
+  font: relief_singleline_mono
   color: black
 - type: text
   x: 170
   "y": 750
   width: 1064
   height: 50
-  text: прстуфхцчшщъыьэюяẞ‐‘’“”†‡•€℄ℓ←↑→↓∂∃∇∈∏
+  text: ̧̨δπω฿ẀẁẂẃẄẅẞẼẽỲỳỸỹ–—‘’‚“”„†‡•…‰′″‹›⁂⁄
   size: 42
   stroke_width: 3
-  font: line_font_mono
+  font: relief_singleline_mono
   color: black
 - type: text
   x: 170
   "y": 800
   width: 1064
   height: 50
-  text: "∑−∓∕∖∗∙√∝∞∠∥∩∪∫∴∼≈≠≡≤≥≦≧⊂⊃⊗⊙⊥⋅♭♮♯ﬀﬁﬂﬃﬄ"
+  text: "⁰⁴⁵⁶⁷⁸⁹₩₪€₴₹₽ℓ™℮⅓⅔←↑→↓↔↕↖↗↘↙∂∆∏∑−∙√∞∫≈"
   size: 42
   stroke_width: 3
-  font: line_font_mono
+  font: relief_singleline_mono
+  color: black
+- type: text
+  x: 170
+  "y": 850
+  width: 1064
+  height: 50
+  text: "≠≤≥□△▵◇◊○◣◻⚪⟲⟳Ꞌꞌﬁﬂ"
+  size: 42
+  stroke_width: 3
+  font: relief_singleline_mono
   color: black

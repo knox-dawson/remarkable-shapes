@@ -26,11 +26,28 @@ RSpec.describe Remarkable::LineFont do
     italic_width = described_class.text_width("Hello", size: 20, font: :line_font_italic)
     mono_width = described_class.text_width("mm", size: 20, font: :line_font_mono)
     relief_italic_width = described_class.text_width("Relief", size: 20, font: :relief_singleline_italic)
+    relief_mono_width = described_class.text_width("Relief", size: 20, font: :relief_singleline_mono)
 
     expect(cursive_width).to be > 0
     expect(italic_width).to be > 0
     expect(mono_width).to eq(described_class.mono_advance(20) * 2)
     expect(relief_italic_width).to be > 0
+    expect(relief_mono_width).to be > 0
+  end
+
+  it "derives mono advance from the loaded mono family data" do
+    original_mono_widths = described_class.instance_variable_get(:@mono_widths)
+    begin
+      described_class.instance_variable_set(:@mono_widths, {})
+      allow(described_class).to receive(:glyph_data).and_call_original
+      allow(described_class).to receive(:glyph_data).with(:line_font_mono).and_return(
+        "A" => { "width" => 1.0, "strokes" => [] }
+      )
+
+      expect(described_class.mono_advance(10, font: :line_font_mono)).to eq(10.0)
+    ensure
+      described_class.instance_variable_set(:@mono_widths, original_mono_widths)
+    end
   end
 
   it "keeps temporary style/mono compatibility for beta.5 while supporting flattened font families" do
@@ -40,7 +57,7 @@ RSpec.describe Remarkable::LineFont do
     compatibility_explicit_cursive_width = described_class.text_width("Hello", size: 20, style: :cursive)
     compatibility_mono_width = described_class.text_width("mm", size: 20, mono: true)
 
-    expect(described_class.available_fonts).to include(:default, :line_font, :line_font_cursive, :line_font_italic, :line_font_mono, :relief_singleline, :relief_singleline_italic)
+    expect(described_class.available_fonts).to include(:default, :line_font, :line_font_cursive, :line_font_italic, :line_font_mono, :relief_singleline, :relief_singleline_italic, :relief_singleline_mono)
     expect(relief_width).to be > 0
     expect(alias_width).to eq(described_class.text_width("Hello", size: 20))
     expect(compatibility_cursive_width).to eq(described_class.text_width("Hello", size: 20, font: :line_font_italic))
@@ -48,6 +65,7 @@ RSpec.describe Remarkable::LineFont do
     expect(compatibility_mono_width).to eq(described_class.text_width("mm", size: 20, font: :line_font_mono))
     expect(described_class.glyph_for("é", font: :relief_singleline)).not_to be_nil
     expect(described_class.glyph_for("é", font: :relief_singleline_italic)).not_to be_nil
+    expect(described_class.glyph_for("é", font: :relief_singleline_mono)).not_to be_nil
   end
 
   it "applies pair-specific spacing tweaks for the synthetic italic family" do

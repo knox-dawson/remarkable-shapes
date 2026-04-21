@@ -59,7 +59,8 @@ FONTS = [
   :line_font_italic,
   :line_font_mono,
   :relief_singleline,
-  :relief_singleline_italic
+  :relief_singleline_italic,
+  :relief_singleline_mono
 ].freeze
 
 def glyph_data_path(font)
@@ -76,13 +77,18 @@ def glyph_data_path(font)
     File.expand_path("../data/relief_singleline/plain.json", __dir__)
   when :relief_singleline_italic
     File.expand_path("../data/relief_singleline_italic/plain.json", __dir__)
+  when :relief_singleline_mono
+    File.expand_path("../data/relief_singleline_mono/mono.json", __dir__)
   else
     raise ArgumentError, "unknown font: #{font}"
   end
 end
 
 def source_font_for_characters(font)
-  font == :line_font_mono ? :line_font : font
+  return :line_font if font == :line_font_mono
+  return :relief_singleline if font == :relief_singleline_mono
+
+  font
 end
 
 def sorted_characters(path)
@@ -145,7 +151,7 @@ end
 
 def yaml_config_for(font, lines, glyph_count, page_index, page_count, character_source_font)
   subtitle =
-    if font == :line_font_mono
+    if font.to_s.end_with?("_mono")
       "Rendered with #{font} using glyph coverage from #{character_source_font}"
     else
       "All glyphs currently present in #{font}"

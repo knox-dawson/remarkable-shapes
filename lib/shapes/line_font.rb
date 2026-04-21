@@ -23,8 +23,8 @@ module Remarkable
     LINE_FONT_MONO = :line_font_mono
     # Default glyph style.
     DEFAULT_STYLE = :plain
-    # Monospaced advance as a fraction of glyph size.
-    MONO_ADVANCE_FACTOR = 0.75
+    # Fallback monospaced advance as a fraction of glyph size.
+    DEFAULT_MONO_ADVANCE_FACTOR = 0.85
     # Fallback advance as a fraction of glyph size for unsupported characters.
     FALLBACK_ADVANCE_FACTOR = 0.5
 
@@ -119,8 +119,8 @@ module Remarkable
     # Returns the monospaced glyph advance.
     #
     # @return [Float]
-    def mono_advance(size)
-      size.to_f * MONO_ADVANCE_FACTOR
+    def mono_advance(size, font: LINE_FONT_MONO)
+      size.to_f * mono_width(font)
     end
 
     # Returns the baseline-to-top offset
@@ -135,10 +135,11 @@ module Remarkable
     # @return [Float]
     def draw_character(page, char, x, baseline_y, size:, stroke_width:, style:, font:, mono:, rgba:, color:, brush:)
       glyph = glyph_for(char, style:, font:, mono:)
-      return fallback_advance(size, mono: effective_mono?(font, style:, mono:)) if glyph.nil?
+      mono_family = effective_font(font, style:, mono:)
+      return fallback_advance(size, mono: effective_mono?(font, style:, mono:), font: mono_family) if glyph.nil?
 
       glyph_width = size.to_f * glyph.fetch("width", 0.0).to_f
-      x_offset = effective_mono?(font, style:, mono:) ? (mono_advance(size) - glyph_width) / 2.0 : 0.0
+      x_offset = effective_mono?(font, style:, mono:) ? (mono_advance(size, font: mono_family) - glyph_width) / 2.0 : 0.0
       glyph.fetch("strokes", []).each do |stroke|
         points = stroke.map do |px, py|
           [x + x_offset + (px.to_f * size.to_f), baseline_y + (py.to_f * size.to_f)]
@@ -146,7 +147,7 @@ module Remarkable
         Shapes.draw_polyline(page, points, stroke_width, rgba:, color:, brush:) if points.length >= 2
       end
 
-      mono ? mono_advance(size) : glyph_width
+      mono ? mono_advance(size, font: mono_family) : glyph_width
     end
 
     # Returns the advance width for one character.
@@ -154,9 +155,10 @@ module Remarkable
     # @return [Float]
     def character_advance(char, size:, style:, font:, mono:)
       glyph = glyph_for(char, style:, font:, mono:)
-      return fallback_advance(size, mono: effective_mono?(font, style:, mono:)) if glyph.nil?
+      mono_family = effective_font(font, style:, mono:)
+      return fallback_advance(size, mono: effective_mono?(font, style:, mono:), font: mono_family) if glyph.nil?
 
-      effective_mono?(font, style:, mono:) ? mono_advance(size) : (size.to_f * glyph.fetch("width", 0.0).to_f)
+      effective_mono?(font, style:, mono:) ? mono_advance(size, font: mono_family) : (size.to_f * glyph.fetch("width", 0.0).to_f)
     end
 
     # Returns registered font families found under data/.
@@ -192,6 +194,8 @@ module Remarkable
         File.join(DATA_ROOT, LINE_FONT_ITALIC.to_s, "italic.json")
       elsif normalize_font(font) == LINE_FONT_MONO
         File.join(DATA_ROOT, LINE_FONT_MONO.to_s, "mono.json")
+      elsif normalize_font(font) == :relief_singleline_mono
+        File.join(DATA_ROOT, "relief_singleline_mono", "mono.json")
       else
         File.join(DATA_ROOT, normalize_font(font).to_s, "plain.json")
       end
@@ -228,6 +232,15 @@ module Remarkable
       effective_font(font, style:, mono:) == LINE_FONT_MONO
     end
 
+    def mono_width(font)
+      normalized_font = normalize_font(font)
+      @mono_widths ||= {}
+      return @mono_widths[normalized_font] if @mono_widths.key?(normalized_font)
+
+      widths = glyph_data(normalized_font)&.values&.map { |glyph| glyph.fetch("width", 0.0).to_f }&.select(&:positive?)
+      @mono_widths[normalized_font] = widths&.max || DEFAULT_MONO_ADVANCE_FACTOR
+    end
+
     def pair_spacing_adjustment(left_char, right_char, size:, style:, font:, mono:)
       return 0.0 if left_char.nil? || right_char.nil?
       return 0.0 unless effective_font(font, style:, mono:) == LINE_FONT_ITALIC
@@ -238,8 +251,8 @@ module Remarkable
     # Returns the fallback advance for unsupported characters.
     #
     # @return [Float]
-    def fallback_advance(size, mono:)
-      mono ? mono_advance(size) : (size.to_f * FALLBACK_ADVANCE_FACTOR)
+    def fallback_advance(size, mono:, font: LINE_FONT_MONO)
+      mono ? mono_advance(size, font:) : (size.to_f * FALLBACK_ADVANCE_FACTOR)
     end
   end
 end

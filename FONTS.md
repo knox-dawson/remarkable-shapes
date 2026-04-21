@@ -16,6 +16,7 @@ Current selectable font families:
 - `line_font_mono`
 - `relief_singleline`
 - `relief_singleline_italic`
+- `relief_singleline_mono`
 
 ## YAML Usage
 
@@ -77,6 +78,7 @@ This font has been modified from the original version.
 
 Modifications:
 - added italics version
+- added monospaced version
 
 The font software is licensed under the SIL Open Font License, Version 1.1.
 
@@ -95,6 +97,7 @@ This font has been modified from the original version.
 
 Modifications:
 - added italics version
+- changed monospaced version
 - shortened the hyphen
 
 The font is distributed under the GPLv2.

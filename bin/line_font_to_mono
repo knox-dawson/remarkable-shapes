@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+
+require "slop"
+require "shapes/mono_font_converter"
+
+def build_options(argv)
+  Slop.parse(argv) do |o|
+    o.banner = <<~BANNER
+      Usage: bin/line_font_to_mono --input INPUT --output OUTPUT [options]
+
+      Example:
+        bin/line_font_to_mono --input data/line_font/plain.json --output data/line_font_mono/mono.json
+    BANNER
+
+    o.string "-i", "--input", "Source stroke-font JSON path"
+    o.string "-o", "--output", "Destination mono JSON path"
+    o.float "--target-width", "Target monospace glyph width, default: 0.85"
+    o.bool "-h", "--help", "Show help"
+  end
+end
+
+options = build_options(ARGV)
+
+if options[:help]
+  puts options
+  exit 0
+end
+
+missing = []
+missing << "--input" if options[:input].to_s.empty?
+missing << "--output" if options[:output].to_s.empty?
+unless missing.empty?
+  warn options
+  abort("missing required options: #{missing.join(', ')}")
+end
+
+Remarkable::MonoFontConverter.new(
+  options[:input],
+  options[:output],
+  target_width: options[:target_width] || Remarkable::MonoFontConverter::DEFAULT_TARGET_WIDTH
+).convert
