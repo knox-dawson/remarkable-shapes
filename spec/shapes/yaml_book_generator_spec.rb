@@ -43,6 +43,10 @@ RSpec.describe Remarkable::YamlBookGenerator do
     FileUtils.chmod(0o755, path)
   end
 
+  def run_script(script_path, chdir:)
+    Dir.chdir(chdir) { system(script_path) }
+  end
+
   it "builds a multipage rmdoc from an ordered yaml page list" do
     Dir.mktmpdir do |dir|
       cover_yaml = File.join(dir, "cover.yml")
@@ -71,6 +75,46 @@ RSpec.describe Remarkable::YamlBookGenerator do
       expect(File.file?(result[:concat_script_path])).to be(true)
       expect(File.file?(final_output)).to be(true)
       expect(result[:concat_ran]).to be(true)
+    end
+  end
+
+  it "writes portable concat script with relative paths" do
+    Dir.mktmpdir do |dir|
+      cover_yaml = File.join(dir, "cover.yml")
+      page_yaml = File.join(dir, "page.yml")
+      list_yaml = File.join(dir, "pages.yml")
+      output_dir = File.join(dir, "build")
+      final_output = File.join(dir, "book.rmdoc")
+      fake_rmcat = File.join(dir, "rmcat")
+      other_dir = Dir.mktmpdir
+
+      write_simple_yaml(cover_yaml, "Cover")
+      write_simple_yaml(page_yaml, "Page 1")
+      File.write(list_yaml, { "pages" => [cover_yaml, page_yaml] }.to_yaml)
+      write_fake_rmcat(fake_rmcat)
+
+      result = described_class.generate_from_yaml_list(
+        list_path: list_yaml,
+        output_dir:,
+        final_output:,
+        rmcat_command: fake_rmcat,
+        run_concat: false
+      )
+
+      script = File.read(result[:concat_script_path])
+      expect(script).to include('cd "$SCRIPT_DIR"')
+      expect(script).to include("../book.rmdoc")
+      expect(script).to include("rmdoc/00-cover.rmdoc")
+      expect(script).to include("rmdoc/01-page.rmdoc")
+      expect(script).not_to include(final_output)
+      expect(script).not_to include(result[:rmdoc_paths].first)
+      expect(script).not_to include(result[:rmdoc_paths].last)
+      expect(File.exist?(final_output)).to be(false)
+
+      expect(run_script(result[:concat_script_path], chdir: other_dir)).to be(true)
+      expect(File.file?(final_output)).to be(true)
+
+      FileUtils.remove_entry(other_dir)
     end
   end
 

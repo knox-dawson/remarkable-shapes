@@ -286,8 +286,22 @@ module Remarkable
       end
 
       def write_concat_script(path, final_output:, rmdoc_paths:, rmcat_command:)
-        command = Shellwords.join([rmcat_command, "-o", final_output, *rmdoc_paths])
-        File.write(path, "#!/usr/bin/env bash\nset -euo pipefail\n#{command}\n")
+        script_dir = File.dirname(File.expand_path(path))
+        relative_final_output = Pathname.new(File.expand_path(final_output)).relative_path_from(Pathname.new(script_dir)).to_s
+        relative_rmdoc_paths = rmdoc_paths.map do |rmdoc_path|
+          Pathname.new(File.expand_path(rmdoc_path)).relative_path_from(Pathname.new(script_dir)).to_s
+        end
+        command = Shellwords.join([rmcat_command, "-o", relative_final_output, *relative_rmdoc_paths])
+        File.write(
+          path,
+          <<~BASH
+            #!/usr/bin/env bash
+            set -euo pipefail
+            SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+            cd "$SCRIPT_DIR"
+            #{command}
+          BASH
+        )
         FileUtils.chmod(0o755, path)
         path
       end

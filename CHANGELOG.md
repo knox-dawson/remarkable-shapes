@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Rendered new version of font: line_font_mono
 - Tuned monospaced font widths and centering
+- Changed book-generator `rmcat` scripts to use relative output and page paths so generated shell commands no longer expose absolute local paths.
 
 ## [0.9.0-beta.5] - 2026-04-07
 
