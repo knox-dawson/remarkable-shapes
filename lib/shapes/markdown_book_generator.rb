@@ -183,7 +183,7 @@ module Remarkable
     }.freeze
 
     TEXT_STYLE_KEYS = %w[
-      font size stroke_width line_spacing color rgba brush style mono align valign
+      font size stroke_width line_spacing color rgba brush align valign
     ].freeze
 
     LINE_STYLE_KEYS = %w[
@@ -542,19 +542,17 @@ module Remarkable
         paragraphs = text.to_s.split("\n", -1)
         size = style.fetch("size", 28).to_f
         font = style.fetch("font", "line_font")
-        style_name = style.fetch("style", "plain")
-        mono = truthy?(style.fetch("mono", false))
 
         paragraphs.flat_map do |paragraph|
           if paragraph.empty?
             [""]
           else
-            wrap_paragraph(paragraph, max_width, size:, font:, style_name:, mono:)
+            wrap_paragraph(paragraph, max_width, size:, font:)
           end
         end
       end
 
-      def wrap_paragraph(paragraph, max_width, size:, font:, style_name:, mono:)
+      def wrap_paragraph(paragraph, max_width, size:, font:)
         words = paragraph.split(/\s+/)
         return [""] if words.empty?
 
@@ -563,7 +561,7 @@ module Remarkable
 
         words.each do |word|
           candidate = "#{current} #{word}"
-          if LineFont.text_width(candidate, size:, font:, style: style_name, mono:) <= max_width || current.empty?
+          if LineFont.text_width(candidate, size:, font:) <= max_width || current.empty?
             current = candidate
           else
             lines << current
@@ -670,8 +668,6 @@ module Remarkable
         lines = []
         current = []
         current_width = 0.0
-        base_style_name = base_style.fetch("style", "plain").to_sym
-        code_style_name = code_style.fetch("style", "plain").to_sym
 
         trim_inline_tokens(tokens).each do |token|
           if token["break"]
@@ -728,9 +724,7 @@ module Remarkable
         style_config = style == "code" ? code_style : base_style
         size = style_config.fetch("size", 28).to_f
         font = style_config.fetch("font", "line_font")
-        style_name = style_config.fetch("style", "plain").to_sym
-        mono = truthy?(style_config.fetch("mono", false))
-        LineFont.text_width(token.fetch("text", ""), size:, style: style_name, font:, mono:)
+        LineFont.text_width(token.fetch("text", ""), size:, font:)
       end
 
       def merge_inline_tokens(tokens)
@@ -769,10 +763,8 @@ module Remarkable
           run_style = run.fetch("style") == "code" ? code_style : inline_run_style(base_style, run)
           run_size = run_style.fetch("size", 28).to_f
           run_font = run_style.fetch("font", "line_font")
-          run_style_name = run_style.fetch("style", "plain").to_sym
-          run_mono = truthy?(run_style.fetch("mono", false))
           run_text = run.fetch("text")
-          run_width = LineFont.text_width(run_text, size: run_size, style: run_style_name, font: run_font, mono: run_mono)
+          run_width = LineFont.text_width(run_text, size: run_size, font: run_font)
           run_y = base_baseline + LineFont.baseline_to_top(run_size)
 
           object = build_text_object(

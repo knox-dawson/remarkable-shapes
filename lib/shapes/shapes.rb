@@ -83,7 +83,7 @@ module Remarkable
     # @example Ruby lambda
     #   Remarkable::Shapes.text(page, "remarkable-shapes", 180, 260, size: 42, stroke_width: 3, color: Remarkable::RmPage::Colour::BLACK)
     # @return [Float] rendered width
-    def text(page, string, x, baseline_y, size: 48.0, stroke_width: 2.0, style: :plain, font: :default, mono: false,
+    def text(page, string, x, baseline_y, size: 48.0, stroke_width: 2.0, font: :default,
              rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
       require_relative "line_font"
 
@@ -91,9 +91,7 @@ module Remarkable
         page, string, x, baseline_y,
         size:,
         stroke_width:,
-        style:,
         font:,
-        mono:,
         rgba:,
         color:,
         brush:
@@ -107,7 +105,7 @@ module Remarkable
     #                                  shadow_color: Remarkable::RmPage::Colour::GREY,
     #                                  color: Remarkable::RmPage::Colour::BLACK)
     # @return [Float] rendered width including the horizontal shadow extent
-    def shadow_text(page, string, x, baseline_y, size: 48.0, stroke_width: 2.0, style: :plain, font: :default, mono: false,
+    def shadow_text(page, string, x, baseline_y, size: 48.0, stroke_width: 2.0, font: :default,
                     shadow_dx: 0.0, shadow_dy: 0.0,
                     shadow_rgba: DEFAULT_RGBA, shadow_color: DEFAULT_COLOR, shadow_brush: DEFAULT_BRUSH,
                     rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
@@ -118,9 +116,7 @@ module Remarkable
         baseline_y.to_f + shadow_dy.to_f,
         size:,
         stroke_width:,
-        style:,
         font:,
-        mono:,
         rgba: shadow_rgba,
         color: shadow_color,
         brush: shadow_brush
@@ -133,9 +129,7 @@ module Remarkable
         baseline_y,
         size:,
         stroke_width:,
-        style:,
         font:,
-        mono:,
         rgba:,
         color:,
         brush:

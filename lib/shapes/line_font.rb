@@ -21,8 +21,6 @@ module Remarkable
     LINE_FONT_ITALIC = :line_font_italic
     # Flattened built-in mono family.
     LINE_FONT_MONO = :line_font_mono
-    # Default glyph style.
-    DEFAULT_STYLE = :plain
     # Fallback monospaced advance as a fraction of glyph size.
     DEFAULT_MONO_ADVANCE_FACTOR = 0.85
     # Fallback advance as a fraction of glyph size for unsupported characters.
@@ -60,25 +58,23 @@ module Remarkable
     # @param baseline_y [Numeric] text baseline
     # @param size [Numeric] glyph scale
     # @param stroke_width [Numeric] line stroke width in page units
-    # @param style [Symbol] compatibility option; plain is preferred
     # @param font [Symbol, String] font family key
-    # @param mono [Boolean] compatibility option; prefer font: :line_font_mono
     # @param rgba [Integer, Array<Integer>, Hash]
     # @param color [Integer]
     # @param brush [Integer]
     # @return [Float] rendered width
     def draw_text(page, text, x, baseline_y, size: DEFAULT_SIZE, stroke_width: DEFAULT_STROKE_WIDTH,
-                  style: DEFAULT_STYLE, font: DEFAULT_FONT, mono: false,
+                  font: DEFAULT_FONT,
                   rgba: Shapes::DEFAULT_RGBA, color: Shapes::DEFAULT_COLOR, brush: Shapes::DEFAULT_BRUSH)
       cursor_x = x.to_f
       chars = text.each_char.to_a
       chars.each_with_index do |char, index|
         cursor_x += draw_character(
           page, char, cursor_x, baseline_y,
-          size:, stroke_width:, style:, font:, mono:, rgba:, color:, brush:
+          size:, stroke_width:, font:, rgba:, color:, brush:
         )
         next_char = chars[index + 1]
-        cursor_x += pair_spacing_adjustment(char, next_char, size:, style:, font:, mono:) unless next_char.nil?
+        cursor_x += pair_spacing_adjustment(char, next_char, size:, font:) unless next_char.nil?
       end
       cursor_x - x.to_f
     end
@@ -86,28 +82,28 @@ module Remarkable
     # Returns the width of a text string without drawing it.
     #
     # @return [Float]
-    def text_width(text, size: DEFAULT_SIZE, style: DEFAULT_STYLE, font: DEFAULT_FONT, mono: false)
+    def text_width(text, size: DEFAULT_SIZE, font: DEFAULT_FONT)
       chars = text.each_char.to_a
       chars.each_with_index.sum do |char, index|
-        advance = character_advance(char, size:, style:, font:, mono:)
+        advance = character_advance(char, size:, font:)
         next_char = chars[index + 1]
-        advance + (next_char.nil? ? 0.0 : pair_spacing_adjustment(char, next_char, size:, style:, font:, mono:))
+        advance + (next_char.nil? ? 0.0 : pair_spacing_adjustment(char, next_char, size:, font:))
       end
     end
 
     # Returns true when the glyph exists in the imported font data.
     #
     # @return [Boolean]
-    def available?(char, style: DEFAULT_STYLE, font: DEFAULT_FONT, mono: false)
-      !glyph_for(char, style:, font:, mono:).nil?
+    def available?(char, font: DEFAULT_FONT)
+      !glyph_for(char, font:).nil?
     end
 
     # Returns the glyph data for a character.
     #
     # @return [Hash, nil]
-    def glyph_for(char, style: DEFAULT_STYLE, font: DEFAULT_FONT, mono: false)
+    def glyph_for(char, font: DEFAULT_FONT)
       char = char.to_s
-      family = effective_font(font, style:, mono:)
+      family = effective_font(font)
       glyph = glyph_data(family)&.[](char)
       return glyph unless glyph.nil?
 
@@ -133,13 +129,13 @@ module Remarkable
     # Draws one character and returns its advance width.
     #
     # @return [Float]
-    def draw_character(page, char, x, baseline_y, size:, stroke_width:, style:, font:, mono:, rgba:, color:, brush:)
-      glyph = glyph_for(char, style:, font:, mono:)
-      mono_family = effective_font(font, style:, mono:)
-      return fallback_advance(size, mono: effective_mono?(font, style:, mono:), font: mono_family) if glyph.nil?
+    def draw_character(page, char, x, baseline_y, size:, stroke_width:, font:, rgba:, color:, brush:)
+      glyph = glyph_for(char, font:)
+      family = effective_font(font)
+      return fallback_advance(size, mono: mono_font?(family), font: family) if glyph.nil?
 
       glyph_width = size.to_f * glyph.fetch("width", 0.0).to_f
-      x_offset = effective_mono?(font, style:, mono:) ? (mono_advance(size, font: mono_family) - glyph_width) / 2.0 : 0.0
+      x_offset = mono_font?(family) ? (mono_advance(size, font: family) - glyph_width) / 2.0 : 0.0
       glyph.fetch("strokes", []).each do |stroke|
         points = stroke.map do |px, py|
           [x + x_offset + (px.to_f * size.to_f), baseline_y + (py.to_f * size.to_f)]
@@ -147,18 +143,18 @@ module Remarkable
         Shapes.draw_polyline(page, points, stroke_width, rgba:, color:, brush:) if points.length >= 2
       end
 
-      mono ? mono_advance(size, font: mono_family) : glyph_width
+      mono_font?(family) ? mono_advance(size, font: family) : glyph_width
     end
 
     # Returns the advance width for one character.
     #
     # @return [Float]
-    def character_advance(char, size:, style:, font:, mono:)
-      glyph = glyph_for(char, style:, font:, mono:)
-      mono_family = effective_font(font, style:, mono:)
-      return fallback_advance(size, mono: effective_mono?(font, style:, mono:), font: mono_family) if glyph.nil?
+    def character_advance(char, size:, font:)
+      glyph = glyph_for(char, font:)
+      family = effective_font(font)
+      return fallback_advance(size, mono: mono_font?(family), font: family) if glyph.nil?
 
-      effective_mono?(font, style:, mono:) ? mono_advance(size, font: mono_family) : (size.to_f * glyph.fetch("width", 0.0).to_f)
+      mono_font?(family) ? mono_advance(size, font: family) : (size.to_f * glyph.fetch("width", 0.0).to_f)
     end
 
     # Returns registered font families found under data/.
@@ -192,10 +188,11 @@ module Remarkable
         File.join(DATA_ROOT, LINE_FONT_CURSIVE.to_s, "cursive.json")
       elsif normalize_font(font) == LINE_FONT_ITALIC
         File.join(DATA_ROOT, LINE_FONT_ITALIC.to_s, "italic.json")
-      elsif normalize_font(font) == LINE_FONT_MONO
-        File.join(DATA_ROOT, LINE_FONT_MONO.to_s, "mono.json")
-      elsif normalize_font(font) == :relief_singleline_mono
-        File.join(DATA_ROOT, "relief_singleline_mono", "mono.json")
+      elsif mono_font?(normalize_font(font))
+        mono_path = File.join(DATA_ROOT, normalize_font(font).to_s, "mono.json")
+        return mono_path if File.file?(mono_path)
+
+        File.join(DATA_ROOT, normalize_font(font).to_s, "plain.json")
       else
         File.join(DATA_ROOT, normalize_font(font).to_s, "plain.json")
       end
@@ -214,22 +211,15 @@ module Remarkable
       normalized.to_sym
     end
 
-    def effective_font(font, style:, mono:)
+    def effective_font(font)
       family = normalize_font(font)
-      # TODO: Remove style/mono compatibility after the next beta release.
-      return LINE_FONT_MONO if mono && [DEFAULT_FONT, LINE_FONT_ALIAS].include?(family)
-
-      if [DEFAULT_FONT, LINE_FONT_ALIAS].include?(family)
-        return LINE_FONT_CURSIVE if style.to_sym == :cursive
-        return LINE_FONT_ITALIC if style.to_sym == :italic
-        return LINE_FONT_ALIAS
-      end
+      return LINE_FONT_ALIAS if [DEFAULT_FONT, LINE_FONT_ALIAS].include?(family)
 
       family
     end
 
-    def effective_mono?(font, style:, mono:)
-      effective_font(font, style:, mono:) == LINE_FONT_MONO
+    def mono_font?(font)
+      normalize_font(font).to_s.end_with?("_mono")
     end
 
     def mono_width(font)
@@ -241,9 +231,9 @@ module Remarkable
       @mono_widths[normalized_font] = widths&.max || DEFAULT_MONO_ADVANCE_FACTOR
     end
 
-    def pair_spacing_adjustment(left_char, right_char, size:, style:, font:, mono:)
+    def pair_spacing_adjustment(left_char, right_char, size:, font:)
       return 0.0 if left_char.nil? || right_char.nil?
-      return 0.0 unless effective_font(font, style:, mono:) == LINE_FONT_ITALIC
+      return 0.0 unless effective_font(font) == LINE_FONT_ITALIC
 
       size.to_f * ITALIC_PAIR_ADJUSTMENTS.fetch("#{left_char}#{right_char}", 0.0)
     end

@@ -11,12 +11,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added inline markdown emphasis support for `*italic*`, `**bold**`, and nested bold-italic runs in `bin/generate_markdown_book`.
 - Added PNG downsampling support for image rendering, with `downsample: 2` averaging each 2x2 block, `downsample: 3` averaging each 3x3 block, and so on.
 - Added new font: relief_singleline_mono
+- Added `bin/ttf_outline_to_line_font` to convert TrueType/OpenType glyph outlines directly into line-font JSON.
+- Added `noto_lines_mono`, a hollow outline stroke-font generated from `NotoMono-Regular.ttf`.
+- Added `noto_lines_mono_filled`, a hatch-filled variant of `noto_lines_mono`.
 
 ### Changed
 
 - Rendered new version of font: line_font_mono
 - Tuned monospaced font widths and centering
 - Changed book-generator `rmcat` scripts to use relative output and page paths so generated shell commands no longer expose absolute local paths.
+- Changed line-font text APIs and YAML text rendering to use explicit `font:` families only, removing the temporary `style` / `mono` compatibility mapping.
+- Updated generated font sample pages to include the Noto outline and filled font families.
 
 ## [0.9.0-beta.5] - 2026-04-07
 

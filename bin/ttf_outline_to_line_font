@@ -1,0 +1,278 @@
+#!/usr/bin/env python3
+"""Convert a TrueType/OpenType font outline into line-font JSON.
+
+Unlike fontforge_svg_to_line_font, this keeps the glyph outline contours as
+strokes. Filled fonts therefore render as hollow outline characters.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+
+
+JSON_START = "__OUTLINE_FONT_JSON_START__"
+JSON_END = "__OUTLINE_FONT_JSON_END__"
+
+
+def parse_args(argv):
+    parser = argparse.ArgumentParser(
+        description="Convert TTF/OTF glyph outlines into remarkable-shapes line-font JSON."
+    )
+    parser.add_argument("--ttf", required=True, help="Source TrueType/OpenType font path")
+    parser.add_argument("-o", "--output", required=True, help="Output line-font JSON path")
+    parser.add_argument("--curve-steps", type=int, default=10, help="Samples per curve segment")
+    parser.add_argument("--chars", help="Optional literal character subset for testing")
+    parser.add_argument(
+        "--target-width",
+        type=float,
+        help="Optional fixed advance width; defaults to each glyph advance/em",
+    )
+    parser.add_argument("--fill-lines", action="store_true", help="Add interior hatch strokes")
+    parser.add_argument("--fill-spacing", type=float, default=0.07, help="Fill hatch spacing in em units")
+    parser.add_argument("--fill-angle", type=float, default=0.0, help="Fill hatch angle in degrees")
+    return parser.parse_args(argv)
+
+
+def fontforge_script():
+    return rf"""
+import fontforge
+import json
+import math
+import sys
+import unicodedata
+
+ttf_path = sys.argv[1]
+curve_steps = max(int(sys.argv[2]), 1)
+target_width_arg = sys.argv[3]
+chars_arg = sys.argv[4]
+fill_lines = sys.argv[5] == "1"
+fill_spacing = max(float(sys.argv[6]), 0.001)
+fill_angle = math.radians(float(sys.argv[7]))
+selected = set(chars_arg) if chars_arg else None
+target_width = None if target_width_arg == "" else float(target_width_arg)
+
+font = fontforge.open(ttf_path)
+em = float(font.em)
+
+def round_float(value):
+    return round(float(value), 6)
+
+def normalize(point, x_scale):
+    x, y = point
+    return [
+        round_float((float(x) / em) * x_scale),
+        round_float(-float(y) / em),
+    ]
+
+def dedupe(points):
+    result = []
+    for point in points:
+        if not result or result[-1] != point:
+            result.append(point)
+    return result
+
+def quadratic_point(p0, p1, p2, t):
+    mt = 1.0 - t
+    return (
+        (mt * mt * p0[0]) + (2 * mt * t * p1[0]) + (t * t * p2[0]),
+        (mt * mt * p0[1]) + (2 * mt * t * p1[1]) + (t * t * p2[1]),
+    )
+
+def cubic_point(p0, p1, p2, p3, t):
+    mt = 1.0 - t
+    return (
+        (mt**3 * p0[0]) + (3 * mt * mt * t * p1[0]) + (3 * mt * t * t * p2[0]) + (t**3 * p3[0]),
+        (mt**3 * p0[1]) + (3 * mt * mt * t * p1[1]) + (3 * mt * t * t * p2[1]) + (t**3 * p3[1]),
+    )
+
+class OutlinePen:
+    def __init__(self, x_scale):
+        self.x_scale = x_scale
+        self.strokes = []
+        self.current = None
+        self.start = None
+        self.last = None
+
+    def moveTo(self, point):
+        self._finish()
+        normalized = normalize(point, self.x_scale)
+        self.current = [normalized]
+        self.start = point
+        self.last = point
+
+    def lineTo(self, point):
+        if self.current is None:
+            self.moveTo(point)
+            return
+        self.current.append(normalize(point, self.x_scale))
+        self.last = point
+
+    def qCurveTo(self, *points):
+        if self.current is None:
+            self.moveTo(points[-1])
+            return
+        start = self.last
+        controls = list(points[:-1])
+        end = points[-1]
+        if not controls:
+            self.lineTo(end)
+            return
+        current_start = start
+        for index, control in enumerate(controls):
+            current_end = end if index == len(controls) - 1 else (
+                (control[0] + controls[index + 1][0]) / 2.0,
+                (control[1] + controls[index + 1][1]) / 2.0,
+            )
+            for step in range(1, curve_steps + 1):
+                self.current.append(normalize(quadratic_point(current_start, control, current_end, step / curve_steps), self.x_scale))
+            current_start = current_end
+        self.last = end
+
+    def curveTo(self, *points):
+        if self.current is None:
+            self.moveTo(points[-1])
+            return
+        start = self.last
+        c1, c2, end = points
+        for step in range(1, curve_steps + 1):
+            self.current.append(normalize(cubic_point(start, c1, c2, end, step / curve_steps), self.x_scale))
+        self.last = end
+
+    def closePath(self):
+        if self.current is not None and self.start is not None:
+            self.current.append(normalize(self.start, self.x_scale))
+        self._finish()
+
+    def endPath(self):
+        self._finish()
+
+    def _finish(self):
+        if self.current is not None:
+            stroke = dedupe(self.current)
+            if len(stroke) >= 2:
+                self.strokes.append(stroke)
+        self.current = None
+        self.start = None
+        self.last = None
+
+def rotate(point, angle):
+    x, y = point
+    c = math.cos(angle)
+    s = math.sin(angle)
+    return ((x * c) - (y * s), (x * s) + (y * c))
+
+def hatch_segments(strokes):
+    polygons = []
+    for stroke in strokes:
+        if len(stroke) >= 4 and stroke[0] == stroke[-1]:
+            polygons.append(stroke)
+    if not polygons:
+        return []
+
+    rotated = [[rotate(point, -fill_angle) for point in polygon] for polygon in polygons]
+    min_y = min(point[1] for polygon in rotated for point in polygon)
+    max_y = max(point[1] for polygon in rotated for point in polygon)
+    hatches = []
+    y = math.floor(min_y / fill_spacing) * fill_spacing
+    while y <= max_y:
+        intersections = []
+        for polygon in rotated:
+            for index in range(len(polygon) - 1):
+                x1, y1 = polygon[index]
+                x2, y2 = polygon[index + 1]
+                if y1 == y2:
+                    continue
+                if (y1 <= y < y2) or (y2 <= y < y1):
+                    t = (y - y1) / (y2 - y1)
+                    intersections.append(x1 + (t * (x2 - x1)))
+        intersections.sort()
+        for index in range(0, len(intersections) - 1, 2):
+            left = intersections[index]
+            right = intersections[index + 1]
+            if right - left <= 0.001:
+                continue
+            start = rotate((left, y), fill_angle)
+            end = rotate((right, y), fill_angle)
+            hatches.append([
+                [round_float(start[0]), round_float(start[1])],
+                [round_float(end[0]), round_float(end[1])],
+            ])
+        y += fill_spacing
+    return hatches
+
+result = {{}}
+for glyph in font.glyphs():
+    codepoint = glyph.unicode
+    if codepoint < 0:
+        continue
+    char = chr(codepoint)
+    if selected is not None and char not in selected:
+        continue
+    category = unicodedata.category(char)
+    if category in ("Cc", "Cs", "Co", "Cn"):
+        continue
+
+    source_width = float(glyph.width) / em
+    width = target_width if target_width is not None else source_width
+    x_scale = 1.0 if target_width is None or source_width == 0 else target_width / source_width
+    pen = OutlinePen(x_scale)
+    glyph.foreground.draw(pen)
+    pen.endPath()
+    strokes = pen.strokes
+    if fill_lines:
+        strokes = strokes + hatch_segments(strokes)
+    result[char] = {{
+        "width": round_float(width),
+        "strokes": strokes,
+    }}
+
+print("{JSON_START}")
+print(json.dumps(result, ensure_ascii=False))
+print("{JSON_END}")
+"""
+
+
+def build_font(args):
+    proc = subprocess.run(
+        [
+            "fontforge",
+            "-lang=py",
+            "-c",
+            fontforge_script(),
+            os.path.abspath(args.ttf),
+            str(args.curve_steps),
+            "" if args.target_width is None else str(args.target_width),
+            "" if args.chars is None else args.chars,
+            "1" if args.fill_lines else "0",
+            str(args.fill_spacing),
+            str(args.fill_angle),
+        ],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    match = re.search(f"{JSON_START}\\s*(.*?)\\s*{JSON_END}", proc.stdout, re.S)
+    if not match:
+        raise RuntimeError("FontForge outline output did not contain JSON payload")
+    return json.loads(match.group(1))
+
+
+def main(argv):
+    args = parse_args(argv)
+    data = build_font(args)
+    output = os.path.abspath(args.output)
+    os.makedirs(os.path.dirname(output), exist_ok=True)
+    with open(output, "w", encoding="utf-8") as handle:
+        json.dump(data, handle, ensure_ascii=False, indent=2)
+        handle.write("\n")
+    print(f"Wrote {len(data)} glyphs to {output}")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
