@@ -8,9 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- Added native PNG image embedding; native image display requires reMarkable tablet software 3.17 or later.
-- Added `bin/generate_native_image` to embed a single PNG as a native tablet image item in a new `.rmdoc` file for tablet software 3.17 or later.
-- Added YAML `native_image` objects so YAML pages and YAML books can embed PNGs as native tablet image items for tablet software 3.17 or later.
+- Added native PNG image embedding; native image display requires reMarkable tablet software 3.27 or later.
+- Added `bin/generate_native_image` to embed a single PNG as a native tablet image item in a new `.rmdoc` file for tablet software 3.27 or later.
+- Added YAML `native_image` objects so YAML pages and YAML books can embed PNGs as native tablet image items for tablet software 3.27 or later.
 - Added inline markdown emphasis support for `*italic*`, `**bold**`, and nested bold-italic runs in `bin/generate_markdown_book`.
 - Added PNG downsampling support for image rendering, with `downsample: 2` averaging each 2x2 block, `downsample: 3` averaging each 3x3 block, and so on.
 - Added new font: relief_singleline_mono
