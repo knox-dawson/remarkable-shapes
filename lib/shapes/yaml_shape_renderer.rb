@@ -6,6 +6,7 @@ require "securerandom"
 require_relative "../io/rm_page"
 require_relative "shapes"
 require_relative "line_font"
+require_relative "native_image"
 
 module Remarkable
   # Renders a simple user-facing YAML page description into reMarkable lines.
@@ -1826,10 +1827,10 @@ module Remarkable
     def draw_native_image_object(page, object, layout, base_dir:)
       box = resolve_box(layout, object)
       image_path = File.expand_path(object.fetch("path") { raise ArgumentError, "image path is required" }, base_dir)
-      image_width, image_height = png_dimensions(image_path)
+      image_width, image_height = NativeImage.dimensions(image_path)
       fitted_box = fitted_image_box(box, image_width, image_height, object)
       uuid = object.fetch("uuid", SecureRandom.uuid).to_s
-      file_name = object.fetch("file_name", "#{uuid}.png").to_s
+      file_name = object.fetch("file_name", "#{uuid}#{NativeImage.extension(image_path)}").to_s
 
       page.add_png_image(
         file_name:,
@@ -1840,22 +1841,6 @@ module Remarkable
         height: fitted_box[:height],
         source_path: image_path
       )
-    end
-
-    # Reads PNG dimensions without decoding the image.
-    #
-    # @return [Array(Integer, Integer)]
-    def png_dimensions(path)
-      File.open(path, "rb") do |file|
-        signature = file.read(8)
-        raise ArgumentError, "not a PNG file: #{path}" unless signature == "\x89PNG\r\n\x1A\n".b
-
-        length = file.read(4)&.unpack1("N")
-        chunk_type = file.read(4)
-        raise ArgumentError, "PNG missing IHDR chunk: #{path}" unless length == 13 && chunk_type == "IHDR"
-
-        file.read(8).unpack("N2")
-      end
     end
 
     # Fits an image into a box while preserving aspect ratio unless stretch is true.

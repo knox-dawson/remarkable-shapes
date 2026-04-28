@@ -8,7 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Added JPEG support to native image embedding.
+- Extended `bin/generate_native_image` to accept `.jpg` and `.jpeg` input.
+- Extended YAML `native_image` objects so YAML pages and YAML books can embed JPEGs as native tablet image items.
+
+## [0.9.0-beta.6] - 2026-04-20
+
+### Added
+
 - Added native PNG image embedding; native image display requires reMarkable tablet software 3.27 or later.
+- Added `.rmdoc` asset embedding support to `RmdocWriter.write`, storing page assets under the page UUID directory expected by the tablet.
 - Added `bin/generate_native_image` to embed a single PNG as a native tablet image item in a new `.rmdoc` file for tablet software 3.27 or later.
 - Added YAML `native_image` objects so YAML pages and YAML books can embed PNGs as native tablet image items for tablet software 3.27 or later.
 - Added inline markdown emphasis support for `*italic*`, `**bold**`, and nested bold-italic runs in `bin/generate_markdown_book`.

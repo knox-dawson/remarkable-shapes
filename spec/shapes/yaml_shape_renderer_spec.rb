@@ -8,6 +8,19 @@ require "shapes/yaml_shape_renderer"
 RSpec.describe Remarkable::YamlShapeRenderer do
   let(:page) { Remarkable::RmPage.new }
 
+  def minimal_jpeg(width:, height:)
+    [
+      0xFF, 0xD8,
+      0xFF, 0xC0,
+      0x00, 0x0B,
+      0x08,
+      (height >> 8) & 0xFF, height & 0xFF,
+      (width >> 8) & 0xFF, width & 0xFF,
+      0x01, 0x01, 0x11, 0x00,
+      0xFF, 0xD9
+    ].pack("C*")
+  end
+
   it "resolves a top-placed canvas inside the standard page box" do
     layout = described_class.resolve_canvas_layout(
       "width" => 600,
@@ -167,6 +180,36 @@ RSpec.describe Remarkable::YamlShapeRenderer do
       expect(page.images.first.width).to eq(200.0)
       expect(page.images.first.height).to eq(100.0)
       expect(page.rmdoc_assets).to eq([["tiny-native.png", File.binread(png_path)]])
+    end
+  end
+
+  it "renders native_image objects from jpg assets" do
+    Dir.mktmpdir do |dir|
+      jpg_path = File.join(dir, "tiny.jpg")
+      File.binwrite(jpg_path, minimal_jpeg(width: 4, height: 2))
+
+      config = {
+        "canvas" => { "width" => 320, "height" => 220, "placement" => "top-left" },
+        "objects" => [
+          {
+            "type" => "native_image",
+            "path" => jpg_path,
+            "uuid" => "00112233-4455-6677-8899-aabbccddeeff",
+            "x" => 20,
+            "y" => 30,
+            "width" => 220,
+            "height" => 100
+          }
+        ]
+      }
+
+      described_class.render(page, config)
+
+      expect(page.images.length).to eq(1)
+      expect(page.images.first.file_name).to eq("00112233-4455-6677-8899-aabbccddeeff.jpg")
+      expect(page.images.first.width).to eq(200.0)
+      expect(page.images.first.height).to eq(100.0)
+      expect(page.rmdoc_assets).to eq([["00112233-4455-6677-8899-aabbccddeeff.jpg", File.binread(jpg_path)]])
     end
   end
 
