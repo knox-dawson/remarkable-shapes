@@ -73,6 +73,14 @@ RSpec.describe Remarkable::RmPage do
     end
   end
 
+  def read_tagged_id(bytes, offset, expected_index:)
+    tag, offset = parse_tag(bytes, offset)
+    expect(tag).to eq(index: expected_index, type: 0x0F)
+    author = bytes.getbyte(offset)
+    value, offset = read_varuint(bytes, offset + 1)
+    [{ author:, value: }, offset]
+  end
+
   def line_value_data(line_block)
     block_data = line_block[:data]
     offset = 0
@@ -84,6 +92,20 @@ RSpec.describe Remarkable::RmPage do
 
     value_data, = parse_subblock(block_data, offset, expected_index: 6)
     expect(value_data.getbyte(0)).to eq(0x03)
+    value_data.byteslice(1..)
+  end
+
+  def scene_item_value_data(item_block, expected_value_type:)
+    block_data = item_block[:data]
+    offset = 0
+    offset = skip_tagged_value(block_data, offset, expected_index: 1, expected_type: 0x0F)
+    offset = skip_tagged_value(block_data, offset, expected_index: 2, expected_type: 0x0F)
+    offset = skip_tagged_value(block_data, offset, expected_index: 3, expected_type: 0x0F)
+    offset = skip_tagged_value(block_data, offset, expected_index: 4, expected_type: 0x0F)
+    offset = skip_tagged_value(block_data, offset, expected_index: 5, expected_type: 0x04)
+
+    value_data, = parse_subblock(block_data, offset, expected_index: 6)
+    expect(value_data.getbyte(0)).to eq(expected_value_type)
     value_data.byteslice(1..)
   end
 
@@ -161,5 +183,47 @@ RSpec.describe Remarkable::RmPage do
     expect(black_value).not_to include([8 << 4 | 0x04].pack("C"))
     expect(rgba_value).to include([8 << 4 | 0x04].pack("C"))
     expect(rgba_value).to include([0xFF112233].pack("V"))
+  end
+
+  it "writes image info and native image item blocks" do
+    page = described_class.new
+    page.add_png_image(
+      file_name: "image.png",
+      uuid: "00112233-4455-6677-8899-aabbccddeeff",
+      x: 130,
+      y: 140,
+      width: 200,
+      height: 100
+    )
+
+    blocks = parse_blocks(page.to_rm_bytes)
+    expect(blocks.map { |block| block[:block_type] }).to eq([0x09, 0x00, 0x0A, 0x0E, 0x01, 0x02, 0x02, 0x04, 0x0F])
+    expect(blocks[3].values_at(:min_version, :current_version)).to eq([3, 3])
+    expect(blocks.last.values_at(:min_version, :current_version)).to eq([2, 2])
+
+    image_info_data, = parse_subblock(blocks[3][:data], 0, expected_index: 1)
+    image_count, offset = read_varuint(image_info_data, 0)
+    expect(image_count).to eq(1)
+
+    entry_data, = parse_subblock(image_info_data, offset, expected_index: 0)
+    expect(entry_data.byteslice(0, 16)).to eq(["00112233445566778899aabbccddeeff"].pack("H*"))
+
+    image_value = scene_item_value_data(blocks.last, expected_value_type: 0x07)
+    image_ref_data, offset = parse_subblock(image_value, 0, expected_index: 1)
+    timestamp, image_ref_offset = read_tagged_id(image_ref_data, 0, expected_index: 1)
+    expect(timestamp).to eq(author: 1, value: 16)
+    uuid_data, = parse_subblock(image_ref_data, image_ref_offset, expected_index: 2)
+    expect(uuid_data).to eq(["00112233445566778899aabbccddeeff"].pack("H*"))
+
+    bounds_timestamp, offset = read_tagged_id(image_value, offset, expected_index: 2)
+    expect(bounds_timestamp).to eq(author: 1, value: 15)
+
+    vertices_data, = parse_subblock(image_value, offset, expected_index: 3)
+    vertex_count, vertex_offset = read_varuint(vertices_data, 0)
+    expect(vertex_count).to eq(16)
+    expect(vertices_data.byteslice(vertex_offset, 64).unpack("e16")).to eq(
+      [-572.0, 140.0, 0.0, 0.0, -372.0, 140.0, 1.0, 0.0,
+       -372.0, 240.0, 1.0, 1.0, -572.0, 240.0, 0.0, 1.0]
+    )
   end
 end

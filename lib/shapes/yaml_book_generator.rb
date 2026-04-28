@@ -280,7 +280,8 @@ module Remarkable
           output_path,
           page.to_rm_bytes,
           page_width: page.page_width,
-          page_height: page.page_height
+          page_height: page.page_height,
+          assets: page.rmdoc_assets
         )
         output_path
       end

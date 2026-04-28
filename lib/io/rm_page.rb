@@ -132,8 +132,45 @@ module Remarkable
       end
     end
 
+    # A PNG image reference placed on the page as a native scene image item.
+    class Image
+      # Default flags observed in the lines v6 image-info block.
+      DEFAULT_FLAGS = [17, 0].freeze
+
+      # @return [String] UUID used by the image-info block and image item
+      attr_accessor :uuid
+      # @return [String] PNG filename stored in the rmdoc archive
+      attr_accessor :file_name
+      # @return [Float] page-space left coordinate
+      attr_accessor :x
+      # @return [Float] page-space top coordinate
+      attr_accessor :y
+      # @return [Float] placed width
+      attr_accessor :width
+      # @return [Float] placed height
+      attr_accessor :height
+      # @return [Array<Integer>] image-info flags
+      attr_accessor :flags
+      # @return [String, nil] source PNG path used when writing a rmdoc asset
+      attr_accessor :source_path
+
+      # Creates a native image placement.
+      def initialize(uuid:, file_name:, x:, y:, width:, height:, flags: DEFAULT_FLAGS, source_path: nil)
+        @uuid = uuid
+        @file_name = file_name
+        @x = x.to_f
+        @y = y.to_f
+        @width = width.to_f
+        @height = height.to_f
+        @flags = flags
+        @source_path = source_path
+      end
+    end
+
     # @return [Array<Line>] lines currently added to the page
     attr_reader :lines
+    # @return [Array<Image>] native images currently added to the page
+    attr_reader :images
     # @return [Float] physical page width used for x-coordinate centering
     attr_reader :page_width
     # @return [Float] physical page height used for metadata and canvas presets
@@ -145,6 +182,8 @@ module Remarkable
     # @param page_height [Numeric]
     def initialize(page_width: DEFAULT_PAGE_WIDTH, page_height: DEFAULT_PAGE_HEIGHT)
       @lines = []
+      @images = []
+      @items = []
       @page_width = page_width.to_f
       @page_height = page_height.to_f
     end
@@ -155,7 +194,39 @@ module Remarkable
     def add_line
       line = Line.new
       @lines << line
+      @items << line
       line
+    end
+
+    # Adds a native PNG image item to the page.
+    #
+    # @param file_name [String] PNG filename stored in the rmdoc archive
+    # @param uuid [String] image UUID
+    # @param x [Numeric] page-space left coordinate
+    # @param y [Numeric] page-space top coordinate
+    # @param width [Numeric] placed width
+    # @param height [Numeric] placed height
+    # @return [Image]
+    def add_png_image(file_name:, uuid:, x:, y:, width:, height:, source_path: nil)
+      raise ArgumentError, "image width must be positive" unless width.to_f.positive?
+      raise ArgumentError, "image height must be positive" unless height.to_f.positive?
+      raise ArgumentError, "image file_name must not be empty" if file_name.to_s.empty?
+
+      image = Image.new(uuid:, file_name: file_name.to_s, x:, y:, width:, height:, source_path:)
+      @images << image
+      @items << image
+      image
+    end
+
+    # Returns native image assets ready for RmdocWriter.write.
+    #
+    # @return [Array<Array(String, String)>]
+    def rmdoc_assets
+      @images.filter_map do |image|
+        next if image.source_path.nil?
+
+        [image.file_name, File.binread(image.source_path)]
+      end
     end
 
     # Serializes the page to a lines v6 byte string.
@@ -167,11 +238,12 @@ module Remarkable
       out << write_author_ids_block
       out << write_migration_info_block
       out << write_page_info_block
+      out << write_image_info_block unless @images.empty?
       out << write_scene_tree_block
       out << write_tree_node_block(0, 1, "", 12)
       out << write_tree_node_block(0, 11, "Layer 1", 14)
       out << write_scene_group_item_block(0, 1, 0, 13, 0, 0, 0, 11)
-      out << write_line_blocks
+      out << write_item_blocks
       out
     end
 
@@ -229,6 +301,27 @@ module Remarkable
       write_block(0x01, 1, 1, block)
     end
 
+    # Encodes image metadata for every native image in the page.
+    #
+    # @return [String]
+    def write_image_info_block
+      block = +"".b
+      image_list = +"".b
+      image_list << write_varuint(@images.length)
+
+      @images.each_with_index do |image, index|
+        timestamp_id = image_info_timestamp_id(index)
+        entry = +"".b
+        entry << write_uuid_bytes(image.uuid)
+        entry << write_lww_string(1, 1, timestamp_id, image.file_name)
+        entry << write_lww_bytes(2, 0, 0, image.flags)
+        image_list << write_subblock(0, entry)
+      end
+
+      block << write_subblock(1, image_list)
+      write_block(0x0E, 3, 3, block)
+    end
+
     # Encodes a tree-node block.
     #
     # @param node_author [Integer]
@@ -260,17 +353,21 @@ module Remarkable
       write_block(0x04, 1, 1, block)
     end
 
-    # Encodes every line block in insertion order.
+    # Encodes every scene item block in insertion order.
     #
     # @return [String]
-    def write_line_blocks
+    def write_item_blocks
       out = +"".b
       previous_item_id = 0
       item_id = 14
-      @lines.each do |line|
-        out << write_line_block(line, item_id, previous_item_id)
+      @items.each do |item|
+        out << if item.is_a?(Line)
+                 write_line_block(item, item_id, previous_item_id)
+               else
+                 write_image_item_block(item, item_id, previous_item_id)
+               end
         previous_item_id = item_id
-        item_id += 1
+        item_id += item_id_step(item)
       end
       out
     end
@@ -292,6 +389,23 @@ module Remarkable
       write_block(0x05, 2, 2, block)
     end
 
+    # Encodes one native image item block.
+    #
+    # @param image [Image]
+    # @param item_id [Integer]
+    # @param left_id [Integer]
+    # @return [String]
+    def write_image_item_block(image, item_id, left_id)
+      block = +"".b
+      block << write_tagged_id(1, 0, 11)
+      block << write_tagged_id(2, 1, item_id)
+      block << write_tagged_id(3, left_id.zero? ? 0 : 1, left_id)
+      block << write_tagged_id(4, 0, 0)
+      block << write_tagged_int(5, 0)
+      block << write_subblock(6, image_value_bytes(image, item_id))
+      write_block(0x0F, 2, 2, block)
+    end
+
     # Encodes the value payload for one line.
     #
     # @param line [Line]
@@ -306,6 +420,38 @@ module Remarkable
       out << write_tagged_id(6, 0, 1)
       out << write_tagged_int(8, line.rgba) if line.color == Colour::RGBA
       out
+    end
+
+    # Encodes the value payload for one native image item.
+    #
+    # @param image [Image]
+    # @param item_id [Integer]
+    # @return [String]
+    def image_value_bytes(image, item_id)
+      out = +"\x07".b
+      out << write_lww_uuid(1, 1, item_id + 2, image.uuid)
+      out << write_tagged_id(2, 1, item_id + 1)
+      out << write_float_sequence(3, image_vertices(image))
+      out << write_int_sequence(4, [0, 1, 2, 2, 3, 0])
+      out
+    end
+
+    # Computes image vertices as x, y, u, v tuples.
+    #
+    # @param image [Image]
+    # @return [Array<Float>]
+    def image_vertices(image)
+      left = scene_x(image.x)
+      right = scene_x(image.x + image.width)
+      top = image.y
+      bottom = image.y + image.height
+
+      [
+        left, top, 0.0, 0.0,
+        right, top, 1.0, 0.0,
+        right, bottom, 1.0, 1.0,
+        left, bottom, 0.0, 1.0
+      ]
     end
 
     # Encodes every point in a line.
@@ -369,6 +515,21 @@ module Remarkable
       write_subblock(index, write_tagged_id(1, author, value_id) + write_tagged_string(2, value))
     end
 
+    # Encodes a last-write-wins UUID wrapper.
+    #
+    # @return [String]
+    def write_lww_uuid(index, author, value_id, value)
+      write_subblock(index, write_tagged_id(1, author, value_id) + write_uuid_subblock(2, value))
+    end
+
+    # Encodes a last-write-wins byte-array wrapper.
+    #
+    # @return [String]
+    def write_lww_bytes(index, author, value_id, bytes)
+      byte_string = bytes.pack("C*")
+      write_subblock(index, write_tagged_id(1, author, value_id) + write_subblock(2, byte_string))
+    end
+
     # Encodes a UTF-8 string value.
     #
     # @return [String]
@@ -378,6 +539,43 @@ module Remarkable
       data << write_varuint(bytes.bytesize)
       data << [1].pack("C")
       data << bytes
+      write_subblock(index, data)
+    end
+
+    # Encodes a UUID subblock.
+    #
+    # @return [String]
+    def write_uuid_subblock(index, uuid)
+      write_subblock(index, write_uuid_bytes(uuid))
+    end
+
+    # Encodes a UUID as 16 bytes in text order.
+    #
+    # @return [String]
+    def write_uuid_bytes(uuid)
+      hex = uuid.to_s.delete("-")
+      raise ArgumentError, "UUID must contain exactly 32 hex digits" unless hex.match?(/\A[0-9a-fA-F]{32}\z/)
+
+      [hex].pack("H*")
+    end
+
+    # Encodes repeated float values inside a subblock.
+    #
+    # @return [String]
+    def write_float_sequence(index, values)
+      data = +"".b
+      data << write_varuint(values.length)
+      values.each { |value| data << [value.to_f].pack("e") }
+      write_subblock(index, data)
+    end
+
+    # Encodes repeated int values inside a subblock.
+    #
+    # @return [String]
+    def write_int_sequence(index, values)
+      data = +"".b
+      data << write_varuint(values.length)
+      values.each { |value| data << [value.to_i].pack("V") }
       write_subblock(index, data)
     end
 
@@ -441,6 +639,27 @@ module Remarkable
         end
       end
       out
+    end
+
+    # Returns the deterministic image-info timestamp id for an image.
+    #
+    # @return [Integer]
+    def image_info_timestamp_id(image_index)
+      item_id = 14
+      seen_images = 0
+      @items.each do |item|
+        return item_id + 3 if item.is_a?(Image) && seen_images == image_index
+
+        seen_images += 1 if item.is_a?(Image)
+        item_id += item_id_step(item)
+      end
+    end
+
+    # Returns how many CRDT ids an item consumes.
+    #
+    # @return [Integer]
+    def item_id_step(item)
+      item.is_a?(Image) ? 4 : 1
     end
   end
 end

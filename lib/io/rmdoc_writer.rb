@@ -17,8 +17,9 @@ module Remarkable
     # @param rm_bytes [String] serialized lines v6 page bytes
     # @param page_width [Numeric] physical page width for notebook metadata
     # @param page_height [Numeric] physical page height for notebook metadata
+    # @param assets [Array<Array(String, String)>] extra entries under the notebook directory
     # @return [void]
-    def self.write(path, rm_bytes, page_width: DEFAULT_PAGE_WIDTH, page_height: DEFAULT_PAGE_HEIGHT)
+    def self.write(path, rm_bytes, page_width: DEFAULT_PAGE_WIDTH, page_height: DEFAULT_PAGE_HEIGHT, assets: [])
       notebook_id = SecureRandom.uuid
       page_id = SecureRandom.uuid
       visible_name = File.basename(path, ".rmdoc")
@@ -30,8 +31,25 @@ module Remarkable
         ["#{notebook_id}.metadata", metadata],
         ["#{notebook_id}/#{page_id}.rm", rm_bytes]
       ]
+      entries.concat(asset_entries(notebook_id, page_id, assets))
 
       write_zip(path, entries)
+    end
+
+    # Builds notebook-relative ZIP entries for extra page assets.
+    #
+    # @param notebook_id [String]
+    # @param page_id [String]
+    # @param assets [Array<Array(String, String)>]
+    # @return [Array<Array(String, String)>]
+    def self.asset_entries(notebook_id, page_id, assets)
+      assets.map do |name, data|
+        clean_name = name.to_s.delete_prefix("/")
+        raise ArgumentError, "asset name must not be empty" if clean_name.empty?
+        raise ArgumentError, "asset name must be relative" if clean_name.include?("..")
+
+        ["#{notebook_id}/#{page_id}/#{clean_name}", data]
+      end
     end
 
     # Creates the .content JSON payload.

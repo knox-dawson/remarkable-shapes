@@ -30,4 +30,10 @@ RSpec.describe Remarkable::RmdocWriter do
     expect(content["customZoomPageHeight"]).to eq(2160)
     expect(content["customZoomCenterY"]).to eq(1080)
   end
+
+  it "adds notebook-relative asset entries" do
+    entries = described_class.asset_entries("notebook-id", "page-id", [["image.png", "png-bytes".b]])
+
+    expect(entries).to eq([["notebook-id/page-id/image.png", "png-bytes".b]])
+  end
 end

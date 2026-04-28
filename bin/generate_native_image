@@ -1,0 +1,121 @@
+#!/usr/bin/env ruby
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+
+require "securerandom"
+
+require "version"
+require "slop"
+require "io/rm_page"
+require "io/rmdoc_writer"
+
+def build_options(argv)
+  Slop.parse(argv) do |o|
+    o.banner = <<~BANNER
+      Usage: ruby bin/generate_native_image --input PNG_PATH [options]
+
+      Example:
+        ruby bin/generate_native_image --input examples/cat.png --output out/cat-native-image.rmdoc
+    BANNER
+
+    o.string "-i", "--input", "PNG file to embed"
+    o.string "-o", "--output", "Output .rmdoc path"
+    o.float "--x", "Image left coordinate"
+    o.float "--y", "Image top coordinate"
+    o.float "--width", "Placed image width"
+    o.float "--height", "Placed image height"
+    o.bool "-v", "--version", "Print version"
+    o.bool "-h", "--help", "Show help"
+  end
+end
+
+def png_dimensions(path)
+  File.open(path, "rb") do |file|
+    signature = file.read(8)
+    raise ArgumentError, "not a PNG file: #{path}" unless signature == "\x89PNG\r\n\x1A\n".b
+
+    length = file.read(4)&.unpack1("N")
+    chunk_type = file.read(4)
+    raise ArgumentError, "PNG missing IHDR chunk: #{path}" unless length == 13 && chunk_type == "IHDR"
+
+    width, height = file.read(8).unpack("N2")
+    [width, height]
+  end
+end
+
+def layout_for_image(image_width, image_height, page_width:, page_height:, x:, y:, width:, height:)
+  x ||= 130.0
+  y ||= 130.0
+  max_width = page_width - (x * 2.0)
+  max_height = page_height - (y * 2.0)
+
+  if width && height
+    placed_width = width
+    placed_height = height
+  elsif width
+    placed_width = width
+    placed_height = image_height * (width / image_width.to_f)
+  elsif height
+    placed_height = height
+    placed_width = image_width * (height / image_height.to_f)
+  else
+    scale = [max_width / image_width.to_f, max_height / image_height.to_f].min
+    placed_width = image_width * scale
+    placed_height = image_height * scale
+  end
+
+  { x:, y:, width: placed_width, height: placed_height }
+end
+
+options = build_options(ARGV)
+
+if options[:help]
+  puts options
+  exit 0
+end
+
+if options[:version]
+  puts Remarkable::VERSION
+  exit 0
+end
+
+png_path = options[:input]
+if png_path.nil? || png_path.strip.empty?
+  warn "Missing required option: --input"
+  warn options
+  exit 2
+end
+
+unless File.extname(png_path).downcase == ".png"
+  warn "generate_native_image only supports PNG input: #{png_path}"
+  exit 2
+end
+
+unless File.file?(png_path)
+  warn "PNG file not found: #{png_path}"
+  exit 2
+end
+
+image_width, image_height = png_dimensions(png_path)
+page = Remarkable::RmPage.new
+layout = layout_for_image(
+  image_width,
+  image_height,
+  page_width: page.page_width,
+  page_height: page.page_height,
+  x: options[:x],
+  y: options[:y],
+  width: options[:width],
+  height: options[:height]
+)
+
+image_uuid = SecureRandom.uuid
+asset_name = "#{image_uuid}.png"
+page.add_png_image(file_name: asset_name, uuid: image_uuid, **layout)
+
+default_name = File.basename(png_path, ".png")
+output_path = options[:output] || "out/#{default_name}-native-image.rmdoc"
+Remarkable::RmdocWriter.write(
+  output_path,
+  page.to_rm_bytes,
+  assets: [[asset_name, File.binread(png_path)]]
+)

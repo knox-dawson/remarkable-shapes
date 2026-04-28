@@ -130,6 +130,46 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     end
   end
 
+  it "renders native_image objects as page images and rmdoc assets" do
+    Dir.mktmpdir do |dir|
+      png_path = File.join(dir, "tiny.png")
+      image = ChunkyPNG::Image.new(2, 1, ChunkyPNG::Color.rgba(255, 0, 0, 255))
+      image.save(png_path)
+
+      yaml_path = File.join(dir, "page.yml")
+      File.write(
+        yaml_path,
+        <<~YAML
+          canvas:
+            width: 320
+            height: 220
+            placement: top-left
+          objects:
+            - type: native_image
+              path: tiny.png
+              uuid: 00112233-4455-6677-8899-aabbccddeeff
+              file_name: tiny-native.png
+              x: 20
+              y: 30
+              width: 220
+              height: 100
+              placement: right
+        YAML
+      )
+
+      described_class.render_file(page, yaml_path)
+
+      expect(page.lines.length).to eq(0)
+      expect(page.images.length).to eq(1)
+      expect(page.images.first.file_name).to eq("tiny-native.png")
+      expect(page.images.first.x).to eq(40.0)
+      expect(page.images.first.y).to eq(30.0)
+      expect(page.images.first.width).to eq(200.0)
+      expect(page.images.first.height).to eq(100.0)
+      expect(page.rmdoc_assets).to eq([["tiny-native.png", File.binread(png_path)]])
+    end
+  end
+
   it "uses placement for square-fit objects inside explicit boxes" do
     config = {
       "canvas" => { "width" => 300, "height" => 260, "placement" => "top-left" },

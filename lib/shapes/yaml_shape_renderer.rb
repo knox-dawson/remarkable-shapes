@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "psych"
+require "securerandom"
 
 require_relative "../io/rm_page"
 require_relative "shapes"
@@ -408,6 +409,8 @@ module Remarkable
         draw_shadow_text_object(page, object, layout, style:, brush:)
       when "image"
         draw_image_object(page, object, layout, base_dir:, brush:)
+      when "native_image"
+        draw_native_image_object(page, object, layout, base_dir:)
       when "yaml"
         draw_yaml_object(page, object, layout, base_dir:)
       else
@@ -522,6 +525,7 @@ module Remarkable
         text
         shadow_text
         image
+        native_image
         yaml
       ].include?(type)
     end
@@ -1807,6 +1811,65 @@ module Remarkable
       pixel_gap = fetch_number(object, "pixel_gap", -3.0)
 
       Shapes.draw_rgba_grid(page, rgba_grid, fitted_box[:x], fitted_box[:y], pixel_size, gap: pixel_gap, brush:)
+    end
+
+    # Draws a native tablet image item fitted inside the given bounding box.
+    #
+    # @example YAML object
+    #   - type: native_image
+    #     path: cat.png
+    #     x: 320
+    #     y: 250
+    #     width: 560
+    #     height: 500
+    # @return [void]
+    def draw_native_image_object(page, object, layout, base_dir:)
+      box = resolve_box(layout, object)
+      image_path = File.expand_path(object.fetch("path") { raise ArgumentError, "image path is required" }, base_dir)
+      image_width, image_height = png_dimensions(image_path)
+      fitted_box = fitted_image_box(box, image_width, image_height, object)
+      uuid = object.fetch("uuid", SecureRandom.uuid).to_s
+      file_name = object.fetch("file_name", "#{uuid}.png").to_s
+
+      page.add_png_image(
+        file_name:,
+        uuid:,
+        x: fitted_box[:x],
+        y: fitted_box[:y],
+        width: fitted_box[:width],
+        height: fitted_box[:height],
+        source_path: image_path
+      )
+    end
+
+    # Reads PNG dimensions without decoding the image.
+    #
+    # @return [Array(Integer, Integer)]
+    def png_dimensions(path)
+      File.open(path, "rb") do |file|
+        signature = file.read(8)
+        raise ArgumentError, "not a PNG file: #{path}" unless signature == "\x89PNG\r\n\x1A\n".b
+
+        length = file.read(4)&.unpack1("N")
+        chunk_type = file.read(4)
+        raise ArgumentError, "PNG missing IHDR chunk: #{path}" unless length == 13 && chunk_type == "IHDR"
+
+        file.read(8).unpack("N2")
+      end
+    end
+
+    # Fits an image into a box while preserving aspect ratio unless stretch is true.
+    #
+    # @return [Hash]
+    def fitted_image_box(box, image_width, image_height, object)
+      raise ArgumentError, "image dimensions must be positive" if image_width.to_i <= 0 || image_height.to_i <= 0
+      return box if object["stretch"] == true
+
+      scale = [box[:width] / image_width.to_f, box[:height] / image_height.to_f].min
+      width = image_width * scale
+      height = image_height * scale
+      placement = (object["placement"] || "center").to_s
+      place_box_in_box(box, width, height, placement)
     end
 
     # Draws a nested YAML object by fitting its child canvas into the box.
