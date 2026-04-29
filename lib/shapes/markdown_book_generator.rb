@@ -30,66 +30,66 @@ module Remarkable
       },
       "styles" => {
         "body" => {
-          "font" => "relief_singleline",
+          "font" => "noto_lines_sans_filled",
           "size" => 28,
-          "stroke_width" => 4,
+          "stroke_width" => 3,
           "line_spacing" => 1.25,
           "color" => "black"
         },
         "heading_1" => {
-          "font" => "relief_singleline",
+          "font" => "noto_lines_sans_filled",
           "size" => 56,
-          "stroke_width" => 5,
+          "stroke_width" => 4,
           "line_spacing" => 1.1,
           "color" => "black"
         },
         "heading_2" => {
-          "font" => "relief_singleline",
+          "font" => "noto_lines_sans_filled",
           "size" => 46,
-          "stroke_width" => 5,
+          "stroke_width" => 4,
           "line_spacing" => 1.15,
           "color" => "black"
         },
         "heading_3" => {
-          "font" => "relief_singleline",
+          "font" => "noto_lines_sans_filled",
           "size" => 40,
-          "stroke_width" => 5,
+          "stroke_width" => 4,
           "line_spacing" => 1.15,
           "color" => "black"
         },
         "heading_4" => {
-          "font" => "relief_singleline",
+          "font" => "noto_lines_sans_filled",
           "size" => 34,
-          "stroke_width" => 4.5,
+          "stroke_width" => 3.5,
           "line_spacing" => 1.2,
           "color" => "black"
         },
         "heading_5" => {
-          "font" => "relief_singleline",
+          "font" => "noto_lines_sans_filled",
           "size" => 30,
-          "stroke_width" => 4.5,
+          "stroke_width" => 3.5,
           "line_spacing" => 1.2,
           "color" => "black"
         },
         "heading_6" => {
-          "font" => "relief_singleline",
+          "font" => "noto_lines_sans_filled",
           "size" => 28,
-          "stroke_width" => 4,
+          "stroke_width" => 3,
           "line_spacing" => 1.2,
           "color" => "black"
         },
         "blockquote" => {
-          "font" => "relief_singleline_italic",
+          "font" => "noto_lines_sans_italic_filled",
           "size" => 28,
-          "stroke_width" => 4,
+          "stroke_width" => 3,
           "line_spacing" => 1.25,
           "rgba" => 0xFF742454,
           "prefix" => ""
         },
         "code" => {
-          "font" => "line_font",
+          "font" => "noto_lines_mono_filled",
           "size" => 30,
-          "stroke_width" => 4,
+          "stroke_width" => 3,
           "line_spacing" => 1.2,
           "rgba" => 0xFF187A47
         }
@@ -176,7 +176,7 @@ module Remarkable
         "thematic_break" => {
           "space_before" => 14,
           "space_after" => 18,
-          "stroke_width" => 5,
+          "stroke_width" => 4,
           "color" => "black"
         }
       }
@@ -798,6 +798,10 @@ module Remarkable
         case font.to_s
         when "line_font", "default"
           "line_font_italic"
+        when "noto_lines_sans"
+          "noto_lines_sans_italic"
+        when "noto_lines_sans_filled"
+          "noto_lines_sans_italic_filled"
         when "relief_singleline"
           "relief_singleline_italic"
         else

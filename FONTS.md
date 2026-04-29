@@ -14,6 +14,12 @@ Current selectable font families:
 - `line_font_italic`
 - `line_font_cursive`
 - `line_font_mono`
+- `noto_lines_mono`
+- `noto_lines_mono_filled`
+- `noto_lines_sans`
+- `noto_lines_sans_filled`
+- `noto_lines_sans_italic`
+- `noto_lines_sans_italic_filled`
 - `relief_singleline`
 - `relief_singleline_italic`
 - `relief_singleline_mono`
@@ -29,7 +35,7 @@ objects:
     y: 240
     width: 1000
     height: 60
-    text: "Synthetic italic sample"
+    text: "italic sample"
     size: 36
     stroke_width: 3
     font: line_font_italic
@@ -101,3 +107,21 @@ Modifications:
 - shortened the hyphen
 
 The font is distributed under the GPLv2.
+
+## Noto Mono and Sans
+
+Original font:
+https://fonts.google.com/noto/specimen/Noto+Sans
+
+License:
+SIL Open Font License, Version 1.1
+
+This font has been converted from TrueType outlines into line-font JSON.
+
+Included variants:
+- `noto_lines_mono`
+- `noto_lines_mono_filled`
+- `noto_lines_sans`
+- `noto_lines_sans_filled`
+- `noto_lines_sans_italic`
+- `noto_lines_sans_italic_filled`

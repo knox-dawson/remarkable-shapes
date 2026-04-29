@@ -25,6 +25,10 @@ RSpec.describe Remarkable::LineFont do
     cursive_width = described_class.text_width("Hello", size: 20, font: :line_font_cursive)
     italic_width = described_class.text_width("Hello", size: 20, font: :line_font_italic)
     mono_width = described_class.text_width("mm", size: 20, font: :line_font_mono)
+    noto_sans_width = described_class.text_width("Noto", size: 20, font: :noto_lines_sans)
+    noto_sans_filled_width = described_class.text_width("Noto", size: 20, font: :noto_lines_sans_filled)
+    noto_sans_italic_width = described_class.text_width("Noto", size: 20, font: :noto_lines_sans_italic)
+    noto_sans_italic_filled_width = described_class.text_width("Noto", size: 20, font: :noto_lines_sans_italic_filled)
     noto_width = described_class.text_width("Noto", size: 20, font: :noto_lines_mono)
     noto_filled_width = described_class.text_width("Noto", size: 20, font: :noto_lines_mono_filled)
     relief_italic_width = described_class.text_width("Relief", size: 20, font: :relief_singleline_italic)
@@ -33,6 +37,10 @@ RSpec.describe Remarkable::LineFont do
     expect(cursive_width).to be > 0
     expect(italic_width).to be > 0
     expect(mono_width).to eq(described_class.mono_advance(20) * 2)
+    expect(noto_sans_width).to be > 0
+    expect(noto_sans_filled_width).to be > 0
+    expect(noto_sans_italic_width).to be > 0
+    expect(noto_sans_italic_filled_width).to be > 0
     expect(noto_width).to eq(described_class.mono_advance(20, font: :noto_lines_mono) * 4)
     expect(noto_filled_width).to eq(described_class.mono_advance(20, font: :noto_lines_mono_filled) * 4)
     expect(relief_italic_width).to be > 0
@@ -65,7 +73,7 @@ RSpec.describe Remarkable::LineFont do
     relief_width = described_class.text_width("Relief", size: 20, font: "Relief-SingleLine")
     alias_width = described_class.text_width("Hello", size: 20, font: :line_font)
 
-    expect(described_class.available_fonts).to include(:default, :line_font, :line_font_cursive, :line_font_italic, :line_font_mono, :noto_lines_mono, :noto_lines_mono_filled, :relief_singleline, :relief_singleline_italic, :relief_singleline_mono)
+    expect(described_class.available_fonts).to include(:default, :line_font, :line_font_cursive, :line_font_italic, :line_font_mono, :noto_lines_sans, :noto_lines_sans_filled, :noto_lines_sans_italic, :noto_lines_sans_italic_filled, :noto_lines_mono, :noto_lines_mono_filled, :relief_singleline, :relief_singleline_italic, :relief_singleline_mono)
     expect(relief_width).to be > 0
     expect(alias_width).to eq(described_class.text_width("Hello", size: 20))
     expect(described_class.glyph_for("é", font: :relief_singleline)).not_to be_nil

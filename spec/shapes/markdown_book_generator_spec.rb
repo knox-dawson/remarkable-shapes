@@ -84,8 +84,8 @@ RSpec.describe Remarkable::MarkdownBookGenerator do
       expect(text_values).to include("- first bullet")
       expect(text_values).to include("<< quoted text")
       expect(text_values).to include("It’s quoted text")
-      expect(objects.any? { |object| object["type"] == "text" && object["text"] == "code span" && object["font"] == "line_font" }).to be(true)
-      expect(objects.any? { |object| object["type"] == "text" && object["text"] == "code sample" && object["font"] == "line_font" }).to be(true)
+      expect(objects.any? { |object| object["type"] == "text" && object["text"] == "code span" && object["font"] == "noto_lines_mono_filled" }).to be(true)
+      expect(objects.any? { |object| object["type"] == "text" && object["text"] == "code sample" && object["font"] == "noto_lines_mono_filled" }).to be(true)
       expect(objects.any? { |object| object["type"] == "line" }).to be(true)
     end
   end
@@ -131,9 +131,9 @@ RSpec.describe Remarkable::MarkdownBookGenerator do
       expect(italic).not_to be_nil
       expect(bold).not_to be_nil
       expect(bold_italic).not_to be_nil
-      expect(italic.fetch("font")).to eq("relief_singleline_italic")
+      expect(italic.fetch("font")).to eq("noto_lines_sans_italic_filled")
       expect(bold.fetch("stroke_width")).to be > body_style.fetch("stroke_width")
-      expect(bold_italic.fetch("font")).to eq("relief_singleline_italic")
+      expect(bold_italic.fetch("font")).to eq("noto_lines_sans_italic_filled")
       expect(bold_italic.fetch("stroke_width")).to be > body_style.fetch("stroke_width")
     end
   end
@@ -188,7 +188,7 @@ RSpec.describe Remarkable::MarkdownBookGenerator do
 
       expect(File.file?(path)).to be(true)
       yaml = YAML.safe_load(File.read(path))
-      expect(yaml.fetch("styles").fetch("body").fetch("font")).to eq("relief_singleline")
+      expect(yaml.fetch("styles").fetch("body").fetch("font")).to eq("noto_lines_sans_filled")
       expect(yaml.fetch("elements").fetch("paragraph").fetch("style")).to eq("body")
     end
   end

@@ -58,6 +58,10 @@ FONTS = [
   :line_font_cursive,
   :line_font_italic,
   :line_font_mono,
+  :noto_lines_sans,
+  :noto_lines_sans_filled,
+  :noto_lines_sans_italic,
+  :noto_lines_sans_italic_filled,
   :noto_lines_mono,
   :noto_lines_mono_filled,
   :relief_singleline,
@@ -75,6 +79,14 @@ def glyph_data_path(font)
     File.expand_path("../data/line_font_italic/italic.json", __dir__)
   when :line_font_mono
     File.expand_path("../data/line_font_mono/mono.json", __dir__)
+  when :noto_lines_sans
+    File.expand_path("../data/noto_lines_sans/plain.json", __dir__)
+  when :noto_lines_sans_filled
+    File.expand_path("../data/noto_lines_sans_filled/plain.json", __dir__)
+  when :noto_lines_sans_italic
+    File.expand_path("../data/noto_lines_sans_italic/plain.json", __dir__)
+  when :noto_lines_sans_italic_filled
+    File.expand_path("../data/noto_lines_sans_italic_filled/plain.json", __dir__)
   when :noto_lines_mono
     File.expand_path("../data/noto_lines_mono/plain.json", __dir__)
   when :noto_lines_mono_filled
