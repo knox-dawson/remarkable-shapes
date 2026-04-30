@@ -1,0 +1,10 @@
+This project was informed by the following open source projects:
+
+- https://github.com/RedTTGMoss/librm_lines (GPL-3.0)
+- https://github.com/RedTTGMoss/pylibrm_lines (GPL-3.0)
+- https://github.com/ricklupton/rmscene (MIT)
+- https://drawj2d.sourceforge.io/ (GPL)
+
+No code from these projects is included in this repository.
+
+Any bugs, quirks, or questionable design decisions are entirely my own and should not be attributed to the above authors.

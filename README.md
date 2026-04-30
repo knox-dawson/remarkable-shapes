@@ -77,6 +77,16 @@ Generate YARD docs:
 bundle exec yard doc
 ```
 
+## Acknowledgements
+
+This project was developed with reference to the following open source projects:
+
+- librm_lines and pylibrm_lines by RedTTGMoss
+- rmscene by Rick Lupton
+- Drawj2d by qwert2003
+
+These projects were extremely helpful in understanding the structure of reMarkable `.lines` and `.rm` files.
+
 ## License
 
 This project is licensed under the MIT License.
