@@ -1044,6 +1044,102 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     expect(page.lines.length).to be > 1
   end
 
+  it "defines reusable yaml objects by id without rendering them" do
+    config = {
+      "objects" => [
+        {
+          "id" => "red-box",
+          "render" => false,
+          "type" => "rectangle_fill",
+          "x" => 20,
+          "y" => 30,
+          "width" => 60,
+          "height" => 40,
+          "color" => "red"
+        },
+        { "use" => "red-box", "x" => 100, "color" => "blue" }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines.length).to eq(1)
+    xs = page.lines.first.points.map(&:x)
+    expect(xs.min).to be_within(0.02).of(100.0)
+    expect(xs.max).to be_within(0.02).of(160.0)
+    expect(page.lines.first.color).to eq(Remarkable::RmPage::Colour::BLUE)
+  end
+
+  it "renders reusable yaml objects with nested loop interpolation" do
+    config = {
+      "vars" => {
+        "start_x" => 20,
+        "start_y" => 30,
+        "dx" => 50,
+        "dy" => 40
+      },
+      "objects" => [
+        {
+          "id" => "dot",
+          "define" => true,
+          "type" => "rectangle_outline",
+          "width" => 16,
+          "height" => 16,
+          "stroke_width" => 2,
+          "color" => "black"
+        },
+        {
+          "use" => "dot",
+          "loop" => {
+            "row" => { "count" => 2 },
+            "col" => { "count" => 3 }
+          },
+          "x" => "${start_x + col * dx}",
+          "y" => "${start_y + row * dy}"
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines.length).to eq(6)
+    xs = page.lines.flat_map { |line| line.points.map(&:x) }
+    ys = page.lines.flat_map { |line| line.points.map(&:y) }
+    expect(xs.min).to be_within(0.02).of(20.0)
+    expect(xs.max).to be_within(0.02).of(136.0)
+    expect(ys.min).to be_within(0.02).of(30.0)
+    expect(ys.max).to be_within(0.02).of(86.0)
+  end
+
+  it "supports loop values for string interpolation" do
+    config = {
+      "objects" => [
+        {
+          "type" => "text",
+          "loop" => {
+            "var" => "label",
+            "values" => %w[A B]
+          },
+          "x" => 20,
+          "y" => "${label_index * 40 + 20}",
+          "width" => 100,
+          "height" => 30,
+          "text" => "Item ${label}",
+          "size" => 18,
+          "stroke_width" => 2,
+          "color" => "black"
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    expect(page.lines).not_to be_empty
+    ys = page.lines.flat_map { |line| line.points.map(&:y) }
+    expect(ys.min).to be >= 20
+    expect(ys.max).to be <= 90
+  end
+
   it "uses scale and placement to position full-cell objects inside a shared cell" do
     Dir.mktmpdir do |dir|
       png_path = File.join(dir, "tiny.png")

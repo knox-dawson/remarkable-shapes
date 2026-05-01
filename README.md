@@ -42,6 +42,25 @@ Generate a page from a YAML description:
 bin/generate_yaml --input examples/basic-shapes.yml --output out/basic-shapes.rmdoc
 ```
 
+YAML files can define reusable objects with `id` plus `render: false` or `define: true`, then draw copies with `use`. `loop` expands repeated objects, and `${...}` interpolates top-level `vars` plus loop variables:
+
+```yaml
+vars:
+  start_x: 20
+objects:
+  - id: dot
+    define: true
+    type: circle_fill
+    radius: 8
+    color: black
+  - use: dot
+    loop:
+      col:
+        count: 3
+    center_x: ${start_x + col * 50}
+    center_y: 30
+```
+
 Generate a page from a Ruby shape file (lambda):
 
 ```bash

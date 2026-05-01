@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Extended `bin/generate_native_image` to accept `.jpg` and `.jpeg` input.
 - Extended YAML `native_image` objects so YAML pages and YAML books can embed JPEGs as native tablet image items.
 - Added `noto_lines_sans`, `noto_lines_sans_filled`, `noto_lines_sans_italic`, and `noto_lines_sans_italic_filled` font families with generated sample pages.
+- Added reusable YAML object definitions with `id`/`use`, define-only objects, `vars`, interpolation, and `loop` expansion.
 
 ### Changed
 

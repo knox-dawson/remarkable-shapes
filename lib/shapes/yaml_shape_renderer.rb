@@ -92,14 +92,280 @@ module Remarkable
       objects = config.fetch("objects", [])
       raise ArgumentError, "objects must be an array" unless objects.is_a?(Array)
 
+      variables = resolve_variables(stringify_keys(config.fetch("vars", {})))
+      definitions = collect_object_definitions(objects, variables)
       draw_grid_borders(page, layout) unless layout[:grid] && layout[:grid][:annotations]
       used_cells = {}
-      objects.each do |object|
-        render_object(page, stringify_keys(object), layout, base_dir:, used_cells:)
+      expand_objects(objects, definitions:, variables:).each do |object|
+        render_object(page, object, layout, base_dir:, used_cells:)
       end
       draw_grid_annotations(page, layout)
 
       layout
+    end
+
+    # Builds a table of named YAML object templates.
+    #
+    # @return [Hash]
+    def collect_object_definitions(objects, variables)
+      objects.each_with_object({}) do |object, definitions|
+        object = stringify_keys(object)
+        next unless object.key?("id")
+
+        object = interpolate_value(object, variables)
+        definitions[object["id"].to_s] = object.reject { |key, _value| %w[id render define].include?(key) }
+      end
+    end
+
+    # Expands reusable and looped YAML objects into drawable objects.
+    #
+    # @return [Array<Hash>]
+    def expand_objects(objects, definitions:, variables:)
+      objects.flat_map do |object|
+        expand_object(stringify_keys(object), definitions:, variables:)
+      end
+    end
+
+    # Expands one object, applying loops before object template substitution.
+    #
+    # @return [Array<Hash>]
+    def expand_object(object, definitions:, variables:)
+      return expand_loop_object(object, definitions:, variables:) if object.key?("loop")
+
+      object = interpolate_value(object, variables)
+      if object.key?("use")
+        template_id = object.fetch("use").to_s
+        template = definitions.fetch(template_id) { raise ArgumentError, "unknown object id: #{template_id}" }
+        object = deep_merge(template, object.reject { |key, _value| key == "use" })
+      end
+      return [] if definition_only_object?(object)
+
+      [object.reject { |key, _value| %w[id render define].include?(key) }]
+    end
+
+    # Expands a loop object. Supports one or more variables.
+    #
+    # @return [Array<Hash>]
+    def expand_loop_object(object, definitions:, variables:)
+      loop_specs = parse_loop_specs(object.fetch("loop"))
+      body = object.reject { |key, _value| key == "loop" }
+
+      loop_contexts(loop_specs).flat_map do |loop_variables|
+        expand_object(body, definitions:, variables: variables.merge(loop_variables))
+      end
+    end
+
+    # Returns whether an object should only define a reusable template.
+    #
+    # @return [Boolean]
+    def definition_only_object?(object)
+      object["render"] == false || object["define"] == true || object["type"].to_s == "define"
+    end
+
+    # Parses loop declarations into normalized specs.
+    #
+    # @return [Array<Hash>]
+    def parse_loop_specs(value)
+      case value
+      when Integer
+        [{ "var" => "index", "from" => 0, "count" => value }]
+      when Hash
+        loop = stringify_keys(value)
+        if loop.key?("var") || loop.key?("count") || loop.key?("to") || loop.key?("values")
+          [loop]
+        else
+          loop.map do |var, spec|
+            stringify_keys(spec).merge("var" => var)
+          end
+        end
+      else
+        raise ArgumentError, "loop must be an integer or hash"
+      end
+    end
+
+    # Builds all variable combinations for loop specs.
+    #
+    # @return [Array<Hash>]
+    def loop_contexts(loop_specs)
+      loop_specs.reduce([{}]) do |contexts, spec|
+        var = spec.fetch("var") { raise ArgumentError, "loop var is required" }.to_s
+        values = loop_values_for(spec)
+        contexts.flat_map do |context|
+          values.each_with_index.map do |value, index|
+            context.merge(var => value, "#{var}_index" => index)
+          end
+        end
+      end
+    end
+
+    # Returns values for one loop spec.
+    #
+    # @return [Array<Integer, Float, String>]
+    def loop_values_for(spec)
+      return spec["values"] if spec["values"].is_a?(Array)
+
+      from = spec.key?("from") ? Integer(spec["from"]) : 0
+      step = spec.key?("step") ? Integer(spec["step"]) : 1
+      raise ArgumentError, "loop step must not be zero" if step.zero?
+
+      if spec.key?("count")
+        count = Integer(spec["count"])
+        raise ArgumentError, "loop count must be non-negative" if count.negative?
+
+        return Array.new(count) { |index| from + (index * step) }
+      end
+
+      to = Integer(spec.fetch("to") { raise ArgumentError, "loop count, to, or values is required" })
+      values = []
+      current = from
+      if step.positive?
+        while current <= to
+          values << current
+          current += step
+        end
+      else
+        while current >= to
+          values << current
+          current += step
+        end
+      end
+      values
+    rescue ArgumentError, TypeError
+      raise ArgumentError, "loop bounds must be integers"
+    end
+
+    # Resolves top-level variables, allowing later variables to refer to earlier ones.
+    #
+    # @return [Hash]
+    def resolve_variables(values)
+      values.each_with_object({}) do |(key, value), variables|
+        variables[key.to_s] = interpolate_value(value, variables)
+      end
+    end
+
+    # Recursively interpolates ${expr} placeholders.
+    #
+    # @return [Object]
+    def interpolate_value(value, variables)
+      case value
+      when Hash
+        value.each_with_object({}) { |(key, inner), result| result[key] = interpolate_value(inner, variables) }
+      when Array
+        value.map { |inner| interpolate_value(inner, variables) }
+      when String
+        interpolate_string(value, variables)
+      else
+        value
+      end
+    end
+
+    # Interpolates one string, preserving numeric results for pure expressions.
+    #
+    # @return [String, Float, Integer]
+    def interpolate_string(value, variables)
+      match = value.match(/\A\$\{([^}]+)\}\z/)
+      return variables.fetch(match[1].strip) if match && variables.key?(match[1].strip)
+      return normalize_number(evaluate_expression(match[1], variables)) if match
+
+      value.gsub(/\$\{([^}]+)\}/) do
+        expression = Regexp.last_match(1).strip
+        next variables.fetch(expression).to_s if variables.key?(expression)
+
+        normalize_number(evaluate_expression(expression, variables)).to_s
+      end
+    end
+
+    # Parses and evaluates a small arithmetic expression language.
+    #
+    # @return [Float, Integer]
+    def evaluate_expression(expression, variables)
+      ExpressionParser.new(expression, variables).parse
+    end
+
+    # Returns integers without a floating suffix when exact.
+    #
+    # @return [Float, Integer]
+    def normalize_number(value)
+      value.to_f == value.to_i ? value.to_i : value
+    end
+
+    # Deep merges hashes, replacing non-hash values from the right side.
+    #
+    # @return [Hash]
+    def deep_merge(left, right)
+      left.merge(right) do |_key, old_value, new_value|
+        old_value.is_a?(Hash) && new_value.is_a?(Hash) ? deep_merge(old_value, new_value) : new_value
+      end
+    end
+
+    # Small arithmetic parser for YAML interpolation.
+    class ExpressionParser
+      def initialize(expression, variables)
+        @tokens = expression.to_s.scan(/[A-Za-z_][A-Za-z0-9_]*|\d+(?:\.\d+)?|[()+\-*\/]/)
+        @position = 0
+        @variables = variables
+      end
+
+      def parse
+        value = parse_expression
+        raise ArgumentError, "unexpected token in expression" unless current_token.nil?
+
+        value
+      end
+
+      private
+
+      def parse_expression
+        value = parse_term
+        while %w[+ -].include?(current_token)
+          operator = consume
+          right = parse_term
+          value = operator == "+" ? value + right : value - right
+        end
+        value
+      end
+
+      def parse_term
+        value = parse_factor
+        while %w[* /].include?(current_token)
+          operator = consume
+          right = parse_factor
+          value = operator == "*" ? value * right : value / right
+        end
+        value
+      end
+
+      def parse_factor
+        token = consume
+        raise ArgumentError, "empty expression" if token.nil?
+
+        case token
+        when "("
+          value = parse_expression
+          raise ArgumentError, "missing closing parenthesis" unless consume == ")"
+
+          value
+        when "-"
+          -parse_factor
+        when /\A\d/
+          Float(token)
+        when /\A[A-Za-z_]/
+          value = @variables.fetch(token) { raise ArgumentError, "unknown variable in expression: #{token}" }
+          Float(value)
+        else
+          raise ArgumentError, "unexpected token in expression: #{token}"
+        end
+      end
+
+      def current_token
+        @tokens[@position]
+      end
+
+      def consume
+        token = current_token
+        @position += 1
+        token
+      end
     end
 
     # Resolves the physical tablet profile from canvas settings.

@@ -1,0 +1,98 @@
+canvas:
+  tablet: rm2
+
+vars:
+  x: 200
+  y: 200
+  width: 870
+  height: 457.48988
+  stripe_height: 35.191529
+  canton_width: 348
+  canton_height: 246.340704
+  star_radius: 13.724696
+  star_size: 27.449392
+  dx: 58.0029
+  dy: 49.25566
+  outer_start_x: 228.9971
+  outer_start_y: 224.62225
+  inner_start_x: 258.0029
+  inner_start_y: 249.25566
+
+objects:
+  - type: rectangle_outline
+    x: 0
+    y: 0
+    width: 1404
+    height: 1872
+    stroke_width: 4
+    color: black
+
+  - type: rectangle_outline
+    x: ${x}
+    y: ${y}
+    width: ${width}
+    height: ${height}
+    stroke_width: 5
+    color: grey
+
+  - id: stripe
+    define: true
+    type: rectangle_fill
+    x: ${x}
+    width: ${width}
+    height: ${stripe_height}
+    brush: ballpoint_2
+
+  - use: stripe
+    loop:
+      var: stripe_color
+      values:
+        - red
+        - white
+        - red
+        - white
+        - red
+        - white
+        - red
+        - white
+        - red
+        - white
+        - red
+        - white
+        - red
+    y: ${y + stripe_color_index * stripe_height}
+    color: ${stripe_color}
+
+  - type: rectangle_fill
+    x: ${x}
+    y: ${y}
+    width: ${canton_width}
+    height: ${canton_height}
+    color: blue
+    brush: ballpoint_2
+
+  - id: star
+    define: true
+    type: star
+    width: ${star_size}
+    height: ${star_size}
+    point_count: 5
+    color: white
+
+  - use: star
+    loop:
+      row:
+        count: 5
+      col:
+        count: 6
+    x: ${outer_start_x + col * dx - star_radius}
+    y: ${outer_start_y + row * dy - star_radius}
+
+  - use: star
+    loop:
+      row:
+        count: 4
+      col:
+        count: 5
+    x: ${inner_start_x + col * dx - star_radius}
+    y: ${inner_start_y + row * dy - star_radius}
