@@ -49,5 +49,5 @@ objects:
     y: 310
     width: 260
     height: 170
-    pixel_gap: 0.0
+    pixel_gap: -0.3
 

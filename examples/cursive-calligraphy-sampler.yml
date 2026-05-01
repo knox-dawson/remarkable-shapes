@@ -1,0 +1,157 @@
+canvas:
+  width: 1200
+  height: 1450
+  placement: top
+
+objects:
+  - type: text
+    x: 70
+    y: 40
+    width: 1060
+    height: 80
+    text: "Cursive line font with calligraphy direction"
+    size: 38
+    stroke_width: 3
+    color: black
+
+  - type: text
+    x: 80
+    y: 150
+    width: 1040
+    height: 120
+    text: "remarkable shapes"
+    size: 82
+    stroke_width: 7
+    font: line_font_cursive
+    brush: calligraphy
+    direction: auto
+    speed: 28
+    pressure: 210
+    color: black
+
+  - type: text
+    x: 80
+    y: 305
+    width: 1040
+    height: 90
+    text: "same font, fineliner"
+    size: 62
+    stroke_width: 4
+    font: line_font_cursive
+    brush: fineliner_2
+    direction: auto
+    pressure: 255
+    color: grey
+
+  - type: text
+    x: 80
+    y: 440
+    width: 1040
+    height: 120
+    text: "slow heavy downstrokes"
+    size: 68
+    stroke_width: 8
+    font: line_font_cursive
+    brush: calligraphy
+    direction: auto
+    speed: 12
+    pressure: 245
+    color: blue
+
+  - type: text
+    x: 80
+    y: 610
+    width: 1040
+    height: 120
+    text: "fast light strokes"
+    size: 78
+    stroke_width: 5
+    font: line_font_cursive
+    brush: calligraphy
+    direction: auto
+    speed: 160
+    pressure: 95
+    color: red
+
+  - type: text
+    x: 80
+    y: 790
+    width: 1040
+    height: 80
+    text: "manual loop path, auto direction"
+    size: 28
+    stroke_width: 3
+    color: grey
+
+  - type: line
+    stroke_width: 18
+    direction: auto
+    brush: calligraphy
+    color: black
+    speed: 26
+    pressure: 220
+    points:
+      - [120, 930, 8]
+      - [170, 840, 18]
+      - [240, 900, 22]
+      - [185, 990, 16]
+      - [120, 930, 8]
+      - [300, 920, 12]
+      - [355, 845, 22]
+      - [420, 920, 24]
+      - [360, 1000, 16]
+      - [300, 920, 10]
+      - [500, 930, 12]
+      - [560, 850, 24]
+      - [640, 930, 26]
+      - [575, 1005, 16]
+      - [500, 930, 10]
+      - [720, 930, 12]
+      - [780, 840, 24]
+      - [860, 930, 26]
+      - [800, 1010, 18]
+      - [720, 930, 10]
+      - [930, 940, 12]
+      - [1015, 870, 20]
+      - [1090, 940, 14]
+
+  - type: text
+    x: 80
+    y: 1115
+    width: 1040
+    height: 80
+    text: "same loop path, fixed direction"
+    size: 28
+    stroke_width: 3
+    color: grey
+
+  - type: line
+    stroke_width: 18
+    brush: calligraphy
+    color: magenta
+    speed: 26
+    pressure: 220
+    points:
+      - [120, 1255, 8, 26, 0, 220]
+      - [170, 1165, 18, 26, 0, 220]
+      - [240, 1225, 22, 26, 0, 220]
+      - [185, 1315, 16, 26, 0, 220]
+      - [120, 1255, 8, 26, 0, 220]
+      - [300, 1245, 12, 26, 0, 220]
+      - [355, 1170, 22, 26, 0, 220]
+      - [420, 1245, 24, 26, 0, 220]
+      - [360, 1325, 16, 26, 0, 220]
+      - [300, 1245, 10, 26, 0, 220]
+      - [500, 1255, 12, 26, 0, 220]
+      - [560, 1175, 24, 26, 0, 220]
+      - [640, 1255, 26, 26, 0, 220]
+      - [575, 1330, 16, 26, 0, 220]
+      - [500, 1255, 10, 26, 0, 220]
+      - [720, 1255, 12, 26, 0, 220]
+      - [780, 1165, 24, 26, 0, 220]
+      - [860, 1255, 26, 26, 0, 220]
+      - [800, 1335, 18, 26, 0, 220]
+      - [720, 1255, 10, 26, 0, 220]
+      - [930, 1265, 12, 26, 0, 220]
+      - [1015, 1195, 20, 26, 0, 220]
+      - [1090, 1265, 14, 26, 0, 220]

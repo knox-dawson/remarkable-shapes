@@ -23,14 +23,14 @@ objects:
     y: 250
     width: 560
     height: 500
-    pixel_gap: -0.10
+    pixel_gap: -0.30
 
   - type: text
     x: 100
     y: 775
     width: 960
     height: 140
-    text: "Using type: image with pixel_gap: -0.10"
+    text: "Using type: image with pixel_gap: -0.30"
     size: 42
     stroke_width: 4
     align: center

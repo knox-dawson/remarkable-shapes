@@ -64,14 +64,14 @@ module Remarkable
     # @param brush [Integer]
     # @return [Float] rendered width
     def draw_text(page, text, x, baseline_y, size: DEFAULT_SIZE, stroke_width: DEFAULT_STROKE_WIDTH,
-                  font: DEFAULT_FONT,
+                  font: DEFAULT_FONT, speed: nil, direction: nil, pressure: nil,
                   rgba: Shapes::DEFAULT_RGBA, color: Shapes::DEFAULT_COLOR, brush: Shapes::DEFAULT_BRUSH)
       cursor_x = x.to_f
       chars = text.each_char.to_a
       chars.each_with_index do |char, index|
         cursor_x += draw_character(
           page, char, cursor_x, baseline_y,
-          size:, stroke_width:, font:, rgba:, color:, brush:
+          size:, stroke_width:, font:, speed:, direction:, pressure:, rgba:, color:, brush:
         )
         next_char = chars[index + 1]
         cursor_x += pair_spacing_adjustment(char, next_char, size:, font:) unless next_char.nil?
@@ -129,7 +129,7 @@ module Remarkable
     # Draws one character and returns its advance width.
     #
     # @return [Float]
-    def draw_character(page, char, x, baseline_y, size:, stroke_width:, font:, rgba:, color:, brush:)
+    def draw_character(page, char, x, baseline_y, size:, stroke_width:, font:, speed:, direction:, pressure:, rgba:, color:, brush:)
       glyph = glyph_for(char, font:)
       family = effective_font(font)
       return fallback_advance(size, mono: mono_font?(family), font: family) if glyph.nil?
@@ -140,7 +140,7 @@ module Remarkable
         points = stroke.map do |px, py|
           [x + x_offset + (px.to_f * size.to_f), baseline_y + (py.to_f * size.to_f)]
         end
-        Shapes.draw_polyline(page, points, stroke_width, rgba:, color:, brush:) if points.length >= 2
+        Shapes.draw_polyline(page, points, stroke_width, speed:, direction:, pressure:, rgba:, color:, brush:) if points.length >= 2
       end
 
       mono_font?(family) ? mono_advance(size, font: family) : glyph_width

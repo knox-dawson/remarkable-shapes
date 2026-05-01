@@ -1,0 +1,232 @@
+canvas:
+  width: 1200
+  height: 1600
+  placement: top
+
+objects:
+  - type: text
+    x: 60
+    y: 40
+    width: 1080
+    height: 80
+    text: "Line dynamics: width, pressure, speed, direction"
+    size: 38
+    stroke_width: 3
+    color: black
+
+  - type: text
+    x: 70
+    y: 150
+    width: 280
+    height: 36
+    text: "fineliner taper"
+    size: 24
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    x1: 360
+    y1: 170
+    x2: 1120
+    y2: 170
+    stroke_width: 16
+    start_width: 2
+    end_width: 28
+    direction: auto
+    brush: fineliner_2
+    color: black
+
+  - type: text
+    x: 70
+    y: 260
+    width: 280
+    height: 36
+    text: "ballpoint taper points"
+    size: 24
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    stroke_width: 16
+    direction: auto
+    brush: ballpoint_2
+    color: blue
+    points:
+      - [360, 285, 2]
+      - [436, 285, 5]
+      - [512, 285, 8]
+      - [588, 285, 10]
+      - [664, 285, 13]
+      - [740, 285, 16]
+      - [816, 285, 18]
+      - [892, 285, 21]
+      - [968, 285, 24]
+      - [1044, 285, 26]
+      - [1120, 285, 28]
+
+  - type: text
+    x: 70
+    y: 400
+    width: 280
+    height: 36
+    text: "ballpoint pressure"
+    size: 24
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    stroke_width: 8
+    direction: auto
+    brush: ballpoint_2
+    color: blue
+    points:
+      - { x: 360, y: 430, width: 4, speed: 20, pressure: 30 }
+      - { x: 520, y: 390, width: 6, speed: 25, pressure: 80 }
+      - { x: 700, y: 465, width: 8, speed: 30, pressure: 150 }
+      - { x: 900, y: 390, width: 10, speed: 35, pressure: 220 }
+      - { x: 1120, y: 430, width: 12, speed: 40, pressure: 255 }
+
+  - type: text
+    x: 70
+    y: 555
+    width: 280
+    height: 36
+    text: "pencil speed"
+    size: 24
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    stroke_width: 10
+    direction: auto
+    brush: pencil_2
+    color: black
+    pressure: 210
+    points:
+      - [360, 585, 12, 5]
+      - [500, 540, 12, 20]
+      - [640, 625, 12, 55]
+      - [800, 545, 12, 110]
+      - [960, 625, 12, 180]
+      - [1120, 585, 12, 255]
+
+  - type: text
+    x: 70
+    y: 720
+    width: 280
+    height: 36
+    text: "shader pressure"
+    size: 24
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    stroke_width: 18
+    direction: auto
+    brush: shader
+    rgba: "0x88458CFF"
+    speed: 45
+    points:
+      - { x: 360, y: 750, width: 10, pressure: 40 }
+      - { x: 540, y: 710, width: 14, pressure: 110 }
+      - { x: 720, y: 785, width: 20, pressure: 180 }
+      - { x: 920, y: 710, width: 26, pressure: 230 }
+      - { x: 1120, y: 750, width: 30, pressure: 255 }
+
+  - type: text
+    x: 70
+    y: 890
+    width: 280
+    height: 36
+    text: "explicit direction"
+    size: 24
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    stroke_width: 18
+    brush: calligraphy
+    color: red
+    pressure: 210
+    speed: 35
+    points:
+      - [360, 920, 16, 35, 0, 210]
+      - [520, 870, 16, 35, 32, 210]
+      - [700, 960, 16, 35, 64, 210]
+      - [880, 870, 16, 35, 128, 210]
+      - [1120, 920, 16, 35, 192, 210]
+
+  - type: text
+    x: 70
+    y: 1060
+    width: 280
+    height: 36
+    text: "marker width map"
+    size: 24
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    stroke_width: 20
+    direction: auto
+    brush: marker_2
+    color: green
+    speed: 20
+    pressure: 255
+    points:
+      - [360, 1090, 4]
+      - [460, 1040, 10]
+      - [560, 1140, 18]
+      - [660, 1040, 26]
+      - [760, 1140, 34]
+      - [880, 1040, 20]
+      - [1000, 1140, 12]
+      - [1120, 1090, 4]
+
+  - type: text
+    x: 70
+    y: 1245
+    width: 280
+    height: 36
+    text: "highlighter flat"
+    size: 24
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    x1: 360
+    y1: 1275
+    x2: 1120
+    y2: 1275
+    stroke_width: 34
+    start_width: 8
+    end_width: 34
+    direction: auto
+    brush: highlighter_2
+    rgba: "0x88FFE066"
+
+  - type: text
+    x: 70
+    y: 1400
+    width: 280
+    height: 36
+    text: "direction change"
+    size: 24
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    stroke_width: 12
+    direction: auto
+    brush: pencil_2
+    color: black
+    speed: 45
+    pressure: 220
+    points:
+      - [360, 1460, 8]
+      - [500, 1380, 12]
+      - [640, 1460, 16]
+      - [780, 1380, 20]
+      - [920, 1460, 16]
+      - [1060, 1380, 12]
+      - [1120, 1460, 8]

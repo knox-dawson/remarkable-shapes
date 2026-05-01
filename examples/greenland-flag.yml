@@ -24,6 +24,7 @@ objects:
     width: 1000
     height: 333.33333
     color: white
+    brush: ballpoint_2
 
   - type: rectangle_fill
     x: 200
@@ -31,6 +32,7 @@ objects:
     width: 1000
     height: 333.33334
     color: red
+    brush: ballpoint_2
 
   - type: semicircle_fill
     x: 311.11111
@@ -39,6 +41,7 @@ objects:
     height: 444.44444
     color: red
     direction: up
+    brush: ballpoint_2
 
   - type: semicircle_fill
     x: 311.11111
@@ -47,3 +50,4 @@ objects:
     height: 444.44444
     color: white
     direction: down
+    brush: ballpoint_2

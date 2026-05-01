@@ -936,6 +936,65 @@ module Remarkable
       raise ArgumentError, "points must be numeric coordinate pairs"
     end
 
+    # Resolves line points, preserving optional per-point stroke metadata.
+    #
+    # @return [Array<Array, Hash>]
+    def resolve_line_points(layout, values)
+      raise ArgumentError, "points must be an array" unless values.is_a?(Array)
+
+      values.map do |value|
+        case value
+        when Array
+          raise ArgumentError, "each line point must have at least two values" if value.length < 2
+
+          point = [map_x(layout, Float(value[0])), map_y(layout, Float(value[1]))]
+          point << scale_length(layout, Float(value[2])) if value.length >= 3
+          point << Float(value[3]) if value.length >= 4
+          point << value[4] if value.length >= 5
+          point << Float(value[5]) if value.length >= 6
+          point
+        when Hash
+          {
+            "x" => map_x(layout, fetch_number(value, "x")),
+            "y" => map_y(layout, fetch_number(value, "y")),
+            "width" => value.key?("width") ? scale_length(layout, fetch_number(value, "width")) : nil,
+            "speed" => value.key?("speed") ? fetch_number(value, "speed") : nil,
+            "direction" => value["direction"],
+            "pressure" => value.key?("pressure") ? fetch_number(value, "pressure") : nil
+          }.compact
+        else
+          raise ArgumentError, "each line point must be an array or hash"
+        end
+      end
+    rescue ArgumentError, TypeError
+      raise ArgumentError, "line points must contain numeric coordinates and metadata"
+    end
+
+    # Builds optional line point metadata from a YAML object.
+    #
+    # @return [Hash]
+    def line_point_options_for(object, layout: nil)
+      options = {}
+      options[:speed] = fetch_number(object, "speed") if object.key?("speed")
+      options[:direction] = object["direction"] if object.key?("direction")
+      options[:pressure] = fetch_number(object, "pressure") if object.key?("pressure")
+      return options if layout.nil?
+
+      if object.key?("start_width")
+        options[:start_width] = scale_length(layout, fetch_number(object, "start_width"))
+      end
+      if object.key?("end_width")
+        options[:end_width] = scale_length(layout, fetch_number(object, "end_width"))
+      end
+      options[:start_speed] = fetch_number(object, "start_speed") if object.key?("start_speed")
+      options[:end_speed] = fetch_number(object, "end_speed") if object.key?("end_speed")
+      options[:start_direction] = object["start_direction"] if object.key?("start_direction")
+      options[:end_direction] = object["end_direction"] if object.key?("end_direction")
+      options[:start_pressure] = fetch_number(object, "start_pressure") if object.key?("start_pressure")
+      options[:end_pressure] = fetch_number(object, "end_pressure") if object.key?("end_pressure")
+      options
+    end
+
     # Maps a local x coordinate into page coordinates.
     #
     # @return [Float]
@@ -1235,12 +1294,19 @@ module Remarkable
     #     rgba: "0xFF444444"
     # @return [void]
     def draw_line_object(page, object, layout, style:, brush:)
+      if object.key?("points")
+        points = resolve_line_points(layout, object["points"])
+        stroke_width = scale_length(layout, fetch_number(object, "stroke_width", DEFAULT_STROKE_WIDTH))
+        Shapes.draw_polyline(page, points, stroke_width, brush:, **line_point_options_for(object), **style)
+        return
+      end
+
       x1 = map_x(layout, fetch_number(object, "x1"))
       y1 = map_y(layout, fetch_number(object, "y1"))
       x2 = map_x(layout, fetch_number(object, "x2"))
       y2 = map_y(layout, fetch_number(object, "y2"))
       width = scale_length(layout, fetch_number(object, "stroke_width", DEFAULT_STROKE_WIDTH))
-      Shapes.draw_line(page, x1, y1, x2, y2, width, brush:, **style)
+      Shapes.draw_line(page, x1, y1, x2, y2, width, brush:, **line_point_options_for(object, layout:), **style)
     end
 
     # Draws a filled semicircle object.
@@ -1713,6 +1779,7 @@ module Remarkable
       shadow_dy = shadow ? scale_length(layout, fetch_number(object, "shadow_dy", 0.0)) : 0.0
       shadow_style = shadow ? shadow_style_options_for(object) : nil
       shadow_brush = shadow && object.key?("shadow_brush") ? brush_for(object["shadow_brush"]) : brush
+      point_options = line_point_options_for(object)
 
       lines = if wrap
                 wrap_text_lines(text, box[:width] - shadow_dx.abs, size:, font: font_name)
@@ -1763,6 +1830,7 @@ module Remarkable
             shadow_dx:,
             shadow_dy:,
             shadow_brush:,
+            **point_options,
             **shadow_style,
             brush:,
             **style
@@ -1776,6 +1844,7 @@ module Remarkable
             size:,
             stroke_width:,
             font: font_name,
+            **point_options,
             brush:,
             **style
           )

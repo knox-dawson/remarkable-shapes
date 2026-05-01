@@ -1,0 +1,289 @@
+canvas:
+  width: 1200
+  height: 1650
+  placement: top
+
+objects:
+  - type: text
+    x: 60
+    y: 35
+    width: 1080
+    height: 70
+    text: "Calligraphy drills: controlled stroke direction"
+    size: 36
+    stroke_width: 3
+    color: black
+
+  - type: text
+    x: 70
+    y: 130
+    width: 1060
+    height: 45
+    text: "Same width, direction: auto. Horizontal should read narrow; vertical should read broad."
+    size: 22
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    x1: 110
+    y1: 230
+    x2: 510
+    y2: 230
+    stroke_width: 28
+    direction: auto
+    speed: 25
+    pressure: 230
+    brush: calligraphy
+    color: black
+
+  - type: line
+    x1: 700
+    y1: 150
+    x2: 700
+    y2: 390
+    stroke_width: 28
+    direction: auto
+    speed: 25
+    pressure: 230
+    brush: calligraphy
+    color: black
+
+  - type: line
+    x1: 835
+    y1: 390
+    x2: 835
+    y2: 150
+    stroke_width: 28
+    direction: auto
+    speed: 25
+    pressure: 230
+    brush: calligraphy
+    color: black
+
+  - type: line
+    x1: 930
+    y1: 230
+    x2: 1130
+    y2: 230
+    stroke_width: 28
+    direction: auto
+    speed: 25
+    pressure: 230
+    brush: calligraphy
+    color: black
+
+  - type: text
+    x: 70
+    y: 465
+    width: 1060
+    height: 45
+    text: "Angle fan: same stroke_width and pressure, only movement angle changes."
+    size: 22
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    x1: 130
+    y1: 605
+    x2: 380
+    y2: 605
+    stroke_width: 26
+    direction: auto
+    speed: 25
+    pressure: 230
+    brush: calligraphy
+    color: blue
+
+  - type: line
+    x1: 460
+    y1: 690
+    x2: 660
+    y2: 520
+    stroke_width: 26
+    direction: auto
+    speed: 25
+    pressure: 230
+    brush: calligraphy
+    color: blue
+
+  - type: line
+    x1: 760
+    y1: 720
+    x2: 760
+    y2: 490
+    stroke_width: 26
+    direction: auto
+    speed: 25
+    pressure: 230
+    brush: calligraphy
+    color: blue
+
+  - type: line
+    x1: 860
+    y1: 520
+    x2: 1060
+    y2: 690
+    stroke_width: 26
+    direction: auto
+    speed: 25
+    pressure: 230
+    brush: calligraphy
+    color: blue
+
+  - type: text
+    x: 70
+    y: 800
+    width: 1060
+    height: 45
+    text: "Ovals with auto direction: direction follows tangent around each loop."
+    size: 22
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    stroke_width: 22
+    direction: auto
+    speed: 22
+    pressure: 235
+    brush: calligraphy
+    color: black
+    points:
+      - [210, 970, 10]
+      - [155, 900, 22]
+      - [210, 830, 28]
+      - [285, 900, 22]
+      - [210, 970, 10]
+
+  - type: line
+    stroke_width: 22
+    direction: auto
+    speed: 22
+    pressure: 235
+    brush: calligraphy
+    color: black
+    points:
+      - [440, 970, 10]
+      - [385, 900, 22]
+      - [440, 830, 28]
+      - [515, 900, 22]
+      - [440, 970, 10]
+      - [610, 955, 12]
+      - [655, 875, 24]
+      - [735, 930, 26]
+      - [665, 1010, 16]
+      - [610, 955, 12]
+
+  - type: line
+    stroke_width: 22
+    direction: auto
+    speed: 22
+    pressure: 235
+    brush: calligraphy
+    color: black
+    points:
+      - [870, 970, 10]
+      - [810, 910, 20]
+      - [850, 840, 26]
+      - [930, 825, 28]
+      - [990, 900, 20]
+      - [940, 980, 14]
+      - [870, 970, 10]
+
+  - type: text
+    x: 70
+    y: 1080
+    width: 1060
+    height: 45
+    text: "Auto direction vs fixed direction on same path."
+    size: 22
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    stroke_width: 24
+    direction: auto
+    speed: 25
+    pressure: 230
+    brush: calligraphy
+    color: green
+    points:
+      - [120, 1220, 8]
+      - [210, 1150, 18]
+      - [300, 1220, 26]
+      - [390, 1150, 18]
+      - [480, 1220, 8]
+
+  - type: line
+    stroke_width: 24
+    speed: 25
+    pressure: 230
+    brush: calligraphy
+    color: magenta
+    points:
+      - [650, 1220, 8, 25, 0, 230]
+      - [740, 1150, 18, 25, 0, 230]
+      - [830, 1220, 26, 25, 0, 230]
+      - [920, 1150, 18, 25, 0, 230]
+      - [1010, 1220, 8, 25, 0, 230]
+
+  - type: text
+    x: 165
+    y: 1265
+    width: 220
+    height: 35
+    text: "auto"
+    size: 22
+    stroke_width: 2
+    color: green
+
+  - type: text
+    x: 720
+    y: 1265
+    width: 220
+    height: 35
+    text: "fixed direction 0"
+    size: 22
+    stroke_width: 2
+    color: magenta
+
+  - type: text
+    x: 70
+    y: 1360
+    width: 1060
+    height: 45
+    text: "Hand-authored cursive-like path, not font outlines."
+    size: 22
+    stroke_width: 2
+    color: grey
+
+  - type: line
+    stroke_width: 20
+    direction: auto
+    speed: 24
+    pressure: 230
+    brush: calligraphy
+    color: black
+    points:
+      - [110, 1515, 8]
+      - [155, 1425, 20]
+      - [230, 1490, 26]
+      - [165, 1575, 16]
+      - [110, 1515, 8]
+      - [290, 1505, 10]
+      - [350, 1425, 24]
+      - [430, 1505, 26]
+      - [360, 1585, 16]
+      - [290, 1505, 10]
+      - [500, 1515, 10]
+      - [555, 1435, 22]
+      - [630, 1515, 26]
+      - [570, 1585, 16]
+      - [500, 1515, 10]
+      - [720, 1515, 10]
+      - [790, 1420, 24]
+      - [885, 1510, 28]
+      - [810, 1590, 18]
+      - [720, 1515, 10]
+      - [960, 1515, 10]
+      - [1030, 1450, 18]
+      - [1110, 1510, 12]

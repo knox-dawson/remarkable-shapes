@@ -112,6 +112,62 @@ RSpec.describe Remarkable::YamlShapeRenderer do
     expect(page.lines.map(&:brush_type).uniq).to eq([Remarkable::RmPage::Pen::FINELINER_2])
   end
 
+  it "renders line metadata fields from yaml" do
+    config = {
+      "canvas" => { "width" => 200, "height" => 200, "placement" => "top-left" },
+      "objects" => [
+        {
+          "type" => "line",
+          "x1" => 10,
+          "y1" => 20,
+          "x2" => 10,
+          "y2" => 120,
+          "stroke_width" => 8,
+          "start_width" => 2,
+          "end_width" => 12,
+          "speed" => 40,
+          "direction" => "auto",
+          "start_pressure" => 64,
+          "end_pressure" => 128
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    line = page.lines.first
+    expect(line.points.map(&:width)).to eq([2.0, 12.0])
+    expect(line.points.map(&:speed)).to eq([40.0, 40.0])
+    expect(line.points.map(&:direction)).to eq([64, 64])
+    expect(line.points.map(&:pressure)).to eq([64 / 255.0, 128 / 255.0])
+  end
+
+  it "renders polyline points with per-point metadata from yaml line objects" do
+    config = {
+      "canvas" => { "width" => 200, "height" => 200, "placement" => "top-left" },
+      "objects" => [
+        {
+          "type" => "line",
+          "stroke_width" => 4,
+          "direction" => "auto",
+          "points" => [
+            { "x" => 10, "y" => 10, "width" => 2, "pressure" => 32 },
+            [60, 10, 4, 20, "auto", 64],
+            [60, 60, 6]
+          ]
+        }
+      ]
+    }
+
+    described_class.render(page, config)
+
+    line = page.lines.first
+    expect(line.points.map(&:width)).to eq([2.0, 4.0, 6.0])
+    expect(line.points.map(&:speed)).to eq([0.1, 20.0, 0.1])
+    expect(line.points.map(&:direction)).to eq([0, 32, 64])
+    expect(line.points.map(&:pressure)).to eq([32 / 255.0, 64 / 255.0, 1.0])
+  end
+
   it "renders image objects relative to the yaml file location" do
     Dir.mktmpdir do |dir|
       png_path = File.join(dir, "tiny.png")

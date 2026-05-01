@@ -77,6 +77,45 @@ RSpec.describe Remarkable::Shapes do
     expect(page.lines).to be_empty
   end
 
+  it "stores optional line point metadata and tapered endpoint widths" do
+    described_class.draw_line(
+      page,
+      0, 0, 0, 10, 8,
+      start_width: 2,
+      end_width: 12,
+      speed: 40,
+      direction: :auto,
+      start_pressure: 64,
+      end_pressure: 128
+    )
+
+    line = page.lines.first
+    expect(line.points.map(&:width)).to eq([2.0, 12.0])
+    expect(line.points.map(&:speed)).to eq([40.0, 40.0])
+    expect(line.points.map(&:direction)).to eq([64, 64])
+    expect(line.points.map(&:pressure)).to eq([64 / 255.0, 128 / 255.0])
+  end
+
+  it "accepts per-point metadata in polylines" do
+    described_class.draw_polyline(
+      page,
+      [
+        { x: 0, y: 0, width: 2, speed: 10, pressure: 32 },
+        [10, 0, 4, 20, "auto", 64],
+        [10, 10, 6]
+      ],
+      3,
+      direction: :auto,
+      pressure: 1.0
+    )
+
+    line = page.lines.first
+    expect(line.points.map(&:width)).to eq([2.0, 4.0, 6.0])
+    expect(line.points.map(&:speed)).to eq([10.0, 20.0, 0.1])
+    expect(line.points.map(&:direction)).to eq([0, 32, 64])
+    expect(line.points.map(&:pressure)).to eq([32 / 255.0, 64 / 255.0, 1.0])
+  end
+
   it "builds an antialiased rgba grid for filled circles" do
     grid = described_class.circle_rgba_grid(7, rgba: 0xFFFF0000, antialias_samples: 4)
 

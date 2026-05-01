@@ -55,26 +55,74 @@ module Remarkable
     # @example Ruby lambda
     #   Remarkable::Shapes.draw_line(page, 140, 240, 1240, 240, 8, rgba: 0xFF444444)
     # @return [void]
-    def draw_line(page, x1, y1, x2, y2, width, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
+    def draw_line(page, x1, y1, x2, y2, width, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH,
+                  start_width: nil, end_width: nil, speed: nil, start_speed: nil, end_speed: nil,
+                  direction: nil, start_direction: nil, end_direction: nil,
+                  pressure: nil, start_pressure: nil, end_pressure: nil)
       line = page.add_line
       apply_style(line, rgba:, color:, brush:)
       line.thickness_scale = width.to_f
-      line.add_point(x1, y1).width = width
-      line.add_point(x2, y2).width = width
+      point_options = compact_options(
+        speed:,
+        direction:,
+        pressure:
+      )
+      first = line.add_point(x1, y1)
+      second = line.add_point(x2, y2)
+      apply_point_options(
+        first,
+        point_options.merge(
+          compact_options(
+            width: start_width || width,
+            speed: start_speed,
+            direction: start_direction,
+            pressure: start_pressure
+          )
+        )
+      )
+      apply_point_options(
+        second,
+        point_options.merge(
+          compact_options(
+            width: end_width || width,
+            speed: end_speed,
+            direction: end_direction,
+            pressure: end_pressure
+          )
+        )
+      )
+      if auto_direction_value?(direction)
+        apply_auto_directions(line.points)
+      else
+        auto_indexes = []
+        auto_indexes << 0 if auto_direction_value?(start_direction)
+        auto_indexes << 1 if auto_direction_value?(end_direction)
+        apply_auto_directions(line.points, indexes: auto_indexes) unless auto_indexes.empty?
+      end
     end
 
     # Draws a multi-point polyline using a constant stroke width.
     #
-    # @param points [Array<Array<Numeric>>]
+    # @param points [Array<Array<Numeric>, Hash>] point coordinates, optionally with per-point width/speed/direction/pressure
     # @return [void]
-    def draw_polyline(page, points, width, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
+    def draw_polyline(page, points, width, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH,
+                      speed: nil, direction: nil, pressure: nil)
       return if points.length < 2
 
       line = page.add_line
       apply_style(line, rgba:, color:, brush:)
       line.thickness_scale = width.to_f
-      points.each do |x, y|
-        line.add_point(x, y).width = width
+      auto_indexes = []
+      points.each_with_index do |point_spec, index|
+        x, y, options = normalize_point_spec(point_spec)
+        auto_indexes << index if auto_direction_value?(options[:direction])
+        point = line.add_point(x, y)
+        apply_point_options(point, compact_options(width:, speed:, direction:, pressure:).merge(options))
+      end
+      if auto_direction_value?(direction)
+        apply_auto_directions(line.points)
+      elsif !auto_indexes.empty?
+        apply_auto_directions(line.points, indexes: auto_indexes)
       end
     end
 
@@ -84,7 +132,8 @@ module Remarkable
     #   Remarkable::Shapes.text(page, "remarkable-shapes", 180, 260, size: 42, stroke_width: 3, color: Remarkable::RmPage::Colour::BLACK)
     # @return [Float] rendered width
     def text(page, string, x, baseline_y, size: 48.0, stroke_width: 2.0, font: :default,
-             rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
+             speed: nil, direction: nil, pressure: nil, rgba: DEFAULT_RGBA, color: DEFAULT_COLOR,
+             brush: DEFAULT_BRUSH)
       require_relative "line_font"
 
       LineFont.draw_text(
@@ -92,6 +141,9 @@ module Remarkable
         size:,
         stroke_width:,
         font:,
+        speed:,
+        direction:,
+        pressure:,
         rgba:,
         color:,
         brush:
@@ -106,6 +158,7 @@ module Remarkable
     #                                  color: Remarkable::RmPage::Colour::BLACK)
     # @return [Float] rendered width including the horizontal shadow extent
     def shadow_text(page, string, x, baseline_y, size: 48.0, stroke_width: 2.0, font: :default,
+                    speed: nil, direction: nil, pressure: nil,
                     shadow_dx: 0.0, shadow_dy: 0.0,
                     shadow_rgba: DEFAULT_RGBA, shadow_color: DEFAULT_COLOR, shadow_brush: DEFAULT_BRUSH,
                     rgba: DEFAULT_RGBA, color: DEFAULT_COLOR, brush: DEFAULT_BRUSH)
@@ -117,6 +170,9 @@ module Remarkable
         size:,
         stroke_width:,
         font:,
+        speed:,
+        direction:,
+        pressure:,
         rgba: shadow_rgba,
         color: shadow_color,
         brush: shadow_brush
@@ -130,6 +186,9 @@ module Remarkable
         size:,
         stroke_width:,
         font:,
+        speed:,
+        direction:,
+        pressure:,
         rgba:,
         color:,
         brush:
@@ -945,6 +1004,94 @@ module Remarkable
       else
         { rgba: normalize_rgba(value), color: RmPage::Colour::RGBA }
       end
+    end
+
+    # Converts a two-value array or a hash point into coordinates and point options.
+    #
+    # @return [Array(Numeric, Numeric, Hash)]
+    def normalize_point_spec(point_spec)
+      case point_spec
+      when Hash
+        [
+          point_spec.fetch(:x) { point_spec.fetch("x") },
+          point_spec.fetch(:y) { point_spec.fetch("y") },
+          compact_options(
+            width: point_spec.fetch(:width) { point_spec.fetch("width", nil) },
+            speed: point_spec.fetch(:speed) { point_spec.fetch("speed", nil) },
+            direction: point_spec.fetch(:direction) { point_spec.fetch("direction", nil) },
+            pressure: point_spec.fetch(:pressure) { point_spec.fetch("pressure", nil) }
+          )
+        ]
+      when Array
+        raise ArgumentError, "point arrays must have at least two values" if point_spec.length < 2
+
+        options = {}
+        options[:width] = point_spec[2] if point_spec.length >= 3
+        options[:speed] = point_spec[3] if point_spec.length >= 4
+        options[:direction] = point_spec[4] if point_spec.length >= 5
+        options[:pressure] = point_spec[5] if point_spec.length >= 6
+        [point_spec[0], point_spec[1], options]
+      else
+        raise ArgumentError, "point must be an array or hash"
+      end
+    end
+
+    # Applies optional line metadata to one point.
+    #
+    # @return [void]
+    def apply_point_options(point, options)
+      point.width = options[:width].to_f if options.key?(:width)
+      point.speed = options[:speed].to_f if options.key?(:speed)
+      point.direction = options[:direction].to_f if options.key?(:direction) && !auto_direction_value?(options[:direction])
+      point.pressure = normalize_pressure(options[:pressure]) if options.key?(:pressure)
+    end
+
+    # Returns true when a direction value asks to derive direction from geometry.
+    #
+    # @return [Boolean]
+    def auto_direction_value?(value)
+      value.to_s.downcase == "auto"
+    end
+
+    # Computes direction bytes from neighbouring points.
+    #
+    # @return [void]
+    def apply_auto_directions(points, indexes: nil)
+      return if points.empty?
+
+      indexes ||= 0...points.length
+      indexes.each do |index|
+        point = points[index]
+        previous_point = points[[index - 1, 0].max]
+        next_point = points[[index + 1, points.length - 1].min]
+        point.direction = direction_byte(next_point.x - previous_point.x, next_point.y - previous_point.y)
+      end
+    end
+
+    # Converts a vector into the reMarkable direction byte range.
+    #
+    # @return [Integer]
+    def direction_byte(dx, dy)
+      return 0 if dx.to_f.zero? && dy.to_f.zero?
+
+      angle = Math.atan2(dy.to_f, dx.to_f)
+      angle += Math::PI * 2.0 while angle.negative?
+      ((angle * 255.0 / (Math::PI * 2.0)).round % 256)
+    end
+
+    # Accept pressure in normalized 0..1 form or raw byte 0..255 form.
+    #
+    # @return [Float]
+    def normalize_pressure(value)
+      numeric = value.to_f
+      numeric > 1.0 ? numeric / 255.0 : numeric
+    end
+
+    # Drops nil option values so per-point omissions inherit parent options.
+    #
+    # @return [Hash]
+    def compact_options(options)
+      options.reject { |_key, value| value.nil? }
     end
 
     # Reads one channel from a symbol-keyed or string-keyed hash.
